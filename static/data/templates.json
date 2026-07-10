@@ -1,0 +1,45 @@
+{
+  "_meta": {
+    "version": "MVP-1.0",
+    "nota": "Plantillas de sesion declarativas. Reemplazan las cuatro funciones GENERAR_* del motor original. Una sola funcion generadora itera sobre la lista de slots y elige un ejercicio para cada uno. Los valores de 'series' y 'reps' que aparecen aqui son indicativos; los valores reales los toma el motor de objetivos.json segun el objetivo activo."
+  },
+
+  "FULL_BODY": {
+    "descripcion": "Cuerpo completo. Para 2-5 dias por semana. Cada sesion trabaja todos los grupos.",
+    "slots": [
+      { "id": "fb-1", "patron": "PUSH_H", "novedad": true, "prioridad_series": "alta" },
+      { "id": "fb-2", "patron": "PULL_H", "novedad": true, "prioridad_series": "alta" },
+      { "id": "fb-3", "patron": "SQUAT", "novedad": true, "prioridad_series": "alta" },
+      { "id": "fb-4", "patron": "PUSH_V", "novedad": true, "prioridad_series": "media" },
+      { "id": "fb-5", "patron": "HINGE", "novedad": true, "prioridad_series": "media" },
+      { "id": "fb-6", "patron": "CORE", "subpatron": "ANTI_EXTENSION", "novedad": false, "prioridad_series": "baja" }
+    ]
+  },
+
+  "UPPER": {
+    "descripcion": "Tren superior. Para 4-5 dias en intermedio o avanzado. Se ejecutan dos sesiones UPPER por semana; la variedad la garantiza el filtro de historial.",
+    "slots": [
+      { "id": "up-1", "patron": "PUSH_H", "novedad": true, "prioridad_series": "alta" },
+      { "id": "up-2", "patron": "PULL_H", "novedad": true, "prioridad_series": "alta" },
+      { "id": "up-3", "patron": "PUSH_V", "novedad": true, "prioridad_series": "media" },
+      { "id": "up-4", "patron": "PULL_V", "novedad": true, "prioridad_series": "media" },
+      { "id": "up-5", "patron": "CORE", "subpatron": "ANTI_EXTENSION", "novedad": false, "prioridad_series": "baja" }
+    ]
+  },
+
+  "LOWER": {
+    "descripcion": "Tren inferior. Para 4-5 dias en intermedio o avanzado. Se ejecutan dos sesiones LOWER por semana.",
+    "slots": [
+      { "id": "lo-1", "patron": "SQUAT", "novedad": true, "prioridad_series": "alta" },
+      { "id": "lo-2", "patron": "HINGE", "novedad": true, "prioridad_series": "alta" },
+      { "id": "lo-3", "patron": "UNILATERAL", "novedad": true, "prioridad_series": "media" },
+      { "id": "lo-4", "patron": "CORE", "subpatron": "ANTI_ROTATION", "novedad": false, "prioridad_series": "baja" }
+    ]
+  },
+
+  "_prioridad_series": {
+    "alta": "series_por_ejercicio del objetivo",
+    "media": "series_por_ejercicio del objetivo menos 1, minimo 2",
+    "baja": "series_por_ejercicio del objetivo menos 1, minimo 2"
+  }
+}

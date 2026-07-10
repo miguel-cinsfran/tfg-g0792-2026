@@ -1,0 +1,1071 @@
+{
+  "_meta": {
+    "version": "MVP-1.2-prueba",
+    "fecha": "2026-06-22",
+    "nota": "Catalogo de 30 ejercicios, 3-4 por patron, con cadenas de progresion/regresion y subpatrones CORE (ANTI_EXTENSION y ANTI_ROTATION) que exigen las plantillas. Descripciones reescritas adaptando descripciones reales de fuentes serias (ACE, NASM, PureGym, TRX, Healthline) al registro corto y no-visual de los programas de ejercicio audio-descrito para personas ciegas (Eyes-Free Fitness, Tactile Training) y al foco externo de atencion (Wulf). Cada campo es una lista de pasos o claves cortas. El tiron horizontal se hace en SUSPENSION (correa, anillas o barra), no bajo una mesa: mas seguro y con evidencia, y un usuario ciego no puede inspeccionar si una mesa aguanta colgarse. Sigue PENDIENTE la validacion del contenido con un profesional de actividad fisica adaptada antes de la entrega final.",
+    "pendiente": [
+      "Validacion de todo el contenido con profesional de actividad fisica adaptada.",
+      "Ajustar reps_iniciales con datos reales de uso.",
+      "Revisar zonas_involucradas de ej-050 (paso de buenos dias a puente a una pierna)."
+    ]
+  },
+
+  "ejercicios": [
+    {
+      "id": "ej-001-push-h-flexion-pared",
+      "nombre": "Flexión en pared",
+      "patron": "PUSH_H",
+      "nivel_requerido": "principiante",
+      "zonas_involucradas": ["hombros", "codos", "muñecas"],
+      "reps_iniciales": 10,
+      "progresion_id": "ej-002-push-h-flexion-inclinada",
+      "regresion_id": null,
+      "sustituciones": {},
+      "descripcion": {
+        "posicion_inicial": [
+          "Párate frente a una pared, a un brazo de distancia.",
+          "Apoya las manos en la pared, a la altura de los hombros y un poco más abiertas.",
+          "Da un paso atrás con los dos pies hasta inclinarte hacia la pared, con el peso en las manos. Cuanto más atrás, más cuesta."
+        ],
+        "ejecucion": [
+          "Dobla los codos y baja el pecho hacia la pared.",
+          "Para un segundo cuando el pecho está cerca.",
+          "Estira los brazos y empuja hasta volver al inicio."
+        ],
+        "referencias_propioceptivas": [
+          "Sientes el peso repartido por igual en las dos manos.",
+          "El trabajo se nota en el pecho y los hombros, no en la parte baja de la espalda.",
+          "El cuerpo va recto de la cabeza a los pies; la cadera no se hunde ni se adelanta."
+        ],
+        "errores_comunes": [
+          "Si la cadera se hunde o se va hacia adelante, aprieta el abdomen y los glúteos para sostener la línea.",
+          "Cuida que los codos no se abran hacia los lados; mantenlos más cerca del cuerpo.",
+          "Si te cuesta demasiado, acerca los pies a la pared para aligerar el ejercicio."
+        ]
+      }
+    },
+
+    {
+      "id": "ej-002-push-h-flexion-inclinada",
+      "nombre": "Flexión inclinada en superficie firme",
+      "patron": "PUSH_H",
+      "nivel_requerido": "principiante",
+      "zonas_involucradas": ["hombros", "codos", "muñecas"],
+      "reps_iniciales": 8,
+      "progresion_id": "ej-003-push-h-flexion-rodillas",
+      "regresion_id": "ej-001-push-h-flexion-pared",
+      "sustituciones": {},
+      "descripcion": {
+        "posicion_inicial": [
+          "Apoya las manos en una superficie firme a la altura de la cadera: una mesa pesada, una encimera o un mueble bajo. Empújala antes para ver que no se mueve.",
+          "Pon las manos en el borde, un poco más abiertas que los hombros.",
+          "Aleja los pies de la superficie hasta quedar inclinado en línea recta de la cabeza a los talones, con el peso en las manos. Cuanto más baja la superficie, más cuesta."
+        ],
+        "ejecucion": [
+          "Dobla los codos y baja el pecho hacia el borde, con los codos cerca del cuerpo.",
+          "Para un segundo cuando el pecho casi toca el borde.",
+          "Empuja con las manos y estira los brazos hasta volver al inicio."
+        ],
+        "referencias_propioceptivas": [
+          "Sientes el peso parejo en las dos manos y el cuerpo firme como una tabla.",
+          "El trabajo se nota en el pecho y los brazos.",
+          "La cadera va en línea con el resto del cuerpo, sin hundirse."
+        ],
+        "errores_comunes": [
+          "Si la cadera se hunde o la espalda se arquea, aprieta el abdomen y los glúteos.",
+          "Si la superficie se mueve o cruje, para y busca una más firme.",
+          "Si te sale fácil y sin fatiga, baja la altura de la superficie o pasa a la flexión de rodillas."
+        ]
+      }
+    },
+
+    {
+      "id": "ej-003-push-h-flexion-rodillas",
+      "nombre": "Flexión de rodillas",
+      "patron": "PUSH_H",
+      "nivel_requerido": "principiante",
+      "zonas_involucradas": ["hombros", "codos", "muñecas", "rodillas"],
+      "reps_iniciales": 8,
+      "progresion_id": "ej-004-push-h-flexion-estandar",
+      "regresion_id": "ej-002-push-h-flexion-inclinada",
+      "sustituciones": {},
+      "descripcion": {
+        "posicion_inicial": [
+          "Ponte a cuatro apoyos sobre algo blando para las rodillas: una colchoneta, una manta doblada o una alfombra.",
+          "Apoya las manos un poco más abiertas que los hombros, con las muñecas debajo de los hombros.",
+          "Estira el cuerpo hasta formar una línea recta de la cabeza a las rodillas, con el abdomen firme."
+        ],
+        "ejecucion": [
+          "Dobla los codos y baja el pecho hacia el suelo, con los codos cerca del cuerpo.",
+          "Baja hasta que el pecho roce el suelo o quede justo encima; si quieres una referencia, apoya un puño bajo el pecho como tope.",
+          "Empuja con las manos y estira los brazos hasta volver al inicio."
+        ],
+        "referencias_propioceptivas": [
+          "El abdomen firme te sostiene la línea recta de la cabeza a las rodillas.",
+          "El trabajo se nota en el pecho y los brazos.",
+          "Si usas el puño como tope, sabes que llegaste cuando el pecho lo roza.",
+          "Las rodillas no deberían doler; si molestan, agrega más acolchado."
+        ],
+        "errores_comunes": [
+          "Si sacas el trasero hacia atrás, el ejercicio se vuelve más fácil; mantén la línea recta de la cabeza a las rodillas.",
+          "Si la espalda se arquea y la panza cuelga, aprieta el abdomen.",
+          "Si las muñecas molestan, gira un poco las manos hacia afuera o apóyate en los puños."
+        ]
+      }
+    },
+
+    {
+      "id": "ej-004-push-h-flexion-estandar",
+      "nombre": "Flexión estándar",
+      "patron": "PUSH_H",
+      "nivel_requerido": "intermedio",
+      "zonas_involucradas": ["hombros", "codos", "muñecas", "lumbar"],
+      "reps_iniciales": 6,
+      "progresion_id": null,
+      "regresion_id": "ej-003-push-h-flexion-rodillas",
+      "sustituciones": {
+        "lumbar": "ej-003-push-h-flexion-rodillas"
+      },
+      "descripcion": {
+        "posicion_inicial": [
+          "Boca abajo, apoya las manos a los costados del pecho, un poco más abiertas que los hombros.",
+          "Apoya la punta de los pies al ancho de las caderas.",
+          "Empuja el suelo y estira los brazos: el cuerpo queda en línea recta de la cabeza a los talones. Aprieta el abdomen y los glúteos."
+        ],
+        "ejecucion": [
+          "Toma aire y dobla los codos, bajando el cuerpo entero como una tabla, con los codos cerca del cuerpo.",
+          "Baja hasta que el pecho quede a un puño del suelo; usa un puño bajo el pecho como tope al principio.",
+          "Suelta el aire y empuja el suelo hasta estirar los brazos otra vez."
+        ],
+        "referencias_propioceptivas": [
+          "Antes de empezar, comprueba por la sensación: los hombros sobre las manos, el abdomen y los glúteos firmes.",
+          "El trabajo se reparte entre el pecho, los brazos y el abdomen; la espalda baja no debería doler.",
+          "Todo el cuerpo sube y baja junto, en una sola pieza."
+        ],
+        "errores_comunes": [
+          "Si la cadera se cae y la espalda se arquea, aprieta los glúteos y el abdomen antes de cada repetición.",
+          "Si los codos se abren en cruz, llévalos más cerca del cuerpo, apuntando un poco hacia atrás.",
+          "Si el cuerpo se te quiebra (la cadera sube antes que el pecho), vuelve a la flexión de rodillas una o dos semanas."
+        ]
+      }
+    },
+
+    {
+      "id": "ej-010-push-v-pike-inclinado",
+      "nombre": "Flexión en pica con manos elevadas",
+      "patron": "PUSH_V",
+      "nivel_requerido": "principiante",
+      "zonas_involucradas": ["hombros", "codos", "muñecas", "cuello"],
+      "reps_iniciales": 6,
+      "progresion_id": "ej-011-push-v-pike-estandar",
+      "regresion_id": null,
+      "sustituciones": {},
+      "descripcion": {
+        "posicion_inicial": [
+          "Apoya las manos en una superficie firme y baja: un escalón, un banco o una silla pesada contra la pared. Confirma que no se mueve.",
+          "Pon las manos un poco más abiertas que los hombros.",
+          "Camina los pies hacia las manos y sube las caderas hasta que el cuerpo forme un pico, con las caderas en el punto más alto y las piernas lo más rectas que puedas."
+        ],
+        "ejecucion": [
+          "Dobla los codos y baja la cabeza hacia la superficie, entre las manos.",
+          "Para un segundo cuando la cabeza casi la toca.",
+          "Empuja con las manos y vuelve a subir, sin trabar los codos."
+        ],
+        "referencias_propioceptivas": [
+          "Sientes más peso en los hombros y la parte alta de la espalda que en el pecho; así sabes que las caderas están bien altas.",
+          "Si el peso se va al pecho, sube más las caderas.",
+          "Los codos van cerca del cuerpo, no abiertos hacia los lados."
+        ],
+        "errores_comunes": [
+          "Si las caderas bajan, el ejercicio se vuelve una flexión inclinada; vuelve a subirlas.",
+          "Si el cuello recibe presión, no bajes tanto la cabeza.",
+          "Si empujas con la cabeza en vez de con las manos, cargas el cuello; empuja la superficie con las manos."
+        ]
+      }
+    },
+
+    {
+      "id": "ej-011-push-v-pike-estandar",
+      "nombre": "Flexión en pica",
+      "patron": "PUSH_V",
+      "nivel_requerido": "intermedio",
+      "zonas_involucradas": ["hombros", "codos", "muñecas", "cuello"],
+      "reps_iniciales": 5,
+      "progresion_id": "ej-012-push-v-pike-pies-elevados",
+      "regresion_id": "ej-010-push-v-pike-inclinado",
+      "sustituciones": {},
+      "descripcion": {
+        "posicion_inicial": [
+          "En el suelo, apoya las manos un poco más abiertas que los hombros.",
+          "Camina los pies hacia las manos y sube las caderas hasta que el cuerpo forme un pico, con las caderas en el punto más alto.",
+          "Acerca o aleja los pies hasta sentir el peso claramente en los hombros; las piernas lo más rectas que puedas."
+        ],
+        "ejecucion": [
+          "Dobla los codos y baja la cabeza hacia el suelo, entre las manos.",
+          "Pon una toalla doblada donde baja la cabeza y bájala hasta rozarla.",
+          "Empuja con las manos y vuelve a subir las caderas al pico."
+        ],
+        "referencias_propioceptivas": [
+          "El peso se siente sobre todo en los hombros y los brazos; los pies cargan poco.",
+          "Las caderas se quedan altas todo el tiempo; si bajan, reacomoda el pico antes de seguir.",
+          "Los codos van cerca del cuerpo."
+        ],
+        "errores_comunes": [
+          "Si bajas sin control y golpeas la cabeza, usa la toalla como tope y baja despacio.",
+          "Si las caderas se caen a mitad de la serie, mejor termina la serie que perder la forma.",
+          "Si te duele el cuello, no fuerces la profundidad; gana rango de a poco."
+        ]
+      }
+    },
+
+    {
+      "id": "ej-012-push-v-pike-pies-elevados",
+      "nombre": "Flexión en pica con pies elevados",
+      "patron": "PUSH_V",
+      "nivel_requerido": "avanzado",
+      "zonas_involucradas": ["hombros", "codos", "muñecas", "cuello"],
+      "reps_iniciales": 4,
+      "progresion_id": null,
+      "regresion_id": "ej-011-push-v-pike-estandar",
+      "sustituciones": {},
+      "descripcion": {
+        "posicion_inicial": [
+          "Apoya las manos en el suelo, un poco más abiertas que los hombros, y sube los pies a una superficie estable de 30 a 50 centímetros: un sofá firme, una silla contra la pared o un cajón pesado.",
+          "Camina las manos hacia los pies hasta que las caderas queden casi sobre los hombros y el cuerpo quede casi vertical.",
+          "Entra aquí solo cuando la pica en el suelo te salga controlada; aquí los hombros cargan la mayor parte del peso."
+        ],
+        "ejecucion": [
+          "Dobla los codos y baja la cabeza hacia el suelo, entre las manos.",
+          "Pon una toalla doblada como tope y baja hasta rozarla; úsala siempre en esta versión.",
+          "Empuja con las manos y estira los brazos del todo."
+        ],
+        "referencias_propioceptivas": [
+          "Casi todo el peso se siente en los hombros y los brazos; los pies solo equilibran.",
+          "Antes de cada serie, comprueba que la superficie de los pies no resbala.",
+          "Si los brazos tiemblan antes de llegar al tope, sube y termina la serie."
+        ],
+        "errores_comunes": [
+          "Si entras sin dominar la pica en el suelo, la carga es mucho mayor; vuelve a la versión más fácil.",
+          "Si bajas sin la toalla de tope, te arriesgas a golpear la cabeza.",
+          "Si contienes la respiración, sube la presión en la cabeza; respira en cada repetición."
+        ]
+      }
+    },
+
+    {
+      "id": "ej-021-pull-h-remo-rodillas",
+      "nombre": "Remo invertido en suspensión con rodillas flexionadas",
+      "patron": "PULL_H",
+      "nivel_requerido": "principiante",
+      "zonas_involucradas": ["hombros", "codos"],
+      "reps_iniciales": 8,
+      "progresion_id": "ej-020-pull-h-remo-suspension",
+      "regresion_id": null,
+      "sustituciones": {},
+      "descripcion": {
+        "posicion_inicial": [
+          "Cuelga la correa o las anillas de un anclaje firme. Tira fuerte de ellas antes para confirmar que aguantan tu peso.",
+          "Toma un agarre con cada mano, al ancho de los hombros, con los brazos estirados.",
+          "Dobla las rodillas y apoya bien las plantas en el suelo, con el cuerpo inclinado hacia atrás. Así las piernas cargan parte del peso, por eso es la versión más fácil."
+        ],
+        "ejecucion": [
+          "Tira de los agarres y acerca el pecho a las manos, llevando los codos hacia atrás.",
+          "Junta los omóplatos y para un segundo arriba.",
+          "Baja despacio hasta estirar los brazos del todo."
+        ],
+        "referencias_propioceptivas": [
+          "El trabajo se siente entre los omóplatos, en el medio de la espalda, no en el cuello.",
+          "Cuanto más adelantes los pies y más atrás te inclines, más cuesta; así regulas el esfuerzo.",
+          "El cuerpo se mantiene firme; solo se mueven los brazos."
+        ],
+        "errores_comunes": [
+          "Si te ayudas con un impulso de las piernas, baja el número de repeticiones en vez de impulsarte.",
+          "Si los hombros se encogen hacia las orejas, baja los omóplatos antes de tirar.",
+          "Si sueltas el cuerpo en la bajada, frena: la mitad del ejercicio está en bajar despacio."
+        ]
+      }
+    },
+
+    {
+      "id": "ej-020-pull-h-remo-suspension",
+      "nombre": "Remo invertido en suspensión",
+      "patron": "PULL_H",
+      "nivel_requerido": "principiante",
+      "zonas_involucradas": ["hombros", "codos", "lumbar"],
+      "reps_iniciales": 6,
+      "progresion_id": "ej-022-pull-h-remo-pies-elevados",
+      "regresion_id": "ej-021-pull-h-remo-rodillas",
+      "sustituciones": {
+        "lumbar": "ej-021-pull-h-remo-rodillas"
+      },
+      "descripcion": {
+        "posicion_inicial": [
+          "Misma instalación: agarres colgando de un anclaje firme, comprobado tirando antes.",
+          "Toma los agarres al ancho de los hombros, con los brazos estirados.",
+          "Estira las piernas con los talones en el suelo y el cuerpo recto e inclinado hacia atrás, de la cabeza a los talones."
+        ],
+        "ejecucion": [
+          "Tira de los agarres y acerca el pecho a las manos, con los codos hacia atrás.",
+          "Junta los omóplatos y para un segundo arriba.",
+          "Baja despacio hasta estirar los brazos."
+        ],
+        "referencias_propioceptivas": [
+          "Con las piernas estiradas, los brazos cargan la mayor parte del peso.",
+          "El trabajo se siente entre los omóplatos, no en el cuello.",
+          "El cuerpo va recto; si la cadera se hunde, aprieta los glúteos."
+        ],
+        "errores_comunes": [
+          "Si los hombros suben hacia las orejas al tirar, junta los omóplatos abajo y atrás al empezar.",
+          "Si la cadera se hunde, aprieta los glúteos y mantén el cuerpo recto.",
+          "Si te queda cargada la espalda baja al terminar, la cadera estuvo cayendo; vuelve una sesión a la versión con rodillas flexionadas."
+        ]
+      }
+    },
+
+    {
+      "id": "ej-022-pull-h-remo-pies-elevados",
+      "nombre": "Remo invertido en suspensión con pies elevados",
+      "patron": "PULL_H",
+      "nivel_requerido": "intermedio",
+      "zonas_involucradas": ["hombros", "codos", "lumbar"],
+      "reps_iniciales": 5,
+      "progresion_id": null,
+      "regresion_id": "ej-020-pull-h-remo-suspension",
+      "sustituciones": {
+        "lumbar": "ej-021-pull-h-remo-rodillas"
+      },
+      "descripcion": {
+        "posicion_inicial": [
+          "Misma instalación. Sube los talones a una silla o un banco a la altura de los agarres, para que el cuerpo quede horizontal.",
+          "Acuéstate bajo los agarres, tómalos al ancho de los hombros y sube los talones uno por uno.",
+          "Con el cuerpo horizontal, los brazos cargan casi todo el peso: es la versión más exigente."
+        ],
+        "ejecucion": [
+          "Tira de los agarres y lleva el pecho a las manos, con los codos hacia atrás.",
+          "Junta los omóplatos y para un segundo arriba.",
+          "Baja despacio hasta estirar los brazos, sin soltar la tensión de los hombros."
+        ],
+        "referencias_propioceptivas": [
+          "Con los pies arriba, sientes casi todo tu peso en los brazos; esa carga te confirma la postura.",
+          "El trabajo se concentra entre los omóplatos; es normal que los antebrazos ardan por el agarre.",
+          "El cuerpo recto importa más que nunca: si la cadera cae, aprieta los glúteos y el abdomen antes de cada tirón."
+        ],
+        "errores_comunes": [
+          "Si la silla de los pies se mueve, apóyala contra una pared.",
+          "Si la cadera se cae con el cansancio, es la señal de que la serie terminó.",
+          "Si tiras con impulso y arqueas la espalda, frena: el rango se gana con fuerza, no con sacudidas."
+        ]
+      }
+    },
+
+    {
+      "id": "ej-030-pull-v-dead-hang",
+      "nombre": "Suspensión activa en barra",
+      "patron": "PULL_V",
+      "nivel_requerido": "principiante",
+      "zonas_involucradas": ["hombros", "codos", "muñecas"],
+      "reps_iniciales": 15,
+      "medido_en": "segundos",
+      "progresion_id": "ej-031-pull-v-retraccion-escapular",
+      "regresion_id": null,
+      "sustituciones": {
+        "muñecas": "ej-020-pull-h-remo-suspension"
+      },
+      "descripcion": {
+        "posicion_inicial": [
+          "Necesitas una barra fija o un marco de puerta robusto. Antes de cada sesión, cuelga unos segundos con un pie aún apoyado para comprobar que resiste tu peso.",
+          "Toma la barra con las dos manos al ancho de los hombros, las palmas hacia adelante y los pulgares rodeándola.",
+          "Despega los pies del suelo despacio, sin balancearte, con los brazos estirados."
+        ],
+        "ejecucion": [
+          "Este ejercicio es isométrico: no hay repeticiones, se mide en segundos.",
+          "Sin doblar los codos, lleva los omóplatos hacia abajo y un poco atrás, alejando los hombros de las orejas. El cuerpo sube unos centímetros.",
+          "Sostén esa posición respirando tranquilo. Para empezar, entre 15 y 20 segundos.",
+          "Al terminar, baja apoyando los pies con control; no te sueltes de golpe."
+        ],
+        "referencias_propioceptivas": [
+          "Notas espacio entre los hombros y las orejas; los hombros no tocan las orejas.",
+          "Sientes que te estás sosteniendo con la espalda, no colgando como peso muerto.",
+          "El agarre se siente firme y parejo en las dos manos."
+        ],
+        "errores_comunes": [
+          "Si cuelgas con los hombros pegados a las orejas, baja, descansa y vuelve a subir bajando primero los omóplatos.",
+          "Si te balanceas, junta los tobillos y aprieta el abdomen para quedarte quieto.",
+          "Si las muñecas duelen enseguida, todavía falta base; trabaja primero el remo y vuelve a la barra en una o dos semanas."
+        ]
+      }
+    },
+
+    {
+      "id": "ej-031-pull-v-retraccion-escapular",
+      "nombre": "Retracción escapular en barra",
+      "patron": "PULL_V",
+      "nivel_requerido": "intermedio",
+      "zonas_involucradas": ["hombros", "codos", "muñecas"],
+      "reps_iniciales": 6,
+      "progresion_id": "ej-032-pull-v-dominada-negativa",
+      "regresion_id": "ej-030-pull-v-dead-hang",
+      "sustituciones": {},
+      "descripcion": {
+        "posicion_inicial": [
+          "Cuelga de la barra como en la suspensión activa: palmas hacia adelante, manos al ancho de los hombros, brazos estirados, pies despegados.",
+          "Comprueba la barra antes de cada sesión.",
+          "Parte del colgado relajado, con los hombros sueltos cerca de las orejas."
+        ],
+        "ejecucion": [
+          "Sin doblar los codos, lleva los omóplatos hacia abajo y júntalos. El cuerpo sube unos pocos centímetros.",
+          "Para uno o dos segundos arriba, con el pecho subiendo hacia la barra.",
+          "Baja despacio y deja que los hombros vuelvan a subir, sin soltar el control.",
+          "El recorrido es corto, de cinco a diez centímetros; si doblas los codos, ya es otro ejercicio."
+        ],
+        "referencias_propioceptivas": [
+          "Sientes trabajar los músculos debajo de los omóplatos y alrededor de las axilas; los brazos solo transmiten.",
+          "Entre los hombros y las orejas: casi se tocan abajo, hay un espacio claro arriba.",
+          "El cuerpo sube y baja derecho, sin balanceo."
+        ],
+        "errores_comunes": [
+          "Si doblas los codos para ganar altura, pierdes el sentido del ejercicio: los brazos quedan estirados.",
+          "Si subes encogiendo los hombros hacia adelante, cambia la dirección: hacia abajo y atrás.",
+          "Si después de dos o tres repeticiones pierdes la sensación del omóplato, descansa: la fatiga borra este gesto fino."
+        ]
+      }
+    },
+
+    {
+      "id": "ej-032-pull-v-dominada-negativa",
+      "nombre": "Dominada negativa",
+      "patron": "PULL_V",
+      "nivel_requerido": "avanzado",
+      "zonas_involucradas": ["hombros", "codos", "muñecas"],
+      "reps_iniciales": 4,
+      "progresion_id": null,
+      "regresion_id": "ej-031-pull-v-retraccion-escapular",
+      "sustituciones": {},
+      "descripcion": {
+        "posicion_inicial": [
+          "Necesitas la barra y algo estable para subir: una silla pesada, un banco o un cajón debajo de la barra.",
+          "Sube al apoyo y toma la barra con las palmas hacia adelante, al ancho de los hombros, un poco más abiertas.",
+          "Con un pequeño impulso de las piernas, llega arriba: la barbilla por encima de la barra, el pecho cerca de ella. Antes de despegar los pies, comprueba que el agarre es firme."
+        ],
+        "ejecucion": [
+          "Antes de soltar los pies, lleva los omóplatos hacia abajo y atrás, como si quisieras juntarlos.",
+          "Despega los pies y baja lo más despacio que puedas, resistiendo con la espalda y los brazos, contando hasta tres o cinco.",
+          "Baja hasta quedar colgado con los brazos estirados del todo. Ahí termina la repetición.",
+          "Apoya los pies en la silla, vuelve a subir y repite. La subida la hacen las piernas, no los brazos."
+        ],
+        "referencias_propioceptivas": [
+          "El descenso se siente como un freno continuo en la espalda y los brazos; si en algún tramo caes libre, ese tramo todavía no es tuyo.",
+          "El pecho se mantiene mirando hacia la barra y los omóplatos firmes hasta el final.",
+          "Localiza la silla con el pie antes de soltarte; que ese gesto sea automático."
+        ],
+        "errores_comunes": [
+          "Si te dejas caer rápido y frenas solo al final, pierdes el valor del ejercicio: frena desde arriba.",
+          "Si haces más repeticiones de las planificadas, vas a tener mucho dolor muscular a los dos días; las negativas cansan mucho.",
+          "Si encoges los hombros hacia las orejas durante la bajada, mantén el cuello largo y los omóplatos abajo."
+        ]
+      }
+    },
+
+    {
+      "id": "ej-041-squat-sentadilla-silla",
+      "nombre": "Sentadilla a silla",
+      "patron": "SQUAT",
+      "nivel_requerido": "principiante",
+      "zonas_involucradas": ["rodillas", "cadera", "tobillos"],
+      "reps_iniciales": 10,
+      "progresion_id": "ej-040-squat-sentadilla",
+      "regresion_id": null,
+      "sustituciones": {},
+      "descripcion": {
+        "posicion_inicial": [
+          "Coloca una silla firme contra la pared para que no se deslice. Ponte de espaldas a ella.",
+          "Separa los pies al ancho de las caderas, con las puntas un poco hacia afuera, a unos centímetros del borde de la silla.",
+          "Reparte el peso entre el talón y la planta de cada pie. Espalda erguida, brazos al frente para equilibrar."
+        ],
+        "ejecucion": [
+          "Lleva la cadera hacia atrás, como si fueras a sentarte, y dobla las rodillas.",
+          "Baja hasta que los glúteos rozan apenas el asiento; tócalo, no te sientes.",
+          "Empuja con los pies y vuelve a ponerte de pie, apretando los glúteos arriba."
+        ],
+        "referencias_propioceptivas": [
+          "El roce de los glúteos en el asiento te marca la profundidad en cada repetición.",
+          "El peso se siente en los talones y la planta; las puntas no cargan ni se despegan.",
+          "Las rodillas siguen la dirección de los pies, sin caer hacia adentro."
+        ],
+        "errores_comunes": [
+          "Si te sientas de verdad y subes con impulso, baja el número de repeticiones; el toque es un aviso, no un descanso.",
+          "Si las rodillas se juntan hacia adentro, piensa en abrirlas en la dirección de los pies.",
+          "Si los talones se despegan, separa un poco más los pies o usa una silla más alta."
+        ]
+      }
+    },
+
+    {
+      "id": "ej-040-squat-sentadilla",
+      "nombre": "Sentadilla con peso corporal",
+      "patron": "SQUAT",
+      "nivel_requerido": "principiante",
+      "zonas_involucradas": ["rodillas", "cadera", "tobillos", "lumbar"],
+      "reps_iniciales": 12,
+      "progresion_id": "ej-042-squat-sentadilla-pausa",
+      "regresion_id": "ej-041-squat-sentadilla-silla",
+      "sustituciones": {
+        "lumbar": "ej-041-squat-sentadilla-silla"
+      },
+      "descripcion": {
+        "posicion_inicial": [
+          "De pie, separa los pies un poco más que el ancho de las caderas, con las puntas un poco hacia afuera.",
+          "Reparte el peso parejo entre el talón y la planta de cada pie.",
+          "Espalda erguida, pecho arriba, brazos al frente o a los costados para equilibrar."
+        ],
+        "ejecucion": [
+          "Toma aire, lleva la cadera hacia atrás y dobla las rodillas, como si te sentaras en una silla imaginaria.",
+          "Baja hasta que los muslos queden casi paralelos al suelo, o hasta donde controles con la espalda recta.",
+          "Empuja con los pies, suelta el aire y vuelve a estar de pie, sin trabar las rodillas arriba."
+        ],
+        "referencias_propioceptivas": [
+          "El peso se queda en toda la planta del pie; si se va a las puntas, lleva más la cadera hacia atrás.",
+          "Las rodillas siguen la línea de los pies, ni hacia adentro ni hacia afuera.",
+          "La espalda baja se mantiene recta; si la sientes redondearse abajo, ahí está tu límite de profundidad por ahora."
+        ],
+        "errores_comunes": [
+          "Si las rodillas se juntan hacia adentro, piensa en abrirlas hacia afuera durante todo el movimiento.",
+          "Si los talones se despegan, baja menos hasta que mejore la movilidad de los tobillos.",
+          "Si la espalda baja se redondea al final, reduce el rango."
+        ]
+      }
+    },
+
+    {
+      "id": "ej-042-squat-sentadilla-pausa",
+      "nombre": "Sentadilla con pausa",
+      "patron": "SQUAT",
+      "nivel_requerido": "intermedio",
+      "zonas_involucradas": ["rodillas", "cadera", "tobillos", "lumbar"],
+      "reps_iniciales": 8,
+      "progresion_id": "ej-043-squat-sentadilla-salto",
+      "regresion_id": "ej-040-squat-sentadilla",
+      "sustituciones": {
+        "lumbar": "ej-041-squat-sentadilla-silla"
+      },
+      "descripcion": {
+        "posicion_inicial": [
+          "La misma postura que la sentadilla con peso corporal: pies un poco más abiertos que las caderas, puntas un poco hacia afuera, peso en la planta, espalda erguida.",
+          "La diferencia no está en la postura sino en el tiempo: vas a detenerte tres segundos en el punto más bajo."
+        ],
+        "ejecucion": [
+          "Baja igual que en la sentadilla normal: cadera atrás, rodillas en la dirección de los pies, hasta los muslos casi paralelos.",
+          "Abajo, detente del todo y cuenta tres segundos, sin relajar las piernas ni sentarte en los talones.",
+          "Empuja con los pies y sube, sin rebote ni balanceo previo."
+        ],
+        "referencias_propioceptivas": [
+          "Durante la pausa, la tensión en los muslos crece; esa es la sensación buscada.",
+          "Aprovecha los tres segundos para revisar: peso en la planta, rodillas en línea con los pies, espalda recta.",
+          "Si te tiembla un poco la pierna al final de la serie, es fatiga normal."
+        ],
+        "errores_comunes": [
+          "Si la pausa se acorta cuando llega el cansancio, cuenta en voz baja: uno, dos, tres.",
+          "Si te relajas abajo sentándote en los tobillos, mantén la tensión activa en las piernas.",
+          "Si rebotas para subir, anulas el sentido de la variante; sube sin impulso."
+        ]
+      }
+    },
+
+    {
+      "id": "ej-043-squat-sentadilla-salto",
+      "nombre": "Sentadilla con salto",
+      "patron": "SQUAT",
+      "nivel_requerido": "avanzado",
+      "zonas_involucradas": ["rodillas", "cadera", "tobillos", "lumbar"],
+      "reps_iniciales": 6,
+      "progresion_id": null,
+      "regresion_id": "ej-042-squat-sentadilla-pausa",
+      "sustituciones": {
+        "lumbar": "ej-041-squat-sentadilla-silla"
+      },
+      "descripcion": {
+        "posicion_inicial": [
+          "Antes de empezar, reconoce el espacio: con los brazos extendidos, gira despacio y confirma que no hay muebles ni techo bajo cerca. Vas a saltar y caer en el mismo lugar.",
+          "Ponte sobre una superficie firme y que no resbale, descalzo o con calzado que agarre bien.",
+          "La postura de partida es la de la sentadilla normal: pies al ancho de las caderas, puntas un poco hacia afuera."
+        ],
+        "ejecucion": [
+          "Baja una sentadilla hasta los muslos casi paralelos.",
+          "Sin pausa, empuja el suelo con fuerza y salta, estirando todo el cuerpo; los brazos suben para ayudar.",
+          "Cae en el mismo punto, apoyando primero la base de los dedos y después el talón, y dobla rodillas y cadera para amortiguar.",
+          "El aterrizaje se funde con la bajada de la siguiente repetición."
+        ],
+        "referencias_propioceptivas": [
+          "El sonido del aterrizaje es tu mejor guía sin vista: un golpe fuerte significa piernas rígidas; un contacto sordo y breve, buena amortiguación.",
+          "Sientes el pie tocar en orden: primero la base de los dedos, luego el talón.",
+          "Entre repeticiones, un instante de quietud te confirma que sigues en el mismo punto del suelo."
+        ],
+        "errores_comunes": [
+          "Si aterrizas con las piernas estiradas, las rodillas sufren; recibe siempre el salto flexionando rodillas y cadera.",
+          "Si los aterrizajes empiezan a sonar más fuerte, llegó la fatiga: termina la serie.",
+          "Si las rodillas se van hacia adentro al caer, mantenlas en línea con los pies."
+        ]
+      }
+    },
+
+    {
+      "id": "ej-051-hinge-puente-gluteos",
+      "nombre": "Puente de glúteos",
+      "patron": "HINGE",
+      "nivel_requerido": "principiante",
+      "zonas_involucradas": ["cadera", "rodillas"],
+      "reps_iniciales": 12,
+      "progresion_id": "ej-050-hinge-puente-una-pierna",
+      "regresion_id": null,
+      "sustituciones": {},
+      "descripcion": {
+        "posicion_inicial": [
+          "Acuéstate boca arriba, las rodillas dobladas y las plantas de los pies en el suelo, cerca de los glúteos.",
+          "Separa los pies al ancho de las caderas. Los brazos a los costados, las palmas hacia abajo.",
+          "La zona baja de la espalda descansa apoyada en el suelo, sin arquearse."
+        ],
+        "ejecucion": [
+          "Empuja con los pies y sube las caderas hasta que el cuerpo quede recto desde las rodillas hasta los hombros.",
+          "Arriba, aprieta los glúteos con fuerza uno o dos segundos.",
+          "Baja despacio hasta apoyar de nuevo la espalda y los glúteos."
+        ],
+        "referencias_propioceptivas": [
+          "El empuje sale de los talones y los glúteos, no de arquear la espalda.",
+          "Arriba sientes los muslos y el tronco como un solo plano inclinado, apoyado en los hombros y los pies.",
+          "La contracción se siente en los glúteos; si la sientes en la espalda baja, subiste de más: baja un poco."
+        ],
+        "errores_comunes": [
+          "Si subes de más y arqueas la espalda, para en la línea recta, ni un centímetro más.",
+          "Si empujas con la punta de los pies, lleva la fuerza a los talones.",
+          "Si te olvidas de apretar los glúteos arriba, pierdes la mitad del ejercicio."
+        ]
+      }
+    },
+
+    {
+      "id": "ej-050-hinge-puente-una-pierna",
+      "nombre": "Puente de glúteos a una pierna",
+      "patron": "HINGE",
+      "nivel_requerido": "principiante",
+      "zonas_involucradas": ["cadera", "rodillas"],
+      "reps_iniciales": 8,
+      "progresion_id": "ej-052-hinge-peso-muerto-una-pierna",
+      "regresion_id": "ej-051-hinge-puente-gluteos",
+      "sustituciones": {
+        "lumbar": "ej-051-hinge-puente-gluteos"
+      },
+      "descripcion": {
+        "posicion_inicial": [
+          "Acuéstate boca arriba como en el puente, las rodillas dobladas y las plantas en el suelo, cerca de los glúteos.",
+          "Levanta un pie del suelo y mantenlo en el aire con la rodilla doblada. El otro pie queda bien apoyado.",
+          "Los brazos a los costados para apoyarte. La espalda baja apoyada en el suelo."
+        ],
+        "ejecucion": [
+          "Empuja con el pie que está en el suelo y sube las caderas hasta que el cuerpo quede recto de la rodilla a los hombros.",
+          "Arriba, aprieta el glúteo uno o dos segundos, con las dos caderas a la misma altura.",
+          "Baja despacio. Termina las repeticiones de un lado y cambia de pierna."
+        ],
+        "referencias_propioceptivas": [
+          "Las dos caderas se mantienen al mismo nivel; ninguna cae hacia el lado de la pierna levantada.",
+          "El trabajo se concentra en el glúteo de la pierna que apoya.",
+          "Si la espalda baja quiere arquearse o tomar el mando, mete el abdomen."
+        ],
+        "errores_comunes": [
+          "Si una cadera cae, baja un poco la altura y prioriza mantener las caderas parejas.",
+          "Si la espalda baja hace la fuerza, lleva el empuje al talón y aprieta el glúteo.",
+          "Si te cuesta el equilibrio, abre un poco más el pie de apoyo."
+        ]
+      }
+    },
+
+    {
+      "id": "ej-052-hinge-peso-muerto-una-pierna",
+      "nombre": "Peso muerto a una pierna",
+      "patron": "HINGE",
+      "nivel_requerido": "intermedio",
+      "zonas_involucradas": ["lumbar", "cadera", "tobillos"],
+      "reps_iniciales": 6,
+      "progresion_id": null,
+      "regresion_id": "ej-050-hinge-puente-una-pierna",
+      "sustituciones": {
+        "lumbar": "ej-051-hinge-puente-gluteos"
+      },
+      "descripcion": {
+        "posicion_inicial": [
+          "De pie, pasa el peso a una pierna, con esa rodilla apenas doblada (rodilla blanda).",
+          "El otro pie se despega apenas del suelo. El pecho arriba, los brazos colgando.",
+          "Ten cerca una pared o una silla al costado por si necesitas equilibrio."
+        ],
+        "ejecucion": [
+          "Inclina el tronco hacia adelante desde la cadera, no desde la espalda, mientras la pierna libre se estira hacia atrás.",
+          "Baja hasta donde controles con la espalda recta; el tronco y la pierna de atrás tienden a una sola línea.",
+          "Vuelve a subir apretando el glúteo de la pierna de apoyo. Termina un lado y cambia."
+        ],
+        "referencias_propioceptivas": [
+          "El movimiento sale de la cadera, que va hacia atrás; la espalda se queda recta.",
+          "Sientes el estiramiento y el trabajo detrás del muslo de la pierna que apoya.",
+          "Las caderas y los hombros se mantienen mirando al suelo, sin abrirse hacia un lado."
+        ],
+        "errores_comunes": [
+          "Si te tambaleas, apoya una mano en la pared o la silla y baja menos.",
+          "Si redondeas la espalda, mueve desde la cadera y baja solo hasta donde la mantengas recta.",
+          "Si la cadera de la pierna libre se abre hacia arriba, mantenla mirando al suelo."
+        ]
+      }
+    },
+
+    {
+      "id": "ej-061-uni-subida-escalon",
+      "nombre": "Subida a escalón",
+      "patron": "UNILATERAL",
+      "nivel_requerido": "principiante",
+      "zonas_involucradas": ["rodillas", "cadera", "tobillos"],
+      "reps_iniciales": 8,
+      "progresion_id": "ej-060-uni-zancada-estatica",
+      "regresion_id": null,
+      "sustituciones": {},
+      "descripcion": {
+        "posicion_inicial": [
+          "Ponte frente a un escalón firme o un cajón estable, más o menos a la altura de la rodilla.",
+          "Apoya todo un pie sobre el escalón; el otro pie queda en el suelo. Pies al ancho de las caderas.",
+          "Pecho arriba y una leve inclinación hacia adelante para cargar la pierna de arriba. Ten una baranda o pared al alcance de la mano como referencia."
+        ],
+        "ejecucion": [
+          "Empuja con el pie de arriba, con el talón y la planta, y sube hasta quedar de pie sobre el escalón.",
+          "Arriba, aprieta el glúteo y para uno o dos segundos para estabilizar el equilibrio.",
+          "Baja el pie de atrás al suelo despacio, sin dejarte caer. Termina un lado y cambia."
+        ],
+        "referencias_propioceptivas": [
+          "La fuerza sale de la pierna de arriba; la de abajo casi no empuja.",
+          "Sientes el trabajo en el muslo y el glúteo de la pierna que sube.",
+          "Arriba te quedas firme un momento; si te tambaleas, baja la altura del escalón."
+        ],
+        "errores_comunes": [
+          "Si te impulsas con la pierna de abajo, deja que la de arriba haga el trabajo.",
+          "Si bajas dejándote caer, controla el descenso.",
+          "Si encorvas la espalda, mantén el pecho arriba."
+        ]
+      }
+    },
+
+    {
+      "id": "ej-060-uni-zancada-estatica",
+      "nombre": "Estocada",
+      "patron": "UNILATERAL",
+      "nivel_requerido": "principiante",
+      "zonas_involucradas": ["rodillas", "cadera", "tobillos"],
+      "reps_iniciales": 8,
+      "progresion_id": "ej-062-uni-zancada-inversa",
+      "regresion_id": "ej-061-uni-subida-escalon",
+      "sustituciones": {},
+      "descripcion": {
+        "posicion_inicial": [
+          "Da un paso largo hacia adelante con un pie y deja el otro atrás, apoyado en la punta: quedas en zancada, un pie adelante y otro atrás.",
+          "Los dos pies miran al frente, separados al ancho de las caderas para no perder el equilibrio.",
+          "Pecho arriba, abdomen firme."
+        ],
+        "ejecucion": [
+          "Dobla las dos rodillas y baja el cuerpo derecho hacia abajo, hasta que la rodilla de atrás casi toca el suelo.",
+          "Las dos rodillas quedan en ángulo recto; la de adelante no pasa por delante de la punta del pie.",
+          "Empuja con el pie de adelante y vuelve a subir. Termina las repeticiones de un lado y cambia."
+        ],
+        "referencias_propioceptivas": [
+          "Sientes el peso repartido entre el pie de adelante y la punta del de atrás.",
+          "El cuerpo baja derecho, no hacia adelante.",
+          "El trabajo se nota en el muslo y el glúteo de la pierna de adelante."
+        ],
+        "errores_comunes": [
+          "Si la rodilla de adelante se va más allá de la punta del pie, acorta un poco el paso.",
+          "Si te vas de lado, separa un poco más los pies para tener más base.",
+          "Si la rodilla de adelante cae hacia adentro, mantenla apuntando al mismo lado que el pie."
+        ]
+      }
+    },
+
+    {
+      "id": "ej-062-uni-zancada-inversa",
+      "nombre": "Estocada hacia atrás",
+      "patron": "UNILATERAL",
+      "nivel_requerido": "intermedio",
+      "zonas_involucradas": ["rodillas", "cadera", "tobillos"],
+      "reps_iniciales": 6,
+      "progresion_id": "ej-063-uni-sentadilla-bulgara",
+      "regresion_id": "ej-060-uni-zancada-estatica",
+      "sustituciones": {},
+      "descripcion": {
+        "posicion_inicial": [
+          "De pie, los pies al ancho de las caderas, el pecho arriba y el abdomen firme.",
+          "Despeja el espacio detrás de ti y, si te ayuda, ten una pared o silla al costado al alcance de la mano."
+        ],
+        "ejecucion": [
+          "Da un paso largo hacia atrás con un pie y apoya la punta en el suelo.",
+          "Dobla las dos rodillas y baja hasta que queden en ángulo recto y la de atrás casi toque el suelo.",
+          "Empuja con el pie de adelante y vuelve a juntar los pies. Alterna o termina un lado y cambia."
+        ],
+        "referencias_propioceptivas": [
+          "Las caderas se mantienen al mismo nivel, sin que un lado caiga.",
+          "La rodilla de adelante queda sobre el tobillo, no pasa la punta del pie.",
+          "El trabajo se nota en el muslo y el glúteo de la pierna de adelante."
+        ],
+        "errores_comunes": [
+          "Si pierdes el equilibrio al dar el paso atrás, hazlo más corto y despacio.",
+          "Si la rodilla de adelante se va hacia adentro, mantenla mirando al frente.",
+          "Si te cuesta el equilibrio, apoya una mano en una pared o una silla al costado."
+        ]
+      }
+    },
+
+    {
+      "id": "ej-063-uni-sentadilla-bulgara",
+      "nombre": "Sentadilla búlgara",
+      "patron": "UNILATERAL",
+      "nivel_requerido": "avanzado",
+      "zonas_involucradas": ["rodillas", "cadera", "tobillos"],
+      "reps_iniciales": 5,
+      "progresion_id": null,
+      "regresion_id": "ej-062-uni-zancada-inversa",
+      "sustituciones": {},
+      "descripcion": {
+        "posicion_inicial": [
+          "Ponte de espaldas a una superficie firme a la altura de la rodilla: un sofá, una silla pesada o un banco.",
+          "Apoya el empeine de un pie sobre la superficie, detrás de ti.",
+          "Adelanta el otro pie lo suficiente para que, al bajar, la rodilla de adelante quede sobre el tobillo. Pecho arriba, abdomen firme."
+        ],
+        "ejecucion": [
+          "Dobla la rodilla de adelante y baja el cuerpo despacio, contando dos o tres segundos.",
+          "Baja hasta que el muslo de adelante quede casi paralelo al suelo.",
+          "Empuja con el talón del pie de adelante y vuelve a subir. Termina un lado y cambia."
+        ],
+        "referencias_propioceptivas": [
+          "Casi todo el peso se siente en la pierna de adelante; la de atrás solo equilibra.",
+          "La rodilla de adelante sigue la línea del pie, sin caer hacia adentro.",
+          "El trabajo se nota fuerte en el muslo y el glúteo de adelante."
+        ],
+        "errores_comunes": [
+          "Si te vas muy hacia adelante, mantén el pecho más arriba.",
+          "Si empujas con la pierna de atrás, lleva el peso a la de adelante.",
+          "Si te cuesta el equilibrio, apoya una mano en una pared al costado; si es nueva para ti, domina antes la estocada."
+        ]
+      }
+    },
+
+    {
+      "id": "ej-071-core-plancha-rodillas",
+      "nombre": "Plancha de rodillas",
+      "patron": "CORE",
+      "subpatron": "ANTI_EXTENSION",
+      "nivel_requerido": "principiante",
+      "zonas_involucradas": ["lumbar", "hombros", "rodillas"],
+      "reps_iniciales": 20,
+      "medido_en": "segundos",
+      "progresion_id": "ej-070-core-plancha",
+      "regresion_id": null,
+      "sustituciones": {
+        "lumbar": "ej-073-core-extension-cruzada"
+      },
+      "descripcion": {
+        "posicion_inicial": [
+          "Acuéstate boca abajo y apoya los antebrazos en el suelo, con los codos justo debajo de los hombros.",
+          "Apoya las rodillas en el suelo, con algo blando debajo si hace falta.",
+          "Empuja con los antebrazos y levanta el tronco: el cuerpo queda recto de la cabeza a las rodillas."
+        ],
+        "ejecucion": [
+          "Es isométrico: sostén la posición sin moverte mientras respiras tranquilo.",
+          "Mantenla el tiempo que aguantes con la forma firme; empieza con unos 20 segundos.",
+          "Cuando no puedas sostener la línea recta, baja y descansa."
+        ],
+        "referencias_propioceptivas": [
+          "Sientes el abdomen firme y la espalda baja plana, ni hundida ni arqueada.",
+          "El peso se reparte entre los antebrazos y las rodillas.",
+          "Los hombros se mantienen lejos de las orejas."
+        ],
+        "errores_comunes": [
+          "Si la cadera se hunde y la espalda se arquea, mete el abdomen y la pelvis.",
+          "Si subes la cadera en punta, bájala hasta la línea recta.",
+          "Si contienes la respiración, respira parejo; sostener no es aguantar el aire."
+        ]
+      }
+    },
+
+    {
+      "id": "ej-070-core-plancha",
+      "nombre": "Plancha abdominal",
+      "patron": "CORE",
+      "subpatron": "ANTI_EXTENSION",
+      "nivel_requerido": "principiante",
+      "zonas_involucradas": ["lumbar", "hombros"],
+      "reps_iniciales": 20,
+      "medido_en": "segundos",
+      "progresion_id": "ej-072-core-hollow-hold",
+      "regresion_id": "ej-071-core-plancha-rodillas",
+      "sustituciones": {
+        "lumbar": "ej-073-core-extension-cruzada"
+      },
+      "descripcion": {
+        "posicion_inicial": [
+          "Acuéstate boca abajo y apoya los antebrazos en el suelo, con los codos justo debajo de los hombros.",
+          "Apoya la punta de los pies, separados al ancho de las caderas.",
+          "Empuja con los antebrazos y levanta el cuerpo: queda recto de la cabeza a los talones."
+        ],
+        "ejecucion": [
+          "Es isométrico: sostén la posición sin moverte mientras respiras tranquilo.",
+          "Aprieta el abdomen y los glúteos para mantener la línea recta.",
+          "Mantenla mientras la forma aguante; cuando la cadera caiga o suba y no puedas corregir, baja."
+        ],
+        "referencias_propioceptivas": [
+          "Pasa la atención por la cintura: el abdomen firme y la espalda baja plana.",
+          "El peso se reparte entre los antebrazos y la punta de los pies.",
+          "Los hombros lejos de las orejas, el cuello en línea con la espalda."
+        ],
+        "errores_comunes": [
+          "Si la cadera se hunde y la espalda se arquea, aprieta el abdomen y los glúteos.",
+          "Si subes la cadera en V, bájala hasta la línea recta.",
+          "Si contienes el aire, respira parejo."
+        ]
+      }
+    },
+
+    {
+      "id": "ej-072-core-hollow-hold",
+      "nombre": "Cuerpo hueco",
+      "patron": "CORE",
+      "subpatron": "ANTI_EXTENSION",
+      "nivel_requerido": "intermedio",
+      "zonas_involucradas": ["lumbar", "cuello"],
+      "reps_iniciales": 15,
+      "medido_en": "segundos",
+      "progresion_id": null,
+      "regresion_id": "ej-070-core-plancha",
+      "sustituciones": {
+        "cuello": "ej-070-core-plancha"
+      },
+      "descripcion": {
+        "posicion_inicial": [
+          "Acuéstate boca arriba, las piernas estiradas y juntas, los brazos estirados por encima de la cabeza.",
+          "Mete el abdomen y aprieta la zona baja de la espalda contra el suelo, sin que quede hueco debajo."
+        ],
+        "ejecucion": [
+          "Es isométrico. Despega del suelo, apenas unos centímetros, las piernas, los brazos y la cabeza a la vez.",
+          "El cuerpo queda como un plato poco hondo, con la espalda baja siempre pegada al suelo.",
+          "Sostén así mientras la espalda baja siga pegada; empieza con 5 a 10 segundos."
+        ],
+        "referencias_propioceptivas": [
+          "La clave es una sola: la espalda baja apretada contra el suelo todo el tiempo.",
+          "Sientes el abdomen trabajar fuerte para sostener los brazos y las piernas en el aire.",
+          "Si quieres aflojar, dobla un poco las rodillas o baja los brazos, pero no despegues la espalda."
+        ],
+        "errores_comunes": [
+          "Si queda un hueco bajo la espalda baja, no estás en cuerpo hueco; pega la espalda al suelo antes de subir.",
+          "Si la espalda baja se despega, dobla las rodillas o acerca los brazos hasta poder mantenerla pegada.",
+          "Si te duele la espalda, casi siempre es que se arqueó; revisa que siga apoyada."
+        ]
+      }
+    },
+
+    {
+      "id": "ej-073-core-extension-cruzada",
+      "nombre": "Extensión cruzada en cuatro apoyos",
+      "patron": "CORE",
+      "subpatron": "ANTI_ROTATION",
+      "nivel_requerido": "principiante",
+      "zonas_involucradas": ["muñecas", "rodillas", "hombros"],
+      "reps_iniciales": 8,
+      "progresion_id": "ej-074-core-plancha-lateral-rodillas",
+      "regresion_id": null,
+      "sustituciones": {},
+      "descripcion": {
+        "posicion_inicial": [
+          "Ponte a cuatro apoyos: las manos justo debajo de los hombros y las rodillas debajo de las caderas.",
+          "La espalda recta y el abdomen firme, el cuello en línea con la espalda."
+        ],
+        "ejecucion": [
+          "Estira al mismo tiempo un brazo hacia adelante y la pierna contraria hacia atrás, hasta que queden en línea con el cuerpo.",
+          "Para uno o dos segundos arriba, alargando la mano y el talón, sin girar las caderas.",
+          "Vuelve despacio y cambia al otro brazo y la otra pierna. Una repetición es un lado y el otro."
+        ],
+        "referencias_propioceptivas": [
+          "Las caderas y los hombros se mantienen mirando al suelo, parejos, sin rotar.",
+          "Sientes el abdomen y la espalda media trabajar para no tambalearte.",
+          "El brazo y la pierna estirados forman una línea con el tronco, sin subir más alto que la espalda."
+        ],
+        "errores_comunes": [
+          "Si las caderas giran hacia un lado, baja un poco el brazo y la pierna y prioriza mantenerlas parejas.",
+          "Si arqueas la espalda al estirar la pierna, no la subas tan alto; mete el abdomen.",
+          "Si te tambaleas, ve más despacio y acorta el rango."
+        ]
+      }
+    },
+
+    {
+      "id": "ej-074-core-plancha-lateral-rodillas",
+      "nombre": "Plancha lateral de rodillas",
+      "patron": "CORE",
+      "subpatron": "ANTI_ROTATION",
+      "nivel_requerido": "principiante",
+      "zonas_involucradas": ["hombros", "codos", "rodillas"],
+      "reps_iniciales": 15,
+      "medido_en": "segundos",
+      "progresion_id": "ej-075-core-plancha-lateral",
+      "regresion_id": "ej-073-core-extension-cruzada",
+      "sustituciones": {},
+      "descripcion": {
+        "posicion_inicial": [
+          "Acuéstate de lado, con las rodillas dobladas y una sobre la otra.",
+          "Apoya el antebrazo de abajo en el suelo, con el codo justo debajo del hombro.",
+          "Sube las caderas hasta que el cuerpo quede en línea recta desde los hombros hasta las rodillas."
+        ],
+        "ejecucion": [
+          "Es isométrico: sostén la posición con las caderas arriba, respirando tranquilo.",
+          "Mantenla mientras la cadera no caiga; empieza con unos 20 segundos.",
+          "Baja, descansa y repite del otro lado."
+        ],
+        "referencias_propioceptivas": [
+          "Sientes el trabajo en el costado del abdomen, el de abajo.",
+          "Las caderas quedan una sobre la otra, sin rodar hacia adelante ni hacia atrás.",
+          "El cuerpo forma una línea de los hombros a las rodillas, sin que la cadera se descuelgue."
+        ],
+        "errores_comunes": [
+          "Si la cadera se cae hacia el suelo, súbela hasta recuperar la línea recta.",
+          "Si te vas hacia adelante, gira un poco el cuerpo para mirar al frente y apilar las caderas.",
+          "Mejor 20 segundos con buena forma que 40 con la cadera caída."
+        ]
+      }
+    },
+
+    {
+      "id": "ej-075-core-plancha-lateral",
+      "nombre": "Plancha lateral",
+      "patron": "CORE",
+      "subpatron": "ANTI_ROTATION",
+      "nivel_requerido": "intermedio",
+      "zonas_involucradas": ["hombros", "codos", "tobillos"],
+      "reps_iniciales": 20,
+      "medido_en": "segundos",
+      "progresion_id": null,
+      "regresion_id": "ej-074-core-plancha-lateral-rodillas",
+      "sustituciones": {},
+      "descripcion": {
+        "posicion_inicial": [
+          "Acuéstate de lado con las piernas estiradas y un pie sobre el otro.",
+          "Apoya el antebrazo de abajo en el suelo, con el codo justo debajo del hombro.",
+          "Sube las caderas hasta que el cuerpo quede en línea recta desde los pies hasta la cabeza."
+        ],
+        "ejecucion": [
+          "Es isométrico: sostén con las caderas arriba, respirando tranquilo.",
+          "Mantenla mientras la cadera no caiga; empieza con 20 a 30 segundos.",
+          "Baja, descansa y repite del otro lado."
+        ],
+        "referencias_propioceptivas": [
+          "Sientes el costado del abdomen de abajo sosteniendo todo.",
+          "Las caderas y los hombros quedan apilados, mirando al frente, sin rodar.",
+          "El cuerpo es una sola línea recta de los pies a la cabeza."
+        ],
+        "errores_comunes": [
+          "Si la cadera se cae, súbela hasta la línea recta o pasa a la versión con rodillas.",
+          "Si te vas hacia adelante o atrás, reacomoda para apilar caderas y hombros.",
+          "Si la muñeca o el hombro de abajo molesta, revisa que el codo esté justo bajo el hombro."
+        ]
+      }
+    }
+  ]
+}

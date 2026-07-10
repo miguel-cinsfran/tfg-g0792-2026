@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Icono "Calistenia Accesible": figura en suspension activa en barra.
+       Paleta Yerba y acero: fondo #0f1413, figura #58cfa6. -->
+  <rect width="512" height="512" fill="#0f1413"/>
+  <g fill="#58cfa6">
+    <!-- barra -->
+    <rect x="92" y="128" width="328" height="22" rx="11"/>
+    <!-- brazos -->
+    <rect x="168" y="142" width="22" height="136" rx="11"/>
+    <rect x="322" y="142" width="22" height="136" rx="11"/>
+    <!-- cabeza -->
+    <circle cx="256" cy="226" r="34"/>
+    <!-- torso: hombros anchos a cadera -->
+    <path d="M174 262 h164 a14 14 0 0 1 14 14 l-22 96 a16 16 0 0 1 -16 13 h-116 a16 16 0 0 1 -16 -13 l-22 -96 a14 14 0 0 1 14 -14 z"/>
+    <!-- piernas juntas, tobillos cruzados sugeridos por el corte -->
+    <rect x="222" y="384" width="28" height="86" rx="13"/>
+    <rect x="262" y="384" width="28" height="86" rx="13"/>
+  </g>
+</svg>

@@ -1,0 +1,81 @@
+{
+  "_meta": {
+    "version": "MVP-1.0",
+    "fecha": "2026-05-16",
+    "nota": "Todos los umbrales del motor en un solo archivo. Editar aqui y nada mas. Cada parametro tiene un codigo unico para citarlo en decisiones.md y en el codigo."
+  },
+
+  "volumen": {
+    "RULE-VOL-MIN-PRINC": 6,
+    "RULE-VOL-MIN-INT": 12,
+    "RULE-VOL-MIN-AVAN": 15,
+    "RULE-VOL-OPT-PRINC": 10,
+    "RULE-VOL-OPT-INT": 15,
+    "RULE-VOL-OPT-AVAN": 20,
+    "_unidad": "series por grupo muscular por semana"
+  },
+
+  "evaluacion_inicial": {
+    "RULE-EVAL-PUSH-PRINC-MAX": 5,
+    "RULE-EVAL-PUSH-INT-MAX": 15,
+    "RULE-EVAL-PULL-PRINC-MAX": 3,
+    "RULE-EVAL-PULL-INT-MAX": 10,
+    "RULE-EVAL-LEGS-PRINC-MAX": 15,
+    "RULE-EVAL-LEGS-INT-MAX": 40,
+    "RULE-EVAL-CORE-PRINC-MAX-SEG": 20,
+    "RULE-EVAL-CORE-INT-MAX-SEG": 60,
+    "_nota": "Limite superior del rango principiante e intermedio. Avanzado = mayor que el limite intermedio."
+  },
+
+  "desbalance_inicial": {
+    "RULE-DESB-PORCENTAJE": 15,
+    "RULE-DESB-DURACION-SEMANAS": 4,
+    "_nota": "Compensacion temporal de volumen para el patron mas debil detectado en la evaluacion inicial."
+  },
+
+  "split": {
+    "RULE-SPLIT-MIN-DIAS-UL": 4,
+    "RULE-SPLIT-MAX-DIAS-FB": 5,
+    "_nota": "FULL_BODY para 2-3 dias siempre, y 4-5 dias si es principiante. UPPER_LOWER para 4-5 dias si es intermedio o avanzado. PPL no esta en MVP."
+  },
+
+  "progresion": {
+    "RULE-PROG-SESIONES-CONSEC": 2,
+    "RULE-PROG-INCREMENTO-REPS": 2,
+    "RULE-PROG-MAX-SERIES": 4,
+    "_nota": "Criterio de la progresion SUGERIDA (ALG-12): tras alcanzar el objetivo con esfuerzo holgado (RIR >= 3) en RULE-PROG-SESIONES-CONSEC sesiones de chequeo, la app sugiere progresar a la variante mas dificil (ALG-09) y el usuario confirma. INCREMENTO-REPS y MAX-SERIES quedan reservados para una doble progresion fina futura (v1.1+); NO se consumen en el MVP."
+  },
+
+  "dolor": {
+    "RULE-DOLOR-BLOQUEO-DIAS": 28,
+    "RULE-DOLOR-REINTRO-PORCENTAJE": 50,
+    "RULE-DOLOR-REINTRO-SESIONES": 2,
+    "_nota": "BLOQUEO-DIAS: plazo de bloqueo tras reporte de dolor; tras 28 dias el sistema pregunta si la zona esta mejor. REINTRO: al reactivar un ejercicio que el usuario reporta sin dolor (ALG-08), vuelve a volumen reducido (REINTRO-PORCENTAJE %) durante REINTRO-SESIONES sesiones antes del volumen completo. Defaults conservadores (decision de ingenieria, no constante de paper); justificacion en motor/decisiones.md."
+  },
+
+
+  "ejercicio_seleccion": {
+    "RULE-SEL-HISTORIAL-SESIONES": 2,
+    "_nota": "Numero de sesiones recientes que se excluyen al elegir ejercicio nuevo. Garantiza variedad sin repetir lo mismo de hace 2 dias."
+  },
+
+  "haptica": {
+    "RULE-HAP-INICIO-MS": 200,
+    "RULE-HAP-FIN-MS": 200,
+    "RULE-HAP-DESCANSO-AVISO-MS": 50,
+    "RULE-HAP-DESCANSO-FIN-MS": 200,
+    "_nota": "Duracion en milisegundos de los pulsos de vibracion. Pulso largo (200ms) para los hitos de la sesion: inicio de ejercicio, fin de serie, fin de ejercicio, fin de descanso. Aviso a 3 segundos del fin del descanso: 50ms repetido tres veces. RULE-HAP-INICIO-MS y RULE-HAP-FIN-MS tienen el mismo valor por diseño; estan separados para poder ajustarlos independientemente en el futuro si la prueba con usuarios lo amerita."
+  },
+
+  "presupuesto": {
+    "RULE-PRESUPUESTO-TRABAJO-SEG-POR-SERIE": 40,
+"RULE-PRESUPUESTO-CALENTAMIENTO-SEG": 0,
+		"RULE-PRESUPUESTO-MIN-SERIES": 2,
+		"_nota": "Estimacion fija para el presupuesto de tiempo por sesion. TRABAJO_SEG_POR_SERIE es deliberadamente conservadora (sobrestima isometrico a proposito); CALENTAMIENTO_SEG se deja en 0 (el calentamiento se elimino); MIN_SERIES es el piso tras recortar. Ver motor/decisiones.md."
+  },
+
+  "rendimiento_ui": {
+    "RNF-09-LATENCIA-MAX-MS": 300,
+    "_nota": "Operaciones de navegacion, inicio de ejercicio y vibracion deben responder en menos de 300ms."
+  }
+}

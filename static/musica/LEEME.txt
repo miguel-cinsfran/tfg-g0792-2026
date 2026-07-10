@@ -1,0 +1,23 @@
+Musica de fondo
+===============
+
+La app reproduce musica ambiente en loop si encuentra estos archivos
+(si faltan, no suena y no es un error):
+
+- fondo.mp3    suena en loop desde el arranque. Instrumental calmado,
+               sin letra, que conviva con el lector de pantalla.
+- sesion.mp3   opcional: reemplaza a fondo durante la sesion de
+               entrenamiento. Si falta, sigue sonando fondo.
+
+No es un reproductor (sin pausa ni pistas): es ambiente, como la musica
+de fondo de un juego. En Perfil > Sonido y musica se apaga o se ajusta
+su volumen, independiente del volumen de los efectos.
+
+Requisitos para los archivos:
+
+- Licencia clara para redistribuir (Creative Commons, dominio publico
+  o composicion propia): este repositorio es publico.
+- Loop corto y bien cerrado (30s-2min) para que no se note el corte ni
+  se infle el APK. Formato .mp3, 96-128 kbps alcanza.
+
+Codigo: src/lib/sonido/musica.ts

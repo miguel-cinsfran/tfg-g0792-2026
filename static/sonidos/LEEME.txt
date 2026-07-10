@@ -1,0 +1,29 @@
+Sonidos de la interfaz
+======================
+
+Cada evento de la app busca un .mp3 con su nombre exacto en esta
+carpeta. Si un archivo falta, ese evento simplemente no suena (no es
+un error). El interruptor "Efectos" en Perfil > Sonido y musica los
+apaga todos sin tocar archivos.
+
+Eventos:
+
+- inicio-app.mp3            al abrir la aplicacion
+- cambio-pestania.mp3       al tocar una pestaña de la barra inferior
+- seleccion.mp3             activacion de botones y opciones
+- inicio-serie.mp3          al entrar a un ejercicio o retomar tras descanso
+- serie-completada.mp3      serie registrada, antes de descanso o siguiente
+- inicio-descanso.mp3       entrada a la vista de descanso
+- fin-descanso.mp3          el descanso termino
+- tic.mp3 / tac.mp3         pulsos alternados del reloj (1 por segundo)
+- sesion-completada.mp3     cierre de sesion exitoso
+- racha.mp3                 cierre de sesion que completa la semana
+- ejercicio-desbloqueado.mp3  un bloqueo por dolor se marca resuelto
+- navegacion-atras.mp3      volver, cerrar o cancelar
+- error.mp3                 refuerzo audible de un error
+- dolor-registrado.mp3      bloqueo por zonas marcadas con dolor
+- re-evaluar.mp3            confirmacion de rehacer la evaluacion
+- papelera.mp3              confirmacion de borrar todos los datos
+- logro.mp3                 reservado (sin uso por ahora)
+
+Codigo: src/lib/sonido/reproducir.ts

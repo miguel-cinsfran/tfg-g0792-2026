@@ -1,0 +1,50 @@
+{
+  "_meta": {
+    "version": "MVP-1.0",
+    "nota": "Parametros por objetivo del usuario. El motor lee este archivo en runtime.",
+    "campos_solo_informativos_mvp": [
+      "OBJ-X-REPS-MIN, OBJ-X-REPS-MAX, OBJ-X-REPS-DEFAULT: rango por objetivo, sirven al redactor del catalogo y a la progresion automatica de v1.1. No se leen en runtime del MVP.",
+      "OBJ-X-EJERCICIOS-POR-SESION: cantidad recomendada por objetivo. En MVP el conteo lo fijan las plantillas en templates.json."
+    ]
+  },
+
+  "fuerza": {
+    "OBJ-FUERZA-REPS-MIN": 3,
+    "OBJ-FUERZA-REPS-MAX": 6,
+    "OBJ-FUERZA-REPS-DEFAULT": 5,
+    "OBJ-FUERZA-DESCANSO-SEG": 180,
+    "OBJ-FUERZA-RIR": 2,
+    "OBJ-FUERZA-EJERCICIOS-POR-SESION": 5,
+    "OBJ-FUERZA-SERIES-POR-EJERCICIO": 4
+  },
+
+  "hipertrofia": {
+    "OBJ-HIPER-REPS-MIN": 8,
+    "OBJ-HIPER-REPS-MAX": 12,
+    "OBJ-HIPER-REPS-DEFAULT": 10,
+    "OBJ-HIPER-DESCANSO-SEG": 90,
+    "OBJ-HIPER-RIR": 2,
+    "OBJ-HIPER-EJERCICIOS-POR-SESION": 6,
+    "OBJ-HIPER-SERIES-POR-EJERCICIO": 3
+  },
+
+  "resistencia": {
+    "OBJ-RESIS-REPS-MIN": 15,
+    "OBJ-RESIS-REPS-MAX": 20,
+    "OBJ-RESIS-REPS-DEFAULT": 17,
+    "OBJ-RESIS-DESCANSO-SEG": 60,
+    "OBJ-RESIS-RIR": 3,
+    "OBJ-RESIS-EJERCICIOS-POR-SESION": 7,
+    "OBJ-RESIS-SERIES-POR-EJERCICIO": 3
+  },
+
+  "perdida_peso": {
+    "OBJ-PESO-REPS-MIN": 12,
+    "OBJ-PESO-REPS-MAX": 15,
+    "OBJ-PESO-REPS-DEFAULT": 13,
+    "OBJ-PESO-DESCANSO-SEG": 45,
+    "OBJ-PESO-RIR": 3,
+    "OBJ-PESO-EJERCICIOS-POR-SESION": 7,
+    "OBJ-PESO-SERIES-POR-EJERCICIO": 3
+  }
+}
