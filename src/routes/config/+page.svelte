@@ -63,7 +63,7 @@
 		| 'RESTABLECER_1'
 		| 'RESTABLECER_2';
 
-	const DIAS = [1, 2, 3, 4, 5];
+	const DIAS = [2, 3, 4, 5];
 
 	const LABELS_CATEGORIA_IMC: Record<CategoriaImc, string> = {
 		bajo_peso: 'bajo peso',
