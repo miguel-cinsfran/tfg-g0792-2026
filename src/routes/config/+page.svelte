@@ -64,6 +64,7 @@
 		| 'RESTABLECER_2';
 
 	const DIAS = [2, 3, 4, 5];
+	const DURACIONES = [20, 30, 45];
 
 	const LABELS_CATEGORIA_IMC: Record<CategoriaImc, string> = {
 		bajo_peso: 'bajo peso',
@@ -83,6 +84,7 @@
 	);
 	let objetivoSeleccionado = $state<Objetivo | null>(null);
 	let diasSeleccionados = $state<number | null>(null);
+	let duracionSeleccionada = $state<number | null>(null);
 	let guardando = $state(false);
 	let errorEscritura = $state<string | null>(null);
 
@@ -110,6 +112,7 @@
 
 	function abrirDisponibilidad() {
 		diasSeleccionados = perfil?.dias_semana ?? null;
+		duracionSeleccionada = perfil?.duracion_sesion_min ?? null;
 		errorEscritura = null;
 		subvista = 'DISPONIBILIDAD';
 	}
@@ -138,11 +141,11 @@
 	}
 
 	async function guardarDisponibilidad() {
-		if (diasSeleccionados === null) return;
+		if (diasSeleccionados === null || duracionSeleccionada === null) return;
 		guardando = true;
 		errorEscritura = null;
 		try {
-			await actualizarPerfil({ dias_semana: diasSeleccionados });
+			await actualizarPerfil({ dias_semana: diasSeleccionados, duracion_sesion_min: duracionSeleccionada });
 			avisar('Disponibilidad guardada', 'exito');
 			subvista = 'CONFIGURACION';
 		} catch (e) {
@@ -595,7 +598,7 @@
 {:else if subvista === 'DISPONIBILIDAD'}
 	<BotonVolver onclick={volverAConfiguracion} />
 	<h1 tabindex="-1" bind:this={heading}>Perfil</h1>
-	<h2>¿Cuántos días por semana puedes entrenar?</h2>
+	<h2>Tu disponibilidad</h2>
 	<fieldset>
 		<legend>Selecciona los días</legend>
 		{#each DIAS as dia (dia)}
@@ -605,11 +608,20 @@
 			</div>
 		{/each}
 	</fieldset>
+	<fieldset class="mt-6">
+		<legend>Duración de la sesión</legend>
+		{#each DURACIONES as d (d)}
+			<div>
+				<input type="radio" id="duracion-{d}" name="duracion" value={d} bind:group={duracionSeleccionada} />
+				<label for="duracion-{d}">{d} minutos por sesión</label>
+			</div>
+		{/each}
+	</fieldset>
 	{#if errorEscritura !== null}
 		<p>{errorEscritura}</p>
 	{/if}
 	<div class="mt-6 flex gap-4">
-		<Boton variante="primario" onclick={guardarDisponibilidad} deshabilitado={guardando || diasSeleccionados === null}>Guardar</Boton>
+		<Boton variante="primario" onclick={guardarDisponibilidad} deshabilitado={guardando || diasSeleccionados === null || duracionSeleccionada === null}>Guardar</Boton>
 		<Boton variante="secundario" onclick={volverAConfiguracion} deshabilitado={guardando}>Cancelar</Boton>
 	</div>
 {:else if subvista === 'DATOS'}
