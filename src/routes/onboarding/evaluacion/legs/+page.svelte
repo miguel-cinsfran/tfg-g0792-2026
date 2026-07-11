@@ -80,7 +80,7 @@
 
 <div class="space-y-6">
 	<Card titulo="Cómo hacer sentadillas">
-		<DescripcionEjercicio descripcion={DESCRIPCION_SENTADILLAS} />
+		<DescripcionEjercicio descripcion={DESCRIPCION_SENTADILLAS} plegarClaves />
 	</Card>
 
 	<Card titulo="Tu conteo">

@@ -75,9 +75,18 @@
 
 <h1 tabindex="-1" bind:this={heading}>Evaluación: flexiones</h1>
 
+<p class="mt-2 text-text-secondary">
+	Últimas cuatro preguntas, y son físicas: una prueba corta por
+	cada patrón de movimiento (empuje, tracción, piernas y núcleo).
+	Con tus resultados, las primeras sesiones salen a tu medida.
+	Si un ejercicio no te sale, «No puedo hacer ninguna» también
+	es una respuesta válida, y puedes descansar lo que necesites
+	entre una prueba y otra.
+</p>
+
 <div class="space-y-6">
 	<Card titulo="Cómo hacer flexiones">
-		<DescripcionEjercicio descripcion={DESCRIPCION_FLEXIONES} />
+		<DescripcionEjercicio descripcion={DESCRIPCION_FLEXIONES} plegarClaves />
 	</Card>
 
 	<Card titulo="Tu conteo">

@@ -83,7 +83,7 @@
 
 <div class="space-y-6">
 	<Card titulo="Cómo hacer la plancha">
-		<DescripcionEjercicio descripcion={DESCRIPCION_PLANCHA} />
+		<DescripcionEjercicio descripcion={DESCRIPCION_PLANCHA} plegarClaves />
 	</Card>
 
 	<Card titulo="Medición">

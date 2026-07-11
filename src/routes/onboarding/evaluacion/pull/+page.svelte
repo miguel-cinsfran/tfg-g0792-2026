@@ -84,7 +84,7 @@
 
 <div class="space-y-6">
 	<Card titulo="Cómo hacer remo en suspensión">
-		<DescripcionEjercicio descripcion={DESCRIPCION_REMO_SUSPENSION} />
+		<DescripcionEjercicio descripcion={DESCRIPCION_REMO_SUSPENSION} plegarClaves />
 	</Card>
 
 	<Card titulo="Tu conteo">
