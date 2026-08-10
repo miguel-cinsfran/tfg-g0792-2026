@@ -11,6 +11,10 @@ import {
 	edadDesdeAnio,
 	entero,
 	inputsDesdePerfil,
+	MENSAJE_ALTURA_INVALIDA,
+	MENSAJE_EDAD_INVALIDA,
+	MENSAJE_NOMBRE_VACIO,
+	MENSAJE_PESO_INVALIDO,
 	normalizarNombre,
 	validarAltura,
 	alturaACm,
@@ -365,6 +369,21 @@ describe('validarDatosEditados (sub-pantalla Cambiar mis datos)', () => {
 		const r = validarDatosEditados('Miguel', '30', '70', '99');
 		expect(r.valido).toBe(false);
 		expect(r.primerError).toBe('altura');
+	});
+});
+
+describe('mensajes de validación (fuente única)', () => {
+	// Identidad, no redacción: si la constante cambia, este test no se
+	// actualiza solo; lo que fija es que el error SIEMPRE sea la
+	// constante exportada (la pagina consume desde aca).
+	it('los errores de validarDatosEditados son las constantes exportadas', () => {
+		// Altura vacia es VALIDA (opcional): el caso con cuatro errores
+		// usa valores invalidos en los cuatro campos.
+		const r = validarDatosEditados('', '13', '19', '99');
+		expect(r.errores.nombre).toBe(MENSAJE_NOMBRE_VACIO);
+		expect(r.errores.edad).toBe(MENSAJE_EDAD_INVALIDA);
+		expect(r.errores.peso).toBe(MENSAJE_PESO_INVALIDO);
+		expect(r.errores.altura).toBe(MENSAJE_ALTURA_INVALIDA);
 	});
 });
 

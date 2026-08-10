@@ -16,7 +16,7 @@ import BotonVolver from '$lib/components/BotonVolver.svelte';
 import Card from '$lib/components/Card.svelte';
 import ContadorReps from '$lib/components/ContadorReps.svelte';
 import Temporizador from '$lib/components/Temporizador.svelte';
-import ModalDolor from '$lib/components/ModalDolor.svelte';
+import Modal from '$lib/components/Modal.svelte';
 import ImportarRespaldo from '$lib/components/ImportarRespaldo.svelte';
 import AvisoVisible from '$lib/a11y/AvisoVisible.svelte';
 import { avisar, resetearAvisoVisible } from '$lib/a11y/avisar.svelte';
@@ -63,8 +63,8 @@ describe('axe-core sobre componentes montados', () => {
 		['ContadorReps', ContadorReps as Component, { valor: 8 }],
 		['Temporizador', Temporizador as Component, { segundos: 60 }],
 		[
-			'ModalDolor abierto',
-			ModalDolor as Component,
+			'Modal abierto',
+			Modal as Component,
 			{ abierto: true, titulo: 'Reportar dolor', alCerrar: () => {}, children: snippetTexto('Detalle') },
 		],
 		[

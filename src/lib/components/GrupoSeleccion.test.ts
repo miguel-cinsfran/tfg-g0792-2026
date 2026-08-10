@@ -86,7 +86,7 @@ describe('GrupoSeleccion', () => {
 		expect(fieldset?.getAttribute('aria-describedby')).toBe('grupo-x-error');
 		const mensaje = document.body.querySelector('#grupo-x-error');
 		expect(mensaje?.textContent).toBe('Falta elegir');
-		expect(mensaje?.getAttribute('role')).toBe('alert');
+		expect(mensaje?.hasAttribute('role')).toBe(false);
 	});
 
 	it('sin error, no expone aria-describedby', () => {

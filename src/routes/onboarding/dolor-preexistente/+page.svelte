@@ -3,7 +3,7 @@
 	import { enfocarPrincipal } from '$lib/a11y/foco';
 	import { obtener, actualizar, pasoPendiente, puedeVisitar } from '$lib/onboarding/estado';
 	import Boton from '$lib/components/Boton.svelte';
-	import BotonVolver from '$lib/components/BotonVolver.svelte';
+	import Cabecera from '$lib/components/Cabecera.svelte';
 	import GrupoSeleccionMultiple from '$lib/components/GrupoSeleccionMultiple.svelte';
 	import BarraAccion from '$lib/components/BarraAccion.svelte';
 	import { ZONAS, type Zona } from '$lib/motor/schema';
@@ -45,9 +45,9 @@
 
 <svelte:head><title>Zonas con dolor previo</title></svelte:head>
 
-<BotonVolver onclick={atras} />
-
-<h1 tabindex="-1" bind:this={heading}>Zonas con dolor previo</h1>
+<Cabecera onclick={atras}>
+	<h1 tabindex="-1" bind:this={heading}>Zonas con dolor previo</h1>
+</Cabecera>
 
 <GrupoSeleccionMultiple
 	leyenda="Selecciona las zonas con dolor previo"

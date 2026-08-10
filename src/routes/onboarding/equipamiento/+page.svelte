@@ -1,9 +1,10 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { enfocarPrincipal } from '$lib/a11y/foco';
+	import { anunciarAssertive } from '$lib/a11y/live-region';
 	import { obtener, actualizar, pasoPendiente, puedeVisitar } from '$lib/onboarding/estado';
 	import Boton from '$lib/components/Boton.svelte';
-	import BotonVolver from '$lib/components/BotonVolver.svelte';
+	import Cabecera from '$lib/components/Cabecera.svelte';
 	import GrupoSeleccion from '$lib/components/GrupoSeleccion.svelte';
 	import BarraAccion from '$lib/components/BarraAccion.svelte';
 
@@ -40,6 +41,7 @@
 	function continuar() {
 		if (tieneAnclaje === null) {
 			errorSeleccion = 'Elige una opción para continuar.';
+			anunciarAssertive(errorSeleccion);
 			document.getElementById('grupo-equipamiento')?.querySelector('input')?.focus();
 			return;
 		}
@@ -56,9 +58,9 @@
 
 <svelte:head><title>Equipamiento disponible</title></svelte:head>
 
-<BotonVolver onclick={atras} />
-
-<h1 tabindex="-1" bind:this={heading}>Equipamiento disponible</h1>
+<Cabecera onclick={atras}>
+	<h1 tabindex="-1" bind:this={heading}>Equipamiento disponible</h1>
+</Cabecera>
 
 <GrupoSeleccion
 	leyenda="¿Tienes una barra o un anclaje para suspensión?"

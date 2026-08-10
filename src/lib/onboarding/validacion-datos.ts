@@ -107,6 +107,16 @@ export interface ErroresDatos {
 	altura: string | null;
 }
 
+// Mensajes de validacion de datos personales. Fuente unica: la pagina
+// de datos del onboarding y los componentes consumen estas constantes,
+// no literales repetidos.
+export const MENSAJE_NOMBRE_VACIO = 'Escribe tu nombre.';
+export const MENSAJE_EDAD_INVALIDA = 'Escribe tu edad en años, entre 14 y 100.';
+export const MENSAJE_PESO_INVALIDO =
+	'Escribe tu peso en kilos, entre 20 y 300. Puedes usar un decimal para los gramos (por ejemplo 66.8).';
+export const MENSAJE_ALTURA_INVALIDA =
+	'Escribe tu altura en metros (por ejemplo 1,60), o déjala vacía.';
+
 export const ERRORES_VACIOS: ErroresDatos = {
 	nombre: null,
 	edad: null,
@@ -133,14 +143,10 @@ export function validarDatosEditados(
 	const alturaValida = validarAltura(altura);
 
 	const errores: ErroresDatos = {
-		nombre: nombreValido ? null : 'Escribe tu nombre.',
-		edad: edadValida ? null : 'Escribe tu edad en años, entre 14 y 100.',
-		peso: pesoValido
-			? null
-			: 'Escribe tu peso en kilos, entre 20 y 300. Puedes usar un decimal para los gramos (por ejemplo 66.8).',
-		altura: alturaValida
-			? null
-			: 'Escribe tu altura en metros (por ejemplo 1,60), o déjala vacía.'
+		nombre: nombreValido ? null : MENSAJE_NOMBRE_VACIO,
+		edad: edadValida ? null : MENSAJE_EDAD_INVALIDA,
+		peso: pesoValido ? null : MENSAJE_PESO_INVALIDO,
+		altura: alturaValida ? null : MENSAJE_ALTURA_INVALIDA
 	};
 
 	if (nombreValido && edadValida && pesoValido && alturaValida) {

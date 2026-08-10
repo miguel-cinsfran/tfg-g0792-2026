@@ -80,7 +80,7 @@
 		{/each}
 	</div>
 	{#if tieneError}
-		<p id={errorId} class="mt-2 text-sm text-error" role="alert">
+		<p id={errorId} class="mt-2 text-sm text-error">
 			{error}
 		</p>
 	{/if}

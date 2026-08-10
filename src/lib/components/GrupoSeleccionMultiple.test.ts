@@ -114,6 +114,6 @@ describe('GrupoSeleccionMultiple', () => {
 		expect(fieldset?.getAttribute('aria-describedby')).toBe('grupo-y-error');
 		const mensaje = document.body.querySelector('#grupo-y-error');
 		expect(mensaje?.textContent).toBe('Falta');
-		expect(mensaje?.getAttribute('role')).toBe('alert');
+		expect(mensaje?.hasAttribute('role')).toBe(false);
 	});
 });

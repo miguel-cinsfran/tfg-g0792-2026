@@ -2,7 +2,9 @@
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import { enfocarPrincipal } from '$lib/a11y/foco';
+	import { anunciarAssertive } from '$lib/a11y/live-region';
 	import { obtener, actualizar, pasoPendiente, puedeVisitar } from '$lib/onboarding/estado';
+	import { M } from '$lib/mensajes/ui';
 	import Boton from '$lib/components/Boton.svelte';
 	import Card from '$lib/components/Card.svelte';
 	import BarraAccion from '$lib/components/BarraAccion.svelte';
@@ -29,6 +31,7 @@
 	function aceptar() {
 		if (!acepto) {
 			errorCasilla = true;
+			anunciarAssertive(M.onboarding.disclaimer.casillaError);
 			casilla?.focus();
 			return;
 		}
@@ -38,36 +41,32 @@
 	}
 </script>
 
-<svelte:head><title>Antes de empezar</title></svelte:head>
+<svelte:head><title>{M.onboarding.disclaimer.titulo}</title></svelte:head>
 
-<h1 tabindex="-1" bind:this={heading}>Antes de empezar</h1>
+<h1 tabindex="-1" bind:this={heading}>{M.onboarding.disclaimer.titulo}</h1>
 
 <p>
-	Hola. En unos minutos armamos tu plan, a tu medida y sin equipo. Primero, algo para cuidarte.
+	{M.onboarding.disclaimer.introduccion}
 </p>
 
-<Card titulo="Aviso médico">
+<Card titulo={M.onboarding.disclaimer.avisoTitulo}>
 	<p>
-		Esta app te ayuda a entrenar con tu peso; no reemplaza al médico. Si tienes alguna condición
-		de salud o dudas sobre si puedes hacer ejercicio, consulta con un profesional antes de arrancar.
+		{M.onboarding.disclaimer.avisoCuerpo}
 	</p>
 
-	<p class="font-semibold mt-4">No arranques hoy si tienes:</p>
+	<p class="font-semibold mt-4">{M.onboarding.disclaimer.noArranquesTitulo}</p>
 	<ul>
-		<li>Dolor fuerte que todavía no sabes a qué se debe.</li>
-		<li>Una lesión activa sin el visto bueno de un médico.</li>
-		<li>Problemas del corazón sin controlar.</li>
-		<li>Mareos o desmayos seguidos.</li>
+		{#each M.onboarding.disclaimer.noArranquesItems as item (item)}
+			<li>{item}</li>
+		{/each}
 	</ul>
 
 	<p>
-		Mientras entrenas, si sientes dolor en el pecho, te cuesta mucho respirar, te mareas fuerte
-		o aparece un dolor agudo en una articulación, detente. Si no se pasa, busca atención médica.
+		{M.onboarding.disclaimer.duranteCuerpo}
 	</p>
 
 	<p>
-		Entrenar con tu peso es seguro para la mayoría, pero nadie conoce tu cuerpo como tú: si
-		algo no se siente bien, corta.
+		{M.onboarding.disclaimer.cerrarCuerpo}
 	</p>
 </Card>
 
@@ -84,13 +83,12 @@
 		aria-describedby={errorCasilla ? 'error-disclaimer' : undefined}
 	/>
 	<label for="cb-disclaimer">
-		Leí y entiendo: sé que tengo que consultar al médico si tengo dudas y parar si siento
-		dolor anormal.
+		{M.onboarding.disclaimer.casillaLabel}
 	</label>
 </div>
 
 {#if errorCasilla}
-	<p id="error-disclaimer" class="mt-1 text-sm text-error">Marca la casilla para continuar.</p>
+	<p id="error-disclaimer" class="mt-1 text-sm text-error">{M.onboarding.disclaimer.casillaError}</p>
 {/if}
 
 <!-- Acceso discreto a recuperar una copia de seguridad. El <details>
@@ -103,14 +101,13 @@
      invalida el load del layout para que el perfil recien cargado se
      refleje en la UI (sin location.reload). -->
 <details class="mt-8 desplegable">
-	<summary class="cursor-pointer">¿Ya usabas la app? Recuperar una copia de seguridad</summary>
+	<summary class="cursor-pointer">{M.onboarding.disclaimer.respaldoTitulo}</summary>
 	<p class="mt-2">
-		Si tienes una copia de seguridad, puedes recuperarla ahora. Reemplaza cualquier dato de esta
-		instalación.
+		{M.onboarding.disclaimer.respaldoCuerpo}
 	</p>
 	<div class="mt-2">
 		<ImportarRespaldo
-			etiquetaBoton="Recuperar mis datos"
+			etiquetaBoton={M.onboarding.disclaimer.respaldoBoton}
 			onImportado={() => {
 				void goto(resolve('/'), { invalidateAll: true });
 			}}
@@ -120,6 +117,6 @@
 
 <BarraAccion>
 	{#snippet primaria()}
-		<Boton variante="primario" tamano="grande" onclick={aceptar} avance>Aceptar y continuar</Boton>
+		<Boton variante="primario" tamano="grande" onclick={aceptar} avance>{M.onboarding.disclaimer.botonContinuar}</Boton>
 	{/snippet}
 </BarraAccion>

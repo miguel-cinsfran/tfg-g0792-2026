@@ -2,11 +2,11 @@
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import { enfocarPrincipal } from '$lib/a11y/foco';
-	import { anunciarPolite } from '$lib/a11y/live-region';
+	import { anunciarAssertive } from '$lib/a11y/live-region';
 	import { obtener, actualizar, pasoPendiente, puedeVisitar } from '$lib/onboarding/estado';
 	import { entero, validarConteo } from '$lib/onboarding/validacion-datos';
 	import Boton from '$lib/components/Boton.svelte';
-	import BotonVolver from '$lib/components/BotonVolver.svelte';
+	import Cabecera from '$lib/components/Cabecera.svelte';
 	import Card from '$lib/components/Card.svelte';
 	import BarraAccion from '$lib/components/BarraAccion.svelte';
 	import DescripcionEjercicio from '$lib/components/DescripcionEjercicio.svelte';
@@ -49,7 +49,7 @@
 	function continuar() {
 		if (!validarConteo(valor)) {
 			error = MENSAJE_INVALIDO;
-			anunciarPolite(MENSAJE_INVALIDO);
+			anunciarAssertive(MENSAJE_INVALIDO);
 			input?.focus();
 			return;
 		}
@@ -71,9 +71,9 @@
 
 <svelte:head><title>Evaluación: flexiones</title></svelte:head>
 
-<BotonVolver onclick={atras} />
-
-<h1 tabindex="-1" bind:this={heading}>Evaluación: flexiones</h1>
+<Cabecera onclick={atras}>
+	<h1 tabindex="-1" bind:this={heading}>Evaluación: flexiones</h1>
+</Cabecera>
 
 <p class="mt-2 text-text-secondary">
 	Últimas cuatro preguntas, y son físicas: una prueba corta por

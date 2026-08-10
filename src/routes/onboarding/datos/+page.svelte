@@ -2,7 +2,7 @@
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import { enfocarPrincipal } from '$lib/a11y/foco';
-	import { anunciarPolite } from '$lib/a11y/live-region';
+	import { anunciarPolite, anunciarAssertive } from '$lib/a11y/live-region';
 	import { obtener, actualizar, pasoPendiente, puedeVisitar } from '$lib/onboarding/estado';
 	import {
 		entero,
@@ -15,10 +15,14 @@
 		validarAltura,
 		alturaACm,
 		metrosDesdeCm,
-		normalizarNombre
+		normalizarNombre,
+		MENSAJE_NOMBRE_VACIO,
+		MENSAJE_EDAD_INVALIDA,
+		MENSAJE_PESO_INVALIDO,
+		MENSAJE_ALTURA_INVALIDA
 	} from '$lib/onboarding/validacion-datos';
 	import Boton from '$lib/components/Boton.svelte';
-	import BotonVolver from '$lib/components/BotonVolver.svelte';
+	import Cabecera from '$lib/components/Cabecera.svelte';
 	import Card from '$lib/components/Card.svelte';
 	import BarraAccion from '$lib/components/BarraAccion.svelte';
 
@@ -99,13 +103,10 @@
 		const pesoValido = validarPeso(peso);
 		const alturaValida = validarAltura(altura);
 
-		if (!nombreValido) errorNombre = 'Escribe tu nombre.';
-		if (!edadValida) errorEdad = 'Escribe tu edad en años, entre 14 y 100.';
-		if (!pesoValido)
-			errorPeso =
-				'Escribe tu peso en kilos, entre 20 y 300. Puedes usar un decimal para los gramos (por ejemplo 66.8).';
-		if (!alturaValida)
-			errorAltura = 'Escribe tu altura en metros (por ejemplo 1,60), o déjala vacía.';
+		if (!nombreValido) errorNombre = MENSAJE_NOMBRE_VACIO;
+		if (!edadValida) errorEdad = MENSAJE_EDAD_INVALIDA;
+		if (!pesoValido) errorPeso = MENSAJE_PESO_INVALIDO;
+		if (!alturaValida) errorAltura = MENSAJE_ALTURA_INVALIDA;
 
 		if (nombreValido && edadValida && pesoValido && alturaValida) {
 			const patch: Parameters<typeof actualizar>[0] = {
@@ -130,6 +131,17 @@
 					: !pesoValido
 						? 'peso'
 						: 'altura';
+			// En esta rama al menos un errorX es string; el narrowing es para TS.
+			const primerMensaje = !nombreValido
+				? errorNombre
+				: !edadValida
+					? errorEdad
+					: !pesoValido
+						? errorPeso
+						: errorAltura;
+			if (primerMensaje !== null) {
+				anunciarAssertive(primerMensaje);
+			}
 			document.getElementById(primerErrorId)?.focus();
 		}
 	}
@@ -141,9 +153,9 @@
 
 <svelte:head><title>Tus datos</title></svelte:head>
 
-<BotonVolver onclick={atras} />
-
-<h1 tabindex="-1" bind:this={heading}>Tus datos</h1>
+<Cabecera onclick={atras}>
+	<h1 tabindex="-1" bind:this={heading}>Tus datos</h1>
+</Cabecera>
 
 <form onsubmit={manejarEnvio} novalidate>
 	<div class="space-y-6">
