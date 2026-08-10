@@ -14,8 +14,17 @@ describe('esRutaConBarraDePestanas', () => {
 		expect(esRutaConBarraDePestanas('/progreso')).toBe(true);
 	});
 
-	it('muestra la barra en /config', () => {
-		expect(esRutaConBarraDePestanas('/config')).toBe(true);
+	it('muestra la barra en /perfil', () => {
+		expect(esRutaConBarraDePestanas('/perfil')).toBe(true);
+	});
+
+	it('OCULTA la barra en /config (lista, no es pestana)', () => {
+		expect(esRutaConBarraDePestanas('/config')).toBe(false);
+	});
+
+	it('OCULTA la barra en sub-rutas de /config', () => {
+		expect(esRutaConBarraDePestanas('/config/objetivo')).toBe(false);
+		expect(esRutaConBarraDePestanas('/config/borrar/confirmar')).toBe(false);
 	});
 
 	it('OCULTA la barra en /sesion', () => {

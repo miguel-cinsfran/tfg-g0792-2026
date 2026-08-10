@@ -8,6 +8,10 @@ import { obtenerEjercicio } from '$lib/catalogo/consultas';
 
 const DIA_MS = 86_400_000;
 
+// Prefijo tecnico de razon_bloqueo; la portada lo recorta al mostrar
+// la zona (la constante es la fuente unica del string).
+export const PREFIJO_RAZON_DOLOR = 'Dolor en ';
+
 export async function obtenerEstadosTodos(): Promise<EstadoEjercicio[]> {
 	try {
 		return await db.estado_ejercicios.toArray();
@@ -59,7 +63,7 @@ export async function bloquearEjercicio(ejercicio_id: string, zonas: Zona[], aho
 			const fila = await db.estado_ejercicios.get(ejercicio_id);
 			const bloqueo = {
 				bloqueado: true,
-				razon_bloqueo: 'Dolor en ' + zonas.join(', '),
+				razon_bloqueo: PREFIJO_RAZON_DOLOR + zonas.join(', '),
 				fecha_bloqueo: ahora,
 				fecha_revision: ahora + rules.dolor['RULE-DOLOR-BLOQUEO-DIAS'] * DIA_MS,
 			};

@@ -32,8 +32,8 @@ describe('decidirAccionAtras', () => {
 			});
 		});
 
-		it('/config -> ir a Inicio', () => {
-			expect(decidirAccionAtras('/config', 'desarmado', true, false)).toEqual({
+		it('/perfil -> ir a Inicio', () => {
+			expect(decidirAccionAtras('/perfil', 'desarmado', true, false)).toEqual({
 				tipo: 'ir-a-inicio',
 			});
 		});
