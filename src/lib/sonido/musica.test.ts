@@ -25,13 +25,13 @@ beforeEach(() => {
 // Para que el spy funcione, el modulo debe CREAR un Audio nuevo
 // (cache interno vacio). Como `audio` es module-scoped, la primera
 // vez que cualquier consumidor llame `audioLazy()` se crea. Los
-// tests con spy usan `establecerMusicaActivada(true)` o
-// `reproducirFondo()` con `musicaActivada() === true` (default), y
-// reinstalamos el mock antes de cada uno.
+// tests con spy activan la musica antes (`establecerMusicaActivada(true)`):
+// el default quedo apagado y `reproducirFondo()` sola ya no crea el
+// Audio. Reinstalamos el mock antes de cada uno.
 
 describe('ajuste de musica', () => {
-	it('activada por defecto', () => {
-		expect(musicaActivada()).toBe(true);
+	it('apagada por defecto', () => {
+		expect(musicaActivada()).toBe(false);
 	});
 
 	it('apagar y prender persiste en localStorage', () => {
@@ -39,6 +39,30 @@ describe('ajuste de musica', () => {
 		expect(musicaActivada()).toBe(false);
 		establecerMusicaActivada(true);
 		expect(musicaActivada()).toBe(true);
+	});
+});
+
+describe('REQ-FS-9: la música arranca apagada', () => {
+	it('sin preferencia guardada devuelve false', () => {
+		expect(musicaActivada()).toBe(false);
+	});
+
+	it('con "1" guardado devuelve true', () => {
+		localStorage.setItem('musica-activada', '1');
+		expect(musicaActivada()).toBe(true);
+	});
+
+	it('con "0" guardado devuelve false', () => {
+		localStorage.setItem('musica-activada', '0');
+		expect(musicaActivada()).toBe(false);
+	});
+
+	it('error de lectura devuelve false sin lanzar', () => {
+		vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
+			throw new Error('storage no disponible');
+		});
+		expect(() => musicaActivada()).not.toThrow();
+		expect(musicaActivada()).toBe(false);
 	});
 });
 
@@ -73,7 +97,7 @@ describe('volumen de musica', () => {
 		// deben pisar las de efectos (sonidos-activados, volumen-efectos).
 		localStorage.setItem('sonidos-activados', '0');
 		localStorage.setItem('volumen-efectos', '0.3');
-		expect(musicaActivada()).toBe(true);
+		expect(musicaActivada()).toBe(false);
 		expect(volumenMusica()).toBe(0.15);
 		establecerMusicaActivada(false);
 		establecerVolumenMusica(0.8);
@@ -126,6 +150,7 @@ describe('volumen en vivo al elemento', () => {
 	// con musica activada) no rompe, y el volumen persiste.
 
 	it('cambiar el volumen tras haber reproducido no rompe', () => {
+		establecerMusicaActivada(true);
 		reproducirFondo();
 		expect(() => establecerVolumenMusica(0.8)).not.toThrow();
 		expect(volumenMusica()).toBeCloseTo(0.8, 5);

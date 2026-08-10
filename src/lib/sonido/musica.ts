@@ -15,9 +15,12 @@ function clamp(n: number, min: number, max: number): number {
 
 export function musicaActivada(): boolean {
 	try {
-		return localStorage.getItem(CLAVE_ACTIVADA) !== '0';
+		// Opt-in explícito: la música arranca apagada; solo el '1'
+		// guardado la activa. Un usuario reportó que arrancar sonando
+		// estaba muy fuerte.
+		return localStorage.getItem(CLAVE_ACTIVADA) === '1';
 	} catch {
-		return true;
+		return false;
 	}
 }
 

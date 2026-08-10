@@ -74,7 +74,7 @@ describe('sonar', () => {
 	});
 });
 
-describe('sonar — eventos del reloj tic-tac', () => {
+describe('sonar - eventos del reloj tic-tac', () => {
 	it(`sonar('tic') no lanza (contrato no-op)`, () => {
 		expect(() => sonar('tic')).not.toThrow();
 	});
@@ -98,7 +98,7 @@ describe('sonar — eventos del reloj tic-tac', () => {
 	});
 });
 
-describe('sonar — asigna el volumen antes de reproducir', () => {
+describe('sonar - asigna el volumen antes de reproducir', () => {
 	// El modulo cachea un Audio por evento. Cada test usa un evento
 	// distinto (y no usado por el resto del archivo) para que el spy
 	// capture un Audio recien creado y no uno cacheado de un test previo.
