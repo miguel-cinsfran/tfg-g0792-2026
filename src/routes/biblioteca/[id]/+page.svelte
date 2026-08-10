@@ -14,14 +14,18 @@
 	import { progresar, retroceder } from '$lib/motor/progresion';
 	import { anunciarPolite, anunciarAssertive } from '$lib/a11y/live-region';
 	import { mensajePara } from '$lib/errores/mensajes';
+	import {
+		leerOrigenDetalle,
+		limpiarOrigenDetalle,
+	} from '$lib/a11y/origen-detalle.svelte';
 	import { M } from '$lib/mensajes/ui';
 	import { enfocarPrincipal } from '$lib/a11y/foco';
 	import { etiquetaPatron } from '$lib/catalogo/etiquetas';
 	import { capitalizar } from '$lib/ui/texto';
 	import Boton from '$lib/components/Boton.svelte';
-	import BotonVolver from '$lib/components/BotonVolver.svelte';
+	import Cabecera from '$lib/components/Cabecera.svelte';
 	import DescripcionEjercicio from '$lib/components/DescripcionEjercicio.svelte';
-	import ModalDolor from '$lib/components/ModalDolor.svelte';
+	import Modal from '$lib/components/Modal.svelte';
 
 	const FORMATO_FECHA = new Intl.DateTimeFormat('es', { day: 'numeric', month: 'long' });
 
@@ -96,17 +100,25 @@
 
 	function volver(): void {
 		// El sonido lo dispara el BotonVolver. Aca solo navegamos para
-		// evitar el doble sonido.
-		goto(resolve('/biblioteca'));
+		// evitar el doble sonido. Con origen registrado, history.back()
+		// (no goto: el navegador restaura el scroll y la lista enfoca
+		// el ejercicio de origen); sin origen, el comportamiento de
+		// siempre: goto a la lista.
+		if (leerOrigenDetalle() !== null) {
+			history.back();
+		} else {
+			limpiarOrigenDetalle();
+			goto(resolve('/biblioteca'));
+		}
 	}
 </script>
 
 <svelte:head><title>{ejercicio?.nombre ?? 'Ejercicio'}</title></svelte:head>
 
-<BotonVolver onclick={volver} />
-
 {#if ejercicio}
-	<h1 bind:this={heading} tabindex="-1">{ejercicio.nombre}</h1>
+	<Cabecera onclick={volver}>
+		<h1 bind:this={heading} tabindex="-1">{ejercicio.nombre}</h1>
+	</Cabecera>
 	<p class="text-text-secondary">{capitalizar(etiquetaPatron(ejercicio.patron))}, nivel {ejercicio.nivel_requerido}</p>
 
 	{#if bloqueo}
@@ -118,13 +130,13 @@
 		</p>
 		<Boton onclick={() => { confirmando = true; }}>Reactivar ahora</Boton>
 		{#if confirmando}
-			<ModalDolor abierto={confirmando} titulo="Reactivar ejercicio" alCerrar={() => { confirmando = false; }}>
+			<Modal abierto={confirmando} titulo="Reactivar ejercicio" alCerrar={() => { confirmando = false; }}>
 				<p>Vuelve a aparecer en tus sesiones. ¿Confirmas?</p>
 				{#snippet acciones()}
 					<Boton onclick={confirmarReactivacion}>Sí, rehabilitar</Boton>
 					<Boton variante="secundario" onclick={() => { confirmando = false; }}>Cancelar</Boton>
 				{/snippet}
-			</ModalDolor>
+			</Modal>
 		{/if}
 	{/if}
 
@@ -144,16 +156,18 @@
 		     botones bajo el dedo desorientaba (QA 0.6.0). -->
 		{#if propuesta?.tipo === 'cambio'}
 			{@const destino = propuesta.destino}
-			<ModalDolor abierto={true} titulo="Cambiar de variante" alCerrar={() => { propuesta = null; }}>
+			<Modal abierto={true} titulo={M.biblioteca.tituloVariantes} alCerrar={() => { propuesta = null; }}>
 				<p>{M.biblioteca.confirmarCambio(destino.nombre)}</p>
 				{#snippet acciones()}
 					<Boton onclick={confirmarCambio} deshabilitado={guardandoCambio}>Confirmar el cambio</Boton>
 					<Boton variante="secundario" onclick={() => { propuesta = null; }} deshabilitado={guardandoCambio}>Cancelar</Boton>
 				{/snippet}
-			</ModalDolor>
+			</Modal>
 		{/if}
 	{/if}
 {:else}
-	<h1 bind:this={heading} tabindex="-1">Ejercicio no encontrado</h1>
+	<Cabecera onclick={volver}>
+		<h1 bind:this={heading} tabindex="-1">Ejercicio no encontrado</h1>
+	</Cabecera>
 	<p>El ejercicio que pediste no está en el catálogo.</p>
 {/if}

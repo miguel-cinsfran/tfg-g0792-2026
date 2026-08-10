@@ -5,6 +5,7 @@
 	// TalkBack en el Redmi: el detalle quedaba intercalado entre los
 	// demas ejercicios.
 	import { liveQuery } from 'dexie';
+	import { untrack } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import { PATRONES } from '$lib/motor/schema';
@@ -12,8 +13,14 @@
 	import { obtenerCatalogo } from '$lib/catalogo/estado';
 	import { obtenerEstadosBloqueados } from '$lib/db/estado';
 	import { anunciarAssertive } from '$lib/a11y/live-region';
-	import { mensajePara } from '$lib/errores/mensajes';
+	import { mensajePara, CODIGO_LECTURA_FALLIDA } from '$lib/errores/mensajes';
 	import { enfocarPrincipal } from '$lib/a11y/foco';
+	import {
+		registrarOrigenDetalle,
+		leerOrigenDetalle,
+		limpiarOrigenDetalle,
+	} from '$lib/a11y/origen-detalle.svelte';
+	import { M } from '$lib/mensajes/ui';
 	import { etiquetaPatron } from '$lib/catalogo/etiquetas';
 	import { capitalizar } from '$lib/ui/texto';
 	import type { EjercicioValidado } from '$lib/catalogo/schema';
@@ -23,7 +30,21 @@
 	import Punto from '$lib/components/iconos/Punto.svelte';
 
 	let heading = $state<HTMLElement>();
-	$effect(() => { enfocarPrincipal(heading); });
+	// El origen se lee sin seguimiento: limpiarlo tras restaurar el foco
+	// no debe re-ejecutar el efecto y arrebatarle el foco al boton.
+	$effect(() => {
+		const id = untrack(leerOrigenDetalle);
+		if (id !== null) {
+			const boton = document.getElementById(`ej-${id}`);
+			if (boton instanceof HTMLElement) {
+				boton.scrollIntoView({ block: 'center' });
+				boton.focus();
+				limpiarOrigenDetalle();
+				return;
+			}
+		}
+		enfocarPrincipal(heading);
+	});
 
 	const catalogo = obtenerCatalogo();
 
@@ -31,7 +52,7 @@
 	$effect(() => {
 		const sub = liveQuery(() => obtenerEstadosBloqueados()).subscribe({
 			next: (lista) => { bloqueos = new Map(lista.map((b) => [b.ejercicio_id, b])); },
-			error: () => { anunciarAssertive(mensajePara('ERR-DB-READ')); },
+			error: () => { anunciarAssertive(mensajePara(CODIGO_LECTURA_FALLIDA)); },
 		});
 		return () => sub.unsubscribe();
 	});
@@ -44,12 +65,13 @@
 		.filter((g: { patron: Patron; ejercicios: EjercicioValidado[] }) => g.ejercicios.length > 0);
 
 	function abrir(ej: EjercicioValidado): void {
+		registrarOrigenDetalle(ej.id);
 		goto(resolve('/biblioteca/[id]', { id: ej.id }));
 	}
 </script>
 
-<svelte:head><title>Ejercicios</title></svelte:head>
-<h1 bind:this={heading} tabindex="-1">Ejercicios</h1>
+<svelte:head><title>{M.biblioteca.titulo}</title></svelte:head>
+<h1 bind:this={heading} tabindex="-1">{M.biblioteca.titulo}</h1>
 
 {#each grupos as grupo (grupo.patron)}
 	<section aria-labelledby="patron-{grupo.patron}">
@@ -69,6 +91,7 @@
 				<li>
 					<button
 						type="button"
+						id="ej-{ej.id}"
 						class="w-full min-h-12 flex items-center gap-3 text-left bg-surface-alt border border-border-strong rounded-lg px-4 py-3 transition-colors hover:border-acento active:border-acento focus-visible:outline-2 focus-visible:outline-acento group"
 						onclick={() => abrir(ej)}
 					>
@@ -82,7 +105,7 @@
 								{ej.nombre}
 							</span>
 							<span class="block text-sm text-text-secondary">
-								Nivel {ej.nivel_requerido}{bloqueos.has(ej.id) ? ', bloqueado por dolor' : ''}
+								{M.biblioteca.nivelDeEjercicio(ej.nivel_requerido, bloqueos.has(ej.id))}
 							</span>
 						</div>
 						<ChevronDerecha tamano={20}

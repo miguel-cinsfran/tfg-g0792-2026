@@ -2,12 +2,13 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { mount, unmount, flushSync, createRawSnippet } from 'svelte';
 import EnvolturaModalTest from './EnvolturaModalTest.svelte';
+import { M } from '$lib/mensajes/ui';
 
 const contenidoSnippet = createRawSnippet(() => ({
 	render: () => '<span>Contenido del modal</span>',
 }));
 
-describe('ModalDolor', () => {
+describe('Modal', () => {
 	let instancia: ReturnType<typeof mount>;
 
 	beforeEach(() => {
@@ -162,5 +163,46 @@ describe('ModalDolor', () => {
 		flushSync();
 
 		expect(document.activeElement).toBe(btnAbrir);
+	});
+
+	it('sin acciones, dos cierres con nombres accesibles distintos', () => {
+		instancia = mount(EnvolturaModalTest, {
+			target: document.body,
+			props: { children: contenidoSnippet },
+		});
+		flushSync();
+
+		const btnAbrir = document.getElementById('btn-abrir-externo') as HTMLButtonElement;
+		btnAbrir.click();
+		flushSync();
+
+		const botones = Array.from(document.body.querySelectorAll('button'));
+		const cerrar = botones.find((b) => b.getAttribute('aria-label') === M.modal.cerrar);
+		const volver = botones.find((b) => b.textContent?.trim() === M.modal.volver);
+		expect(cerrar, 'cierre del encabezado con M.modal.cerrar').toBeDefined();
+		expect(volver, 'cierre inferior por defecto con M.modal.volver').toBeDefined();
+		expect(M.modal.cerrar).not.toBe(M.modal.volver);
+		expect(cerrar).not.toBe(volver);
+	});
+
+	it('el cierre del encabezado llama alCerrar', () => {
+		instancia = mount(EnvolturaModalTest, {
+			target: document.body,
+			props: { children: contenidoSnippet },
+		});
+		flushSync();
+
+		const btnAbrir = document.getElementById('btn-abrir-externo') as HTMLButtonElement;
+		btnAbrir.click();
+		flushSync();
+
+		const cerrar = Array.from(document.body.querySelectorAll('button')).find(
+			(b) => b.getAttribute('aria-label') === M.modal.cerrar,
+		) as HTMLButtonElement;
+		expect(cerrar).toBeDefined();
+		cerrar.click();
+		flushSync();
+
+		expect(document.body.querySelector('[role="dialog"]')).toBeNull();
 	});
 });

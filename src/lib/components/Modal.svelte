@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
 	import Boton from './Boton.svelte';
+	import { M } from '$lib/mensajes/ui';
 
 	let {
 		abierto,
@@ -96,9 +97,21 @@
 		aria-labelledby="{idDialogo}-titulo"
 		class="fixed inset-x-4 top-1/2 -translate-y-1/2 z-50 bg-surface-raised border border-border rounded-lg p-6 max-w-lg mx-auto max-h-[80svh] overflow-y-auto"
 	>
-		<h2 id="{idDialogo}-titulo" tabindex="-1" class="text-xl font-semibold text-text-primary mb-4">
-			{titulo}
-		</h2>
+		<div class="flex items-start justify-between gap-2 mb-4">
+			<h2 id="{idDialogo}-titulo" tabindex="-1" class="text-xl font-semibold text-text-primary m-0">
+				{titulo}
+			</h2>
+			<!-- Cierre del encabezado: nombre accesible distinto del "Volver"
+			     del pie; la X es decorativa (aria-hidden). -->
+			<button
+				type="button"
+				aria-label={M.modal.cerrar}
+				onclick={alCerrar}
+				class="min-h-12 min-w-12 flex items-center justify-center rounded-full bg-surface-alt border border-border-strong text-text-primary transition-colors active:brightness-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-acento focus-visible:ring-offset-2 touch-manipulation"
+			>
+				<span aria-hidden="true">X</span>
+			</button>
+		</div>
 		<div class="mb-4">
 			{@render children()}
 		</div>
@@ -107,7 +120,7 @@
 				{@render acciones()}
 			</div>
 		{:else}
-			<Boton variante="secundario" onclick={alCerrar}>Volver</Boton>
+			<Boton variante="secundario" onclick={alCerrar}>{M.modal.volver}</Boton>
 		{/if}
 	</div>
 {/if}

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import ModalDolor from './ModalDolor.svelte';
+	import Modal from './Modal.svelte';
 	import type { Snippet } from 'svelte';
 
 	let {
@@ -20,4 +20,4 @@
 </script>
 
 <button id="btn-abrir-externo" onclick={abrir}>Abrir</button>
-<ModalDolor {abierto} {titulo} alCerrar={cerrar} {children} />
+<Modal {abierto} {titulo} alCerrar={cerrar} {children} />
