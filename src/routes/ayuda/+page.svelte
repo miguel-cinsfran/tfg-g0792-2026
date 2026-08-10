@@ -4,7 +4,7 @@
 	import { page } from '$app/state';
 	import { enfocarPrincipal } from '$lib/a11y/foco';
 	import { M } from '$lib/mensajes/ui';
-	import BotonVolver from '$lib/components/BotonVolver.svelte';
+	import Cabecera from '$lib/components/Cabecera.svelte';
 
 	let heading = $state<HTMLElement>();
 
@@ -12,14 +12,13 @@
 		enfocarPrincipal(heading);
 	});
 
-	// La ayuda se abre desde config y desde el resumen del onboarding.
-	// Config pasa ?de=config para volver a la lista de configuracion
-	// (la subvista interna no sobrevive a un history.back); para el
-	// resto alcanza el historial.
+	// La ayuda se abre desde /perfil y desde el resumen del onboarding.
+	// La lista de configuracion marca el origen con ?de=config: su
+	// retorno va a /perfil (la lista cuelga de ahi); cualquier otro
+	// origen alcanza el historial.
 	function volver() {
 		if (page.url.searchParams.get('de') === 'config') {
-			// eslint-disable-next-line svelte/no-navigation-without-resolve -- ruta interna resuelta, solo se agrega el query
-			goto(`${resolve('/config')}?vista=configuracion`);
+			goto(resolve('/perfil'));
 		} else {
 			history.back();
 		}
@@ -28,31 +27,31 @@
 
 <svelte:head><title>{M.ayuda.titulo}</title></svelte:head>
 
-<BotonVolver onclick={volver} />
-
-<h1 tabindex="-1" bind:this={heading}>{M.ayuda.titulo}</h1>
+<Cabecera onclick={volver}>
+	<h1 tabindex="-1" bind:this={heading}>{M.ayuda.titulo}</h1>
+</Cabecera>
 
 <!-- name comun: acordeon nativo, al abrir un tema se cierra el resto.
      Si la WebView no lo soporta, degradan a independientes. -->
 <div class="flex flex-col gap-2 mt-4">
 	<details class="clase-tema-ayuda desplegable" name="tema-ayuda">
-		<summary>{M.ayuda.vibracionTitulo}</summary>
+		<summary><h2>{M.ayuda.vibracionTitulo}</h2></summary>
 		<p>{M.ayuda.vibracionTexto}</p>
 	</details>
 	<details class="clase-tema-ayuda desplegable" name="tema-ayuda">
-		<summary>{M.ayuda.chequeoTitulo}</summary>
+		<summary><h2>{M.ayuda.chequeoTitulo}</h2></summary>
 		<p>{M.ayuda.chequeoTexto}</p>
 	</details>
 	<details class="clase-tema-ayuda desplegable" name="tema-ayuda">
-		<summary>{M.ayuda.rachaTitulo}</summary>
+		<summary><h2>{M.ayuda.rachaTitulo}</h2></summary>
 		<p>{M.ayuda.rachaTexto}</p>
 	</details>
 	<details class="clase-tema-ayuda desplegable" name="tema-ayuda">
-		<summary>{M.ayuda.sonidosTitulo}</summary>
+		<summary><h2>{M.ayuda.sonidosTitulo}</h2></summary>
 		<p>{M.ayuda.sonidosTexto}</p>
 	</details>
 	<details class="clase-tema-ayuda desplegable" name="tema-ayuda">
-		<summary>{M.ayuda.reanudarTitulo}</summary>
+		<summary><h2>{M.ayuda.reanudarTitulo}</h2></summary>
 		<p>{M.ayuda.reanudarTexto}</p>
 	</details>
 </div>

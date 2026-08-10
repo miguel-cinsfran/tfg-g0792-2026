@@ -18,6 +18,11 @@ const mensajes: Record<string, string> = {
 		'El archivo corresponde a una versión anterior de la aplicación. Genera una exportación nueva.',
 };
 
+// Codigos de fallback que las rutas usan al traducir un error: la
+// constante es la fuente unica, no el string repetido en cada ruta.
+export const CODIGO_LECTURA_FALLIDA = 'ERR-DB-READ';
+export const CODIGO_ESCRITURA_FALLIDA = 'ERR-DB-WRITE';
+
 export function mensajePara(code: string): string {
 	return mensajes[code] ?? `Se produjo un error inesperado. Código: ${code}`;
 }
