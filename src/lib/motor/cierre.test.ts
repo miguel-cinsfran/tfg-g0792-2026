@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { crearEstadoInicial, cancelarSesionEnCurso, cerrarSesionEnCurso } from './cierre';
 import { aplicarSerieCompletada, pasarSiguienteEjercicio } from './serie';
+import { registrarZonasDolor } from './dolor';
 import type { EjercicioPlanificado } from './schema';
 import { estadoBase } from '../../../tests/fixtures/estado-base';
 import { AHORA, diasAntes } from '../../../tests/fixtures/ahora';
@@ -61,6 +62,15 @@ describe('cerrarSesionEnCurso (ALG-10)', () => {
 		expect(sesion.ejercicios).toHaveLength(2);
 		expect(sesion.ejercicios[0].reps_reales).toEqual([10, 9]);
 		expect(sesion.ejercicios[1].reps_reales).toEqual([8, 7]);
+	});
+
+	it('nunca persiste una duracion negativa si el reloj retrocedio', () => {
+		let s = crearEstadoInicial(plan(), 'FULL_BODY', INICIO);
+		s = aplicarSerieCompletada(s, 10, 3, INICIO);
+		// se cierra 10 minutos ANTES del inicio: reloj ajustado hacia atras
+		// o cambio de huso durante el entrenamiento.
+		const { sesion } = cerrarSesionEnCurso(s, [], INICIO - 10 * 60_000);
+		expect(sesion.duracion_minutos).toBe(0);
 	});
 
 	it('actualiza fecha_ultimo_uso del estado previo preservando el resto', () => {
@@ -183,5 +193,61 @@ describe('cerrarSesionEnCurso + reintroduccion gradual (ALG-10)', () => {
 		const a = estados.find((e) => e.ejercicio_id === 'ej-a');
 		// primer uso -> no aplica reintroduccion (no viene de un bloqueo)
 		expect(a?.reintroduccion_sesiones_restantes).toBeUndefined();
+	});
+});
+
+describe('cerrarSesionEnCurso + dolor sin series (defecto 8 ago 2026)', () => {
+	// Dolor reportado antes de la primera serie deja un ejecutado con
+	// series_completadas: 0 (dolor.ts, registrarZonasDolor). Ese ejecutado
+	// no entreno nada: el cierre no debe escribir estado para el.
+	function sesionConDolorSinSeries(plan: EjercicioPlanificado[]) {
+		return registrarZonasDolor(crearEstadoInicial(plan, 'FULL_BODY', INICIO), ['hombros']);
+	}
+
+	it('con reintroduccion en curso: no la descuenta ni toca la fecha', () => {
+		const previo = estadoBase({
+			ejercicio_id: 'ej-a',
+			fecha_ultimo_uso: diasAntes(30),
+			reintroduccion_sesiones_restantes: 2,
+		});
+		const s = sesionConDolorSinSeries(plan());
+		const { estados } = cerrarSesionEnCurso(s, [previo], AHORA);
+		expect(estados.find((e) => e.ejercicio_id === 'ej-a')).toBeUndefined();
+	});
+
+	it('con estado previo sin reintroduccion: no le pone fecha_ultimo_uso de hoy', () => {
+		const previo = estadoBase({ ejercicio_id: 'ej-a', fecha_ultimo_uso: diasAntes(30) });
+		const s = sesionConDolorSinSeries(plan());
+		const { estados } = cerrarSesionEnCurso(s, [previo], AHORA);
+		expect(estados.find((e) => e.ejercicio_id === 'ej-a')).toBeUndefined();
+	});
+
+	it('sin estado previo: no crea un estado de primer uso', () => {
+		const s = sesionConDolorSinSeries(plan());
+		const { estados } = cerrarSesionEnCurso(s, [], AHORA);
+		expect(estados.find((e) => e.ejercicio_id === 'ej-a')).toBeUndefined();
+	});
+
+	it('un ejercicio con series si actualiza estado aunque otro del plan no tenga ninguna', () => {
+		const previoA = estadoBase({ ejercicio_id: 'ej-a', fecha_ultimo_uso: diasAntes(30) });
+		let s = sesionConDolorSinSeries(plan());
+		s = aplicarSerieCompletada(pasarSiguienteEjercicio(s, INICIO), 8, 2, INICIO);
+		const { estados } = cerrarSesionEnCurso(s, [previoA], AHORA);
+		expect(estados.find((e) => e.ejercicio_id === 'ej-a')).toBeUndefined();
+		expect(estados.find((e) => e.ejercicio_id === 'ej-b')?.fecha_ultimo_uso).toBe(AHORA);
+	});
+
+	// Contrapeso de las dos pruebas de arriba: no actualizar el estado no
+	// es lo mismo que borrar el registro. El ejecutado de cero series tiene
+	// que seguir en la sesion persistida, con las zonas de dolor intactas;
+	// si no, el dato clinico se pierde y el motor no puede bloquear.
+	it('el ejecutado de cero series sigue en sesion.ejercicios con sus zonas de dolor', () => {
+		const s = sesionConDolorSinSeries(plan());
+		const { sesion } = cerrarSesionEnCurso(s, [], AHORA);
+		expect(sesion.ejercicios).toHaveLength(1);
+		const ejecutado = sesion.ejercicios[0];
+		expect(ejecutado.ejercicio_id).toBe('ej-a');
+		expect(ejecutado.series_completadas).toBe(0);
+		expect(ejecutado.zonas_dolor_reportadas).toEqual(['hombros']);
 	});
 });

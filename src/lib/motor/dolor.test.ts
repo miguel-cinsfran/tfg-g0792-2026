@@ -7,7 +7,7 @@ import {
 	reactivarEjercicio,
 } from './dolor';
 import { crearEstadoInicial } from './cierre';
-import { aplicarSerieCompletada } from './serie';
+import { aplicarSerieCompletada, pasarSiguienteEjercicio } from './serie';
 import type { EjercicioPlanificado } from './schema';
 import { ejercicioBase } from '../../../tests/fixtures/ejercicio-base';
 import { estadoBase } from '../../../tests/fixtures/estado-base';
@@ -80,6 +80,65 @@ describe('buscarSustituto (ALG-06 paso 4)', () => {
 	it('devuelve null cuando el pool queda vacio (ALG-07)', () => {
 		const actual = ejercicioBase({ id: 'ej-a' });
 		expect(buscarSustituto(actual, ['hombros'], [actual], [], 'principiante')).toBeNull();
+	});
+});
+
+// Reproduce el cruce real de catalogo.json: la sustitucion curada de
+// ej-030-pull-v-dead-hang por "muñecas" apunta a ej-020-pull-h-remo-suspension,
+// que puede ser el slot PULL_H de la misma sesion UPPER (up-2/up-4).
+describe('buscarSustituto no elige un ejercicio que ya ocupa otro slot del plan', () => {
+	it('rama del mapa curado: cae al catalogo filtrado si el candidato curado ya se trabajo', () => {
+		const pullH = ejercicioBase({ id: 'ej-020', patron: 'PULL_H', zonas_involucradas: [] });
+		const pullV = ejercicioBase({
+			id: 'ej-030',
+			patron: 'PULL_V',
+			sustituciones: { muñecas: 'ej-020' },
+			zonas_involucradas: [],
+		});
+		const alternativa = ejercicioBase({ id: 'ej-031', patron: 'PULL_V', zonas_involucradas: [] });
+		const dosSlots: EjercicioPlanificado[] = [
+			{ ejercicio_id: 'ej-020', series: 3, reps_objetivo: 8, rir_objetivo: 2, descanso_segundos: 90 },
+			{ ejercicio_id: 'ej-030', series: 4, reps_objetivo: 6, rir_objetivo: 2, descanso_segundos: 60 },
+		];
+		let sesion = crearEstadoInicial(dosSlots, 'UPPER', AHORA);
+		sesion = aplicarSerieCompletada(sesion, 8, 2, AHORA);
+		sesion = pasarSiguienteEjercicio(sesion, AHORA);
+
+		const r = buscarSustituto(
+			pullV,
+			['muñecas'],
+			[pullH, pullV, alternativa],
+			[],
+			'principiante',
+			sesion.plan,
+		);
+		expect(r?.id).toBe('ej-031');
+
+		// Aplicado el sustituto correcto, el cierre no funde las series
+		// del slot ya trabajado con las del sustituido.
+		sesion = aplicarSustitucion(sesion, alternativa, [], AHORA);
+		sesion = aplicarSerieCompletada(sesion, 6, 2, AHORA);
+		expect(sesion.ejecutados).toHaveLength(2);
+		expect(sesion.ejecutados[0]).toMatchObject({ ejercicio_id: 'ej-020', series_planificadas: 3 });
+		expect(sesion.ejecutados[1]).toMatchObject({ ejercicio_id: 'ej-031', series_planificadas: 4 });
+	});
+
+	it('rama del catalogo filtrado: no devuelve un candidato que ya ocupa otro slot', () => {
+		const actual = ejercicioBase({ id: 'ej-a', zonas_involucradas: [] });
+		const enOtroSlot = ejercicioBase({ id: 'ej-en-plan', zonas_involucradas: [] });
+		const dosSlots: EjercicioPlanificado[] = [
+			{ ejercicio_id: 'ej-en-plan', series: 3, reps_objetivo: 8, rir_objetivo: 2, descanso_segundos: 90 },
+			{ ejercicio_id: 'ej-a', series: 3, reps_objetivo: 8, rir_objetivo: 2, descanso_segundos: 90 },
+		];
+		const r = buscarSustituto(
+			actual,
+			['hombros'],
+			[actual, enOtroSlot],
+			[],
+			'principiante',
+			dosSlots,
+		);
+		expect(r).toBeNull();
 	});
 });
 

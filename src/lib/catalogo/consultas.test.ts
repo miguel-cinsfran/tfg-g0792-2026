@@ -146,21 +146,21 @@ describe('obtenerCatalogoPorPatron', () => {
 });
 
 describe('obtenerSustituto', () => {
-	it('excluye por zona — PUSH_H sin muñecas', () => {
+	it('excluye por zona - PUSH_H sin muñecas', () => {
 		const ej001 = obtenerEjercicio('fixture-001')!;
 		const sustitutos = obtenerSustituto(ej001, 'muñecas');
 		expect(sustitutos).toHaveLength(1);
 		expect(sustitutos[0].id).toBe('fixture-005');
 	});
 
-	it('excluye por id propio — fixture-001 no aparece en su propio sustituto', () => {
+	it('excluye por id propio - fixture-001 no aparece en su propio sustituto', () => {
 		const ej001 = obtenerEjercicio('fixture-001')!;
 		const sustitutos = obtenerSustituto(ej001, 'lumbar');
 		const ids = sustitutos.map((e) => e.id);
 		expect(ids).not.toContain('fixture-001');
 	});
 
-	it('distinto patrón queda excluido — PUSH_V no aparece en sustitutos de PUSH_H', () => {
+	it('distinto patrón queda excluido - PUSH_V no aparece en sustitutos de PUSH_H', () => {
 		const ej001 = obtenerEjercicio('fixture-001')!;
 		const sustitutos = obtenerSustituto(ej001, 'cadera');
 		const ids = sustitutos.map((e) => e.id);

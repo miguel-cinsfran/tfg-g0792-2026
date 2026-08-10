@@ -67,7 +67,7 @@ describe('nombreArchivoExportacion', () => {
 	});
 });
 
-describe('manejarExportar — rama APK (archivo + share)', () => {
+describe('manejarExportar - rama APK (archivo + share)', () => {
 	beforeEach(() => {
 		vi.mocked(Capacitor.isNativePlatform).mockReturnValue(true);
 	});
@@ -128,7 +128,7 @@ describe('manejarExportar — rama APK (archivo + share)', () => {
 	});
 });
 
-describe('manejarExportar — rama navegador (blob + descarga)', () => {
+describe('manejarExportar - rama navegador (blob + descarga)', () => {
 	beforeEach(() => {
 		vi.mocked(Capacitor.isNativePlatform).mockReturnValue(false);
 		// jsdom ya existe por el archivo adyacente (este test corre en

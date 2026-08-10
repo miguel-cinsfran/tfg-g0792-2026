@@ -2,7 +2,14 @@
 // vencidos. El bloqueo y el historial_dolor viven en lib/db; aca solo
 // los calculos puros. Consumidores: F-04 (modal de dolor), arranque.
 
-import type { Ejercicio, EstadoEjercicio, Nivel, SesionEnCurso, Zona } from './schema.js';
+import type {
+	Ejercicio,
+	EjercicioPlanificado,
+	EstadoEjercicio,
+	Nivel,
+	SesionEnCurso,
+	Zona,
+} from './schema.js';
 import { ordenarParaSeleccion } from './seleccion.js';
 import { nivelNumerico } from './evaluacion.js';
 import { crearEjecutado } from './serie.js';
@@ -12,6 +19,9 @@ import { rules } from './reglas.js';
 // si el candidato no esta bloqueado o colgado). Despues, el catalogo
 // filtrado: mismo patron, nivel alcanzable, distinto del actual, no
 // bloqueado y sin tocar las zonas reportadas; gana el de uso menos reciente.
+// `plan` es opcional para no forzar a los llamadores existentes: quien lo
+// pase evita que el sustituto sea un ejercicio que ya ocupa otro slot,
+// en las dos ramas (el generador ya evita esa repeticion al armar el plan).
 // null = pool agotado: la UI ofrece el menu ALG-07.
 export function buscarSustituto(
 	ejercicio: Ejercicio,
@@ -19,12 +29,15 @@ export function buscarSustituto(
 	catalogo: Ejercicio[],
 	estados: EstadoEjercicio[],
 	nivel_usuario: Nivel,
+	plan: readonly EjercicioPlanificado[] = [],
 ): Ejercicio | null {
 	const bloqueados = new Set(estados.filter((e) => e.bloqueado).map((e) => e.ejercicio_id));
+	const enPlan = new Set(plan.map((p) => p.ejercicio_id));
 
 	for (const zona of zonas) {
 		const candidatoId = ejercicio.sustituciones[zona];
-		if (candidatoId === undefined || bloqueados.has(candidatoId)) continue;
+		if (candidatoId === undefined || bloqueados.has(candidatoId) || enPlan.has(candidatoId))
+			continue;
 		const candidato = catalogo.find((e) => e.id === candidatoId);
 		if (candidato) return candidato;
 	}
@@ -36,6 +49,7 @@ export function buscarSustituto(
 			nivelNumerico(e.nivel_requerido) <= nivelNumerico(nivel_usuario) &&
 			e.id !== ejercicio.id &&
 			!bloqueados.has(e.id) &&
+			!enPlan.has(e.id) &&
 			e.zonas_involucradas.every((z) => !zonasReportadas.has(z)),
 	);
 	if (candidatos.length === 0) return null;
