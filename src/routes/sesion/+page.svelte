@@ -19,7 +19,7 @@
 	import { progresar } from '$lib/motor/progresion';
 	import { rules } from '$lib/motor/reglas';
 	import { contarProgresoSemana, type ProgresoSemanal } from '$lib/ui/progreso-semanal';
-	import { formatearSemanas, formatearDias } from '$lib/mensajes/ui';
+	import { formatearTiempo } from '$lib/mensajes/ui';
 	import { guardarEstado } from '$lib/db/estado';
 	import { obtenerCatalogo } from '$lib/catalogo/estado';
 	import { obtenerEjercicio } from '$lib/catalogo/consultas';
@@ -43,9 +43,9 @@
 	import { obtenerSesionEnCurso, borrarSesionEnCurso } from '$lib/db/sesion-en-curso';
 	import type { SesionEnCursoGuardada } from '$lib/db/db';
 	import Boton from '$lib/components/Boton.svelte';
-	import BotonVolver from '$lib/components/BotonVolver.svelte';
+	import Cabecera from '$lib/components/Cabecera.svelte';
 	import Card from '$lib/components/Card.svelte';
-	import ModalDolor from '$lib/components/ModalDolor.svelte';
+	import Modal from '$lib/components/Modal.svelte';
 	import DescripcionEjercicio from '$lib/components/DescripcionEjercicio.svelte';
 	import ContadorReps from '$lib/components/ContadorReps.svelte';
 	import GrupoSeleccion from '$lib/components/GrupoSeleccion.svelte';
@@ -61,21 +61,33 @@
 	import Cronometro from '$lib/components/iconos/Cronometro.svelte';
 	import { ZONAS } from '$lib/motor/schema';
 	import type { SesionCompletada, Ejercicio, EstadoEjercicio, EjercicioPlanificado, Zona } from '$lib/motor/schema';
+	import {
+		siguienteSubvista,
+		armarEventoCerrarSerie,
+		type Evento,
+		type Subvista as SubvistaMaquina,
+		type Contexto,
+		type OrigenDolor,
+	} from '$lib/sesion/fases';
 
-	type Subvista =
-		| 'REANUDAR'
-		| 'EJERCICIO'
-		| 'POST_SERIE'
-		| 'DESCANSO'
-		| 'DOLOR_ZONAS'
-		| 'DOLOR_SUSTITUTO'
-		| 'DOLOR_POOL'
-		| 'CIERRE';
-
-	let heading = $state<HTMLElement>();
 	// Foco al nombre del ejercicio (no al h1 generico, que no dice cual sigue).
 	let refEjercicio = $state<HTMLElement>();
-	let subvista = $state<Subvista>('EJERCICIO');
+	// Foco al h1 de la pantalla cuando la generacion de sesion falla: ese
+	// bloque no tiene fase propia, asi que no lo cubre el efecto de abajo.
+	let refTitulo = $state<HTMLElement>();
+	// El sosten es un estado interno de EJERCICIO (no una fase de la
+	// maquina): este h2 solo-lector nombra lo que empieza al pulsar
+	// "Empezar", sin duplicar el texto visible del Temporizador.
+	let refSosten = $state<HTMLElement>();
+	// Una ref por fase: el foco aterriza en el h2 que nombra la subvista.
+	let refReanudar = $state<HTMLElement>();
+	let refPostSerieTitulo = $state<HTMLElement>();
+	let refDescanso = $state<HTMLElement>();
+	let refDolorZonas = $state<HTMLElement>();
+	let refDolorSustituto = $state<HTMLElement>();
+	let refDolorPool = $state<HTMLElement>();
+	let refCierre = $state<HTMLElement>();
+	let subvista = $state<SubvistaMaquina>('EJERCICIO');
 	// undefined = aun no se consulto el respaldo; null = no hay.
 	let respaldo = $state<SesionEnCursoGuardada | null | undefined>(undefined);
 	let repsReales = $state(0);
@@ -98,7 +110,6 @@
 	let reportandoDolor = $state(false);
 	let errorDolor = $state<string | null>(null);
 	let sustitutoPropuesto = $state<Ejercicio | null>(null);
-	let contenedorPool = $state<HTMLElement>();
 	// false = boton "Empezar"; true = Temporizador corriendo.
 	let sosteniendo = $state(false);
 	// null = no se calcularon (sesion no fue de chequeo o no se cerro).
@@ -109,10 +120,11 @@
 	let refTituloSugerencia = $state<HTMLElement>();
 	// El bloqueo persistente sale UNA vez por reporte.
 	let dolorYaBloqueado = false;
-	// Desde donde se abrio el reporte de dolor: cancelar vuelve ahi.
-	// Si fue el descanso, el temporizador rearranca completo (no hay
+	// Desde donde se abrio el reporte de dolor: cancelar vuelve ahi;
+	// null fuera del flujo (invariante que mantiene transicionar). Si
+	// fue el descanso, el temporizador rearranca completo (no hay
 	// registro del restante); preferible a darlo por terminado.
-	let origenDolor = $state<'EJERCICIO' | 'DESCANSO'>('EJERCICIO');
+	let origenDolor = $state<OrigenDolor | null>(null);
 	let estadosParaSustituir: EstadoEjercicio[] | null = null;
 
 	let perfil = $state<Awaited<ReturnType<typeof obtenerPerfil>> | null | undefined>(undefined);
@@ -176,6 +188,34 @@
 		};
 	});
 
+	// Punto unico de consumo de la maquina: los handlers hacen su I/O
+	// (Dexie, anuncios, sonido, haptica) y esta decide la fase siguiente.
+	function transicionar(evento: Evento): void {
+		const contexto: Contexto = { origenDolor };
+		const resultado = siguienteSubvista(subvista, evento, contexto);
+		if (resultado.tipo === 'ir-a') {
+			subvista = resultado.subvista;
+			if (evento.tipo === 'abrirDolor') {
+				origenDolor = evento.desde;
+			} else if (esSalidaDelFlujoDolor(evento)) {
+				origenDolor = null;
+			}
+		} else if (resultado.tipo === 'error') {
+			// Hoy no se produce desde el cableado; si ocurre, no navega.
+		}
+	}
+
+	function esSalidaDelFlujoDolor(evento: Evento): boolean {
+		// omitirPatron sale del flujo solo si no hay sustituto; si lo
+		// hay, ya lo absorbio confirmarZonas.
+		return (
+			evento.tipo === 'cancelarDolorZonas' ||
+			evento.tipo === 'continuarSustituto' ||
+			evento.tipo === 'interrumpirPorDolor' ||
+			(evento.tipo === 'omitirPatron' && sustitutoPropuesto === null)
+		);
+	}
+
 	function manejarReanudar() {
 		if (!respaldo) return;
 		const s = respaldo.sesion;
@@ -184,13 +224,13 @@
 		anunciarPolite(M.sesion.anuncioReanudada);
 		vibrar('inicio');
 		sonar('inicio-serie');
-		subvista = 'EJERCICIO';
+		transicionar({ tipo: 'reanudar' });
 	}
 
 	async function manejarEmpezarDeNuevo() {
 		respaldo = null;
 		await borrarSesionEnCurso();
-		subvista = 'EJERCICIO';
+		transicionar({ tipo: 'empezarNueva' });
 	}
 
 	// Salida SEGURA: la sesion se persiste paso a paso, asi que salir no
@@ -218,7 +258,10 @@
 		const generacion = generarSesion(tipo, perfil, catalogo, estados, historial);
 
 		if (generacion.plan.length === 0) {
-			errorGeneracion = 'No hay ejercicios disponibles para hoy. Inténtalo de nuevo más tarde.';
+			errorGeneracion = M.sesion.errorPlanVacio;
+			// Estado que bloquea la pantalla: el usuario debe conocerlo
+			// de inmediato (convenciones-ui.md, anuncios por region viva).
+			anunciarAssertive(M.sesion.errorPlanVacio);
 			return;
 		}
 
@@ -231,26 +274,68 @@
 		}
 	});
 
-	// Foco al h1 en cada cambio de subvista. Excepciones: DOLOR_POOL va al
-	// primer boton; EJERCICIO va al nombre del ejercicio (no al h1 generico)
-	// y re-enfoca al cambiar de ejercicio.
+	// El bloque de error de generacion no es una fase de la maquina: sin
+	// esto el foco queda huerfano en <body> cuando el plan sale vacio.
 	$effect(() => {
-		void subvista;
-		if (subvista === 'DOLOR_POOL') return;
-		if (subvista === 'EJERCICIO') {
-			const s = sesion;
-			const slot = s ? s.plan[s.indice_ejercicio] : undefined;
-			void slot?.ejercicio_id;
-			enfocarPrincipal(refEjercicio);
-			return;
-		}
-		enfocarPrincipal(heading);
+		if (errorGeneracion !== null) enfocarPrincipal(refTitulo);
 	});
 
+	// Foco al h2 que nombra cada subvista. La lectura de slot?.ejercicio_id
+	// y de completada fuerza la reejecucion al cambiar de ejercicio y al
+	// llegar el resultado del cierre.
 	$effect(() => {
-		if (subvista === 'DOLOR_POOL') {
-			contenedorPool?.querySelector('button')?.focus();
-		}
+		const slot = sesion?.plan[sesion.indice_ejercicio];
+		void slot?.ejercicio_id;
+		void completada;
+
+		// Cada rama llama con la ref literal: la regla de invariantes exige
+		// que el argumento de enfocarPrincipal sea un identificador ligado
+		// por bind:this a un h1/h2, no una variable intermedia.
+		if (subvista === 'REANUDAR') enfocarPrincipal(refReanudar);
+		else if (subvista === 'EJERCICIO') enfocarPrincipal(refEjercicio);
+		else if (subvista === 'POST_SERIE') enfocarPrincipal(refPostSerieTitulo);
+		else if (subvista === 'DESCANSO') enfocarPrincipal(refDescanso);
+		else if (subvista === 'DOLOR_ZONAS') enfocarPrincipal(refDolorZonas);
+		else if (subvista === 'DOLOR_SUSTITUTO') enfocarPrincipal(refDolorSustituto);
+		else if (subvista === 'DOLOR_POOL') enfocarPrincipal(refDolorPool);
+		else if (subvista === 'CIERRE') enfocarPrincipal(refCierre);
+	});
+
+	// Al arrancar el sosten, la ref de arriba no se reejecuta (el nombre del
+	// ejercicio no cambio). Al terminar, siguienteEjercicio() SI cambia el
+	// slot y el efecto de arriba ya cubre el destino.
+	$effect(() => {
+		if (subvista === 'EJERCICIO' && sosteniendo) enfocarPrincipal(refSosten);
+	});
+
+	// El gesto atras del sistema debe retroceder dentro de la sesion en
+	// las fases que tienen paso anterior; las demas fases lo dejan pasar
+	// y el layout navega. Patron de Modal: listener en window dentro
+	// de un $effect con cleanup.
+	$effect(() => {
+		const handler = (e: Event) => {
+			const ev = e as CustomEvent & { defaultPrevented: boolean };
+			if (subvista === 'DOLOR_ZONAS' && origenDolor !== null) {
+				ev.preventDefault();
+				transicionar({ tipo: 'cancelarDolorZonas' });
+			} else if (subvista === 'DOLOR_SUSTITUTO' || subvista === 'DOLOR_POOL') {
+				ev.preventDefault();
+				transicionar({ tipo: 'revisarZonas' });
+			} else if (subvista === 'POST_SERIE') {
+				ev.preventDefault();
+				transicionar({ tipo: 'cancelarPostSerie' });
+			} else if (subvista === 'DESCANSO') {
+				ev.preventDefault();
+				if (modoAjusteDescanso) {
+					modoAjusteDescanso = false;
+				} else {
+					manejarFinDescanso();
+				}
+			}
+			// EJERCICIO, REANUDAR, CIERRE: no cancelan; el layout navega.
+		};
+		window.addEventListener('volveratras', handler);
+		return () => window.removeEventListener('volveratras', handler);
 	});
 
 	let sesion = $derived(obtenerSesion());
@@ -269,12 +354,21 @@
 
 	function manejarSerieTerminada() {
 		vibrar('fin');
+		const s = sesion;
+		const slot = s?.plan[s.indice_ejercicio];
+		if (!s || !slot) return;
 		if (mostrarPreguntaEsfuerzo) {
-			subvista = 'POST_SERIE';
+			transicionar(
+				armarEventoCerrarSerie({
+					indiceEjercicio: s.indice_ejercicio,
+					totalEjercicios: s.plan.length,
+					serieCompletada: s.indice_serie + 1,
+					totalSeries: slot.series,
+					esChequeo,
+				}),
+			);
 		} else {
-			const slot = sesion?.plan[sesion.indice_ejercicio];
-			if (!slot) return;
-			cerrarSerieYAvanza(slot.reps_objetivo, null, slot);
+			manejarCierreDeSerieNormal(slot.reps_objetivo, null, slot);
 		}
 	}
 
@@ -283,17 +377,29 @@
 	function manejarCronometroParado(segundos: number) {
 		repsReales = segundos;
 		vibrar('fin');
+		const s = sesion;
+		const slot = s?.plan[s.indice_ejercicio];
+		if (!s || !slot) return;
 		if (mostrarPreguntaEsfuerzo) {
-			subvista = 'POST_SERIE';
+			transicionar(
+				armarEventoCerrarSerie({
+					indiceEjercicio: s.indice_ejercicio,
+					totalEjercicios: s.plan.length,
+					serieCompletada: s.indice_serie + 1,
+					totalSeries: slot.series,
+					esChequeo,
+				}),
+			);
 		} else {
-			const slot = sesion?.plan[sesion.indice_ejercicio];
-			if (!slot) return;
-			cerrarSerieYAvanza(segundos, null, slot);
+			manejarCierreDeSerieNormal(segundos, null, slot);
 		}
 	}
 
-	// Decide la siguiente subvista tras cerrar una serie.
-	function cerrarSerieYAvanza(
+	// Cierra una serie sin pregunta de esfuerzo: registra (paridad con
+	// manejarContinuarPostSerie), delega la fase a transicionar y aplica
+	// los efectos por destino. El avance al siguiente ejercicio vive aca
+	// (no en transicionar): la maquina solo decide la fase.
+	function manejarCierreDeSerieNormal(
 		reps: number,
 		esfuerzo: number | null,
 		slot: EjercicioPlanificado,
@@ -312,25 +418,35 @@
 		const hechasSesion =
 			s.plan.slice(0, s.indice_ejercicio).reduce((acc, p) => acc + p.series, 0) + s.indice_serie;
 
-		// Ultima serie del ejercicio -> siguiente (sin descanso).
-		if (serieCompletada >= totalSeries) {
+		transicionar(
+			armarEventoCerrarSerie({
+				indiceEjercicio: s.indice_ejercicio,
+				totalEjercicios: s.plan.length,
+				serieCompletada,
+				totalSeries,
+				esChequeo,
+			}),
+		);
+
+		if (subvista === 'CIERRE') {
+			// La ultima serie del ultimo ejercicio deja la sesion sin
+			// ejercicio en curso, estado en el que cierra.
+			siguienteEjercicio(Date.now());
+			void manejarCerrar();
+		} else if (subvista === 'EJERCICIO') {
+			// Ultima serie del ejercicio con ejercicios restantes: el
+			// anuncio nombra el ejercicio que sigue.
 			siguienteEjercicio(Date.now());
 			const despues = obtenerSesion();
-			if (despues && despues.indice_ejercicio >= despues.plan.length) {
-				subvista = 'CIERRE';
-				void manejarCerrar();
-			} else {
-				const nombre = obtenerEjercicio(slot.ejercicio_id)?.nombre ?? slot.ejercicio_id;
-				const slotSiguiente = despues?.plan[despues.indice_ejercicio];
-				const siguiente = slotSiguiente
-					? (obtenerEjercicio(slotSiguiente.ejercicio_id)?.nombre ?? slotSiguiente.ejercicio_id)
-					: '';
-				anunciarPolite(M.sesion.anuncioEjercicioCompletado(nombre, hechasSesion, totalSesion, siguiente));
-				vibrar('inicio');
-				sonar('inicio-serie');
-				subvista = 'EJERCICIO';
-			}
-		} else {
+			const nombre = obtenerEjercicio(slot.ejercicio_id)?.nombre ?? slot.ejercicio_id;
+			const slotSiguiente = despues?.plan[despues.indice_ejercicio];
+			const siguiente = slotSiguiente
+				? (obtenerEjercicio(slotSiguiente.ejercicio_id)?.nombre ?? slotSiguiente.ejercicio_id)
+				: '';
+			anunciarPolite(M.sesion.anuncioEjercicioCompletado(nombre, hechasSesion, totalSesion, siguiente));
+			vibrar('inicio');
+			sonar('inicio-serie');
+		} else if (subvista === 'DESCANSO') {
 			anunciarPolite(
 				M.sesion.anuncioSerieConDescanso(
 					serieCompletada,
@@ -344,7 +460,6 @@
 			// Precargar el Audio del fin-descanso apenas entramos: la WebView
 			// pierde la primera reproduccion de un Audio "frio".
 			precargar('fin-descanso');
-			subvista = 'DESCANSO';
 		}
 	}
 
@@ -360,8 +475,40 @@
 			return;
 		}
 
+		const serieCompletada = previa.indice_serie + 1;
+		const totalSeries = slot.series;
 		const esfuerzo = mostrarPreguntaEsfuerzo ? Number(rirSeleccionado) : null;
-		cerrarSerieYAvanza(repsReales, esfuerzo, slot);
+		completarSerie(repsReales, esfuerzo, Date.now());
+		sonar('serie-completada');
+		const s = obtenerSesion();
+		if (!s) return;
+		const totalSesion = s.plan.reduce((acc, p) => acc + p.series, 0);
+		const hechasSesion =
+			s.plan.slice(0, s.indice_ejercicio).reduce((acc, p) => acc + p.series, 0) + s.indice_serie;
+		// POST_SERIE solo se alcanza con la pregunta de esfuerzo, que solo
+		// sale en la ultima serie del ejercicio: la serie siempre lo cierra.
+		const { esFinDeSesion } = armarEventoCerrarSerie({
+			indiceEjercicio: s.indice_ejercicio,
+			totalEjercicios: s.plan.length,
+			serieCompletada,
+			totalSeries,
+			esChequeo,
+		});
+		transicionar({ tipo: 'continuarPostSerie', esFinDeSesion });
+		siguienteEjercicio(Date.now());
+		const despues = obtenerSesion();
+		if (despues && despues.indice_ejercicio >= despues.plan.length) {
+			void manejarCerrar();
+		} else {
+			const nombre = obtenerEjercicio(slot.ejercicio_id)?.nombre ?? slot.ejercicio_id;
+			const slotSiguiente = despues?.plan[despues.indice_ejercicio];
+			const siguiente = slotSiguiente
+				? (obtenerEjercicio(slotSiguiente.ejercicio_id)?.nombre ?? slotSiguiente.ejercicio_id)
+				: '';
+			anunciarPolite(M.sesion.anuncioEjercicioCompletado(nombre, hechasSesion, totalSesion, siguiente));
+			vibrar('inicio');
+			sonar('inicio-serie');
+		}
 	}
 
 	function manejarFinDescanso() {
@@ -373,7 +520,7 @@
 		const s = sesion ? sesion.indice_serie + 1 : 1;
 		const total = slot?.series ?? 1;
 		anunciarPolite(M.sesion.anuncioSiguienteSerie(s, total, nombre));
-		subvista = 'EJERCICIO';
+		transicionar({ tipo: 'finDescanso' });
 	}
 
 	function manejarAvisoDescanso() {
@@ -392,8 +539,10 @@
 		zonasDolor = [];
 		errorDolor = null;
 		dolorYaBloqueado = false;
-		origenDolor = subvista === 'DESCANSO' ? 'DESCANSO' : 'EJERCICIO';
-		subvista = 'DOLOR_ZONAS';
+		transicionar({
+			tipo: 'abrirDolor',
+			desde: subvista === 'DESCANSO' ? 'DESCANSO' : 'EJERCICIO',
+		});
 	}
 
 	// registrar -> bloquear -> buscar sustituto, en ese orden. El bloqueo
@@ -425,22 +574,18 @@
 				sonar('dolor-registrado');
 			}
 			estadosParaSustituir = await obtenerEstadosTodos();
-			// Sin los ejercicios del plan: un sustituto repetido acumularia
-			// sus series sobre el ejecutado del slot anterior.
-			const idsEnPlan = new Set(s.plan.map((p) => p.ejercicio_id));
 			const sustituto = buscarSustituto(
 				ejercicioActual,
 				[...zonasDolor],
-				[...obtenerCatalogo()].filter((e) => !idsEnPlan.has(e.id)),
+				[...obtenerCatalogo()],
 				estadosParaSustituir,
 				perfil.nivel_experiencia,
+				s.plan,
 			);
 			if (sustituto !== null) {
 				sustitutoPropuesto = sustituto;
-				subvista = 'DOLOR_SUSTITUTO';
-			} else {
-				subvista = 'DOLOR_POOL';
 			}
+			transicionar({ tipo: 'confirmarZonas', haySustituto: sustituto !== null });
 		} catch (e) {
 			const code = (e as { code?: string }).code ?? 'ERR-DB-WRITE';
 			errorDolor = mensajePara(code);
@@ -457,24 +602,23 @@
 		sustitutoPropuesto = null;
 		vibrar('inicio');
 		sonar('inicio-serie');
-		subvista = 'EJERCICIO';
+		transicionar({ tipo: 'continuarSustituto' });
 	}
 
 	function manejarOmitirPatron() {
 		siguienteEjercicio(Date.now());
 		const despues = obtenerSesion();
-		if (despues && despues.indice_ejercicio >= despues.plan.length) {
-			subvista = 'CIERRE';
+		const esFinDeSesion = despues !== null && despues.indice_ejercicio >= despues.plan.length;
+		transicionar({ tipo: 'omitirPatron', esFinDeSesion });
+		if (esFinDeSesion) {
 			void manejarCerrar();
-		} else {
-			subvista = 'EJERCICIO';
 		}
 	}
 
 	function manejarCancelarPorDolor() {
 		sonar('navegacion-atras');
 		cancelar(Date.now());
-		subvista = 'CIERRE';
+		transicionar({ tipo: 'interrumpirPorDolor' });
 		void manejarCerrar();
 	}
 
@@ -609,6 +753,9 @@
 		if (subvista === 'POST_SERIE') {
 			rirSeleccionado = null;
 			ajustando = false;
+			// con el atras nuevo (tarea 5) la fase se puede abandonar y
+			// re-entrar; limpiamos para no arrastrar error stale.
+			errorEsfuerzo = null;
 		}
 	});
 
@@ -633,46 +780,61 @@
 		}
 	});
 
+	// Cero series completadas = no se entreno ese ejercicio (dolor antes de
+	// la primera serie, dolor.ts registrarZonasDolor): no entra al resumen
+	// de "hechos". El dato no se pierde, sigue en completada.ejercicios;
+	// el reporte de dolor ya se ve en el bloqueo inmediato y en Progreso.
 	let resumenEjercicios = $derived(
 		completada
-			? completada.ejercicios.map((e) => obtenerEjercicio(e.ejercicio_id)?.nombre ?? e.ejercicio_id)
+			? completada.ejercicios
+					.filter((e) => e.series_completadas > 0)
+					.map((e) => obtenerEjercicio(e.ejercicio_id)?.nombre ?? e.ejercicio_id)
 			: [],
 	);
 </script>
 
 <svelte:head>
-	<title>Sesión de entrenamiento</title>
+	<title>{M.sesion.titulo}</title>
 </svelte:head>
 
-<!-- BotonVolver durante toda la sesion activa menos en CIERRE. En CIERRE
-     la accion inferior pasa a "Continuar": nunca dos controles al mismo destino. -->
+<!-- Cabecera durante toda la sesion activa menos en CIERRE. En CIERRE
+     la accion inferior pasa a "Continuar": nunca dos controles al mismo
+     destino, y el h1 queda fuera de la barra sin boton de salida. -->
 {#if subvista !== 'CIERRE'}
-	<BotonVolver onclick={volverAlInicio} etiqueta="Volver al inicio" />
+	<Cabecera onclick={volverAlInicio} etiqueta={M.sesion.botonVolverInicio}>
+		<h1 tabindex="-1" bind:this={refTitulo}>{M.sesion.titulo}</h1>
+	</Cabecera>
+{:else}
+	<h1 tabindex="-1" bind:this={refTitulo}>{M.sesion.titulo}</h1>
 {/if}
-
-<h1 tabindex="-1" bind:this={heading}>Sesión de entrenamiento</h1>
 
 {#if errorGeneracion !== null}
 	<p>{errorGeneracion}</p>
-	<Boton variante="primario" onclick={() => goto(resolve('/'))}>Volver al inicio</Boton>
+	{#if errorGeneracion === M.sesion.errorPlanVacio}
+		<!-- La salida superior (BotonVolver) es la unica "Volver al
+		     inicio"; la primaria atiende la causa del plan vacio. -->
+		<Boton variante="primario" onclick={() => goto(resolve('/config/dolor'))}>{M.sesion.botonRevisarZonas}</Boton>
+	{:else}
+		<Boton variante="primario" onclick={() => goto(resolve('/'))}>{M.sesion.botonVolverInicio}</Boton>
+	{/if}
 {:else if subvista === 'CIERRE'}
 	<!-- Va antes del chequeo de sesion: cerrar() deja el store en null
 	     a proposito y aca se muestra la SesionCompletada local. -->
 	{#if cerrando}
-		<p>Cerrando sesión...</p>
+		<p>{M.sesion.cerrando}</p>
 	{:else if errorCerrar !== null}
 		<Card>
 			<p class="text-error">{errorCerrar}</p>
 			<div class="mt-6">
-				<Boton variante="primario" onclick={manejarCerrar}>Volver a intentar</Boton>
+				<Boton variante="primario" onclick={manejarCerrar}>{M.sesion.botonVolverIntentar}</Boton>
 			</div>
 		</Card>
 	{:else if completada !== null}
 		{@const completadaLograda = !completada.cancelada_por_dolor}
 		<Card>
 			<div class="flex items-center gap-3">
-				<h2 class="m-0 flex-1 min-w-0">
-					{completadaLograda ? 'Sesión completada' : 'Sesión cortada por dolor'}
+				<h2 tabindex="-1" bind:this={refCierre} class="m-0 flex-1 min-w-0">
+					{completadaLograda ? M.sesion.anuncioSesionCompletada : M.sesion.anuncioSesionCancelada}
 				</h2>
 				{#if completadaLograda}
 					<!-- El color naranja es solo para logro; cancelada por dolor no aplica. -->
@@ -681,10 +843,10 @@
 			</div>
 
 			<p class="text-3xl font-bold font-mono tabular-nums text-text-primary mt-2">
-				{completada.duracion_minutos} <span class="text-base font-normal text-text-secondary">minutos</span>
+				{formatearTiempo(completada.duracion_minutos * 60)}
 			</p>
 
-			<h3 class="font-semibold text-text-primary mt-4">Ejercicios que hiciste</h3>
+			<h3 class="font-semibold text-text-primary mt-4">{M.sesion.ejerciciosHechosTitulo}</h3>
 			<ul class="m-0 p-0 list-none flex flex-col gap-1">
 				{#each resumenEjercicios as nombre, i (i)}
 					<li class="text-text-primary">{nombre}</li>
@@ -696,18 +858,18 @@
 				{@const yaEstabaCompleta = progresoCierre.meta > 0 && progresoCierre.hechas > progresoCierre.meta}
 				<div class="mt-4">
 					{#if cerroLaSemana}
-						<p class="tabular-nums text-naranja m-0">¡Semana completa! Racha: {formatearSemanas(rachaCierre)}</p>
+						<p class="tabular-nums text-naranja m-0">{M.sesion.rachaCierreSemanaCompleta(rachaCierre)}</p>
 					{:else if yaEstabaCompleta}
-						<p class="tabular-nums text-text-secondary m-0">Racha: {formatearSemanas(rachaCierre)}</p>
+						<p class="tabular-nums text-text-secondary m-0">{M.sesion.rachaCierre(rachaCierre)}</p>
 					{:else}
-						<p class="tabular-nums text-text-secondary m-0">Vas {progresoCierre.hechas} de {formatearDias(progresoCierre.meta)} esta semana</p>
+						<p class="tabular-nums text-text-secondary m-0">{M.sesion.progresoCierre(progresoCierre.hechas, progresoCierre.meta)}</p>
 					{/if}
 				</div>
 			{/if}
 
 			{#if vistaPreviaCierre !== null}
 				<div class="mt-4 pt-4 border-t border-border">
-					<h3 class="font-semibold text-text-primary mt-0">Tu próxima sesión</h3>
+					<h3 class="font-semibold text-text-primary mt-0">{M.sesion.proximaSesionTitulo}</h3>
 					<p class="text-text-primary m-0">
 						{etiquetaTipoSesion(vistaPreviaCierre.tipo)}, {vistaPreviaCierre.plan.length} ejercicios
 					</p>
@@ -748,14 +910,14 @@
 					<!-- En CIERRE la accion inferior es "Continuar". El BotonVolver
 					     superior no se muestra: un segundo control al mismo destino
 					     competiria con esta accion. -->
-					<Boton variante="primario" tamano="grande" onclick={() => goto(resolve('/'))}>Continuar</Boton>
+					<Boton variante="primario" tamano="grande" onclick={() => goto(resolve('/'))}>{M.sesion.botonContinuar}</Boton>
 				{/snippet}
 			</BarraAccion>
 		{/if}
 	{/if}
 {:else if subvista === 'REANUDAR'}
 	<Card>
-		<h2>{M.sesion.tituloReanudar}</h2>
+		<h2 tabindex="-1" bind:this={refReanudar}>{M.sesion.tituloReanudar}</h2>
 		<p class="text-text-secondary">{M.sesion.textoReanudar}</p>
 	</Card>
 	<BarraAccion>
@@ -767,7 +929,7 @@
 		{/snippet}
 	</BarraAccion>
 {:else if sesion === null}
-	<p>Cargando...</p>
+	<p>{M.sesion.cargando}</p>
 {:else if subvista === 'EJERCICIO'}
 	{@const slot = sesion.plan[sesion.indice_ejercicio]}
 	{@const ejercicio = obtenerEjercicio(slot.ejercicio_id)}
@@ -800,9 +962,9 @@
 			</Boton>
 		</div>
 		{#if ejercicio && modalAbierto}
-			<ModalDolor abierto={modalAbierto} titulo={`Cómo hacer ${ejercicio.nombre}`} alCerrar={() => modalAbierto = false}>
+			<Modal abierto={modalAbierto} titulo={M.sesion.tituloComoHacer(ejercicio.nombre)} alCerrar={() => modalAbierto = false}>
 				<DescripcionEjercicio descripcion={ejercicio.descripcion} />
-			</ModalDolor>
+			</Modal>
 		{/if}
 	{/key}
 		<BarraAccion>
@@ -811,6 +973,9 @@
 					<!-- sostener = true -> Temporizador corriendo; false -> boton "Empezar". -->
 					{#if sosteniendo}
 					<div class="flex items-center justify-center gap-3">
+						<!-- Solo-lector: nombra el arranque del sosten sin duplicar
+						     el texto visible del Temporizador (que ya lo anuncia). -->
+						<h2 tabindex="-1" bind:this={refSosten} class="sr-only">{M.sesion.sostenerEtiqueta}: {slot.reps_objetivo} segundos</h2>
 						<Cronometro tamano={28} />
 						{#key `${sesion.indice_ejercicio}-${sesion.indice_serie}`}
 							<Temporizador
@@ -840,7 +1005,12 @@
 	{@const slot = sesion.plan[sesion.indice_ejercicio]}
 	{@const ejercicio = obtenerEjercicio(slot.ejercicio_id)}
 	{@const unidad = ejercicio?.medido_en ?? 'repeticiones'}
-	<Card titulo={M.sesion.tituloPostSerie(sesion.indice_serie + 1, slot.series)}>
+	<!-- El h2 vive en la página (no en Card): la regla de invariantes exige
+	     que el destino de foco esté ligado por bind:this en la ruta. -->
+	<section class="bg-surface-alt border border-border rounded-lg p-4">
+		<h2 tabindex="-1" bind:this={refPostSerieTitulo} class="text-lg font-semibold text-text-primary mb-2">
+			{M.sesion.tituloPostSerie(sesion.indice_serie + 1, slot.series)}
+		</h2>
 		<p>{M.sesion.confirmacionPostSerie(repsReales, unidad)}</p>
 		{#if ajustando}
 			<ContadorReps bind:valor={repsReales} min={0} max={unidad === 'segundos' ? 600 : 99} {unidad} />
@@ -865,8 +1035,13 @@
 			<div class="mt-6">
 				<Boton variante="secundario" onclick={() => ajustando = true}>{M.sesion.botonAjustarReps}</Boton>
 			</div>
+			<div class="mt-4">
+				<Boton variante="secundario" onclick={() => transicionar({ tipo: 'cancelarPostSerie' })}>
+					{M.sesion.botonVolverAlEjercicio}
+				</Boton>
+			</div>
 		{/if}
-	</Card>
+	</section>
 	<BarraAccion>
 		{#snippet primaria()}
 			<!-- Boton siempre pulsable: el error se muestra via GrupoSeleccion. -->
@@ -884,16 +1059,16 @@
 	{@const slot = sesion.plan[sesion.indice_ejercicio]}
 	{@const ejercicio = obtenerEjercicio(slot.ejercicio_id)}
 	{@const unidad = ejercicio?.medido_en ?? 'repeticiones'}
-	<h2 class="flex items-center gap-2"><Reloj /><span>Descanso</span></h2>
+	<h2 tabindex="-1" bind:this={refDescanso} class="flex items-center gap-2"><Reloj /><span>{M.sesion.descansoTitulo}</span></h2>
 	{#if modoAjusteDescanso}
 		<p>{M.sesion.confirmacionPostSerie(repsReales, unidad)}</p>
 		<ContadorReps bind:valor={repsReales} min={0} max={unidad === 'segundos' ? 600 : 99} {unidad} />
 		<BarraAccion>
 			{#snippet primaria()}
-				<Boton variante="primario" tamano="grande" onclick={confirmarCorreccionDescanso}>Confirmar</Boton>
+				<Boton variante="primario" tamano="grande" onclick={confirmarCorreccionDescanso}>{M.sesion.botonConfirmar}</Boton>
 			{/snippet}
 			{#snippet secundaria()}
-				<Boton variante="secundario" onclick={() => modoAjusteDescanso = false}>Volver al descanso</Boton>
+				<Boton variante="secundario" onclick={() => modoAjusteDescanso = false}>{M.sesion.botonVolverDescanso}</Boton>
 			{/snippet}
 		</BarraAccion>
 	{:else}
@@ -937,10 +1112,10 @@
 	{/if}
 {:else if subvista === 'DOLOR_ZONAS'}
 	<Card>
-		<h2>¿Dónde te duele?</h2>
+		<h2 tabindex="-1" bind:this={refDolorZonas}>{M.sesion.dolorZonasTitulo}</h2>
 		<GrupoSeleccionMultiple
 			id="grupo-zonas-dolor"
-			leyenda="Marca todas las zonas donde te duele"
+			leyenda={M.sesion.dolorZonasLeyenda}
 			nombre="zonas-dolor"
 			opciones={ZONAS.map((zona) => ({ valor: zona, etiqueta: etiquetaZona(zona) }))}
 			bind:valores={zonasDolor}
@@ -949,19 +1124,19 @@
 	</Card>
 	<BarraAccion>
 		{#snippet primaria()}
-			<Boton variante="primario" tamano="grande" onclick={manejarConfirmarZonas} deshabilitado={reportandoDolor} silencioso>Confirmar</Boton>
+			<Boton variante="primario" tamano="grande" onclick={manejarConfirmarZonas} deshabilitado={reportandoDolor} silencioso>{M.sesion.botonConfirmar}</Boton>
 		{/snippet}
 		{#snippet secundaria()}
-			<Boton variante="secundario" onclick={() => { subvista = origenDolor; }} deshabilitado={reportandoDolor}>Cancelar</Boton>
+			<Boton variante="secundario" onclick={() => transicionar({ tipo: 'cancelarDolorZonas' })} deshabilitado={reportandoDolor}>{M.sesion.botonCancelar}</Boton>
 		{/snippet}
 	</BarraAccion>
 {:else if subvista === 'DOLOR_SUSTITUTO' && sustitutoPropuesto !== null}
 	{@const slot = sesion.plan[sesion.indice_ejercicio]}
 	{@const actual = obtenerEjercicio(slot.ejercicio_id)}
 	<Card>
-		<h2>Cambiamos {actual?.nombre ?? slot.ejercicio_id} por {sustitutoPropuesto.nombre}</h2>
+		<h2 tabindex="-1" bind:this={refDolorSustituto}>{M.sesion.dolorSustitutoTitulo(actual?.nombre ?? slot.ejercicio_id, sustitutoPropuesto.nombre)}</h2>
 		<p class="text-text-secondary">
-			Trabaja el mismo patrón sin pasar por {zonasDolor.map((z) => etiquetaZona(z).toLowerCase()).join(', ')}.
+			{M.sesion.dolorSustitutoCuerpo(zonasDolor.map((z) => etiquetaZona(z).toLowerCase()).join(', '))}
 		</p>
 	</Card>
 	<BarraAccion>
@@ -969,30 +1144,29 @@
 			<Boton variante="primario" tamano="grande" onclick={manejarContinuarSustituto} silencioso>
 				<span class="inline-flex items-center gap-2">
 					<CirculoCheque tamano={20} />
-					Continuar con el cambio
+					{M.sesion.botonContinuarCambio}
 				</span>
 			</Boton>
 		{/snippet}
 		{#snippet secundaria()}
-			<Boton variante="secundario" onclick={manejarCancelarPorDolor} silencioso>Cortar la sesión</Boton>
+			<div class="flex flex-col gap-2">
+				<Boton variante="secundario" onclick={() => transicionar({ tipo: 'revisarZonas' })}>{M.sesion.botonRevisarZonas}</Boton>
+				<Boton variante="secundario" onclick={manejarCancelarPorDolor} silencioso>{M.sesion.botonInterrumpirSesion}</Boton>
+			</div>
 		{/snippet}
 	</BarraAccion>
 {:else if subvista === 'DOLOR_POOL'}
 	<Card>
-		<h2>No hay un reemplazo seguro</h2>
+		<h2 tabindex="-1" bind:this={refDolorPool}>{M.sesion.dolorSinReemplazoTitulo}</h2>
 	</Card>
-	<!-- contenedorPool envuelve la primaria: el $effect de foco pone el
-	     foco en el primer <button>, que es la accion de avance. -->
 	<BarraAccion>
 		{#snippet primaria()}
-			<div bind:this={contenedorPool}>
-				<Boton variante="primario" tamano="grande" onclick={manejarOmitirPatron}>Omitir este patrón hoy</Boton>
-			</div>
+			<Boton variante="primario" tamano="grande" onclick={manejarOmitirPatron}>{M.sesion.botonOmitirPatron}</Boton>
 		{/snippet}
 		{#snippet secundaria()}
 			<div class="flex flex-col gap-2">
-				<Boton variante="secundario" onclick={() => { subvista = 'DOLOR_ZONAS'; }}>Revisar mis zonas con dolor</Boton>
-				<Boton variante="secundario" onclick={manejarCancelarPorDolor} silencioso>Cortar la sesión</Boton>
+				<Boton variante="secundario" onclick={() => transicionar({ tipo: 'revisarZonas' })}>{M.sesion.botonRevisarZonas}</Boton>
+				<Boton variante="secundario" onclick={manejarCancelarPorDolor} silencioso>{M.sesion.botonInterrumpirSesion}</Boton>
 			</div>
 		{/snippet}
 	</BarraAccion>

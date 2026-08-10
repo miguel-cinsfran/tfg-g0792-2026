@@ -60,7 +60,7 @@ afterEach(async () => {
 	descartar();
 });
 
-describe('sesion store — obtenerSesion y comenzar', () => {
+describe('sesion store - obtenerSesion y comenzar', () => {
 	it('obtenerSesion retorna null inicialmente', () => {
 		expect(obtenerSesion()).toBeNull();
 	});
@@ -79,7 +79,7 @@ describe('sesion store — obtenerSesion y comenzar', () => {
 	});
 });
 
-describe('sesion store — transiciones sin sesion lanzan Error', () => {
+describe('sesion store - transiciones sin sesion lanzan Error', () => {
 	it('completarSerie sin sesion lanza "No hay sesion activa"', () => {
 		expect(() => completarSerie(8, 2, AHORA)).toThrow('No hay sesión activa');
 	});
@@ -116,7 +116,7 @@ describe('sesion store — transiciones sin sesion lanzan Error', () => {
 	});
 });
 
-describe('sesion store — completarSerie y siguienteEjercicio', () => {
+describe('sesion store - completarSerie y siguienteEjercicio', () => {
 	it('completarSerie avanza indice_serie y acumula ejecutados', () => {
 		comenzar(plan3Ejercicios(), 'FULL_BODY' as TipoSesion, AHORA);
 		completarSerie(8, 2, AHORA);
@@ -139,7 +139,7 @@ describe('sesion store — completarSerie y siguienteEjercicio', () => {
 	});
 });
 
-describe('sesion store — cancelar y descartar', () => {
+describe('sesion store - cancelar y descartar', () => {
 	it('cancelar marca cancelada_por_dolor en true', () => {
 		comenzar(plan3Ejercicios(), 'FULL_BODY' as TipoSesion, AHORA);
 		cancelar(AHORA);
@@ -154,7 +154,7 @@ describe('sesion store — cancelar y descartar', () => {
 	});
 });
 
-describe('sesion store — cerrar con Dexie', () => {
+describe('sesion store - cerrar con Dexie', () => {
 	it('cerrar persiste en Dexie y nullifica estado', async () => {
 		const plan = plan3Ejercicios();
 		comenzar(plan, 'FULL_BODY' as TipoSesion, AHORA);
@@ -178,7 +178,7 @@ describe('sesion store — cerrar con Dexie', () => {
 // la serie se cierra con reps_reales = reps_objetivo y rir_declarado = null
 // sin pedir confirmacion. La accion "Registrar otra cantidad" en el
 // descanso permite corregir el valor recien registrado.
-describe('sesion store — registro por excepcion (F-03.2)', () => {
+describe('sesion store - registro por excepcion (F-03.2)', () => {
 	it('caso comun: serie completada registra reps=objetivo y rir=null', () => {
 		comenzar(plan3Ejercicios(), 'FULL_BODY' as TipoSesion, AHORA);
 		completarSerie(8, null, AHORA);
