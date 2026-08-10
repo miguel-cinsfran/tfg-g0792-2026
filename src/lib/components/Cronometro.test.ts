@@ -94,7 +94,7 @@ describe('Cronometro', () => {
 	});
 });
 
-describe('Cronometro — tic-tac del reloj', () => {
+describe('Cronometro - tic-tac del reloj', () => {
 	let instancia: ReturnType<typeof mount>;
 
 	beforeEach(() => {
@@ -123,7 +123,7 @@ describe('Cronometro — tic-tac del reloj', () => {
 		flushSync();
 
 		// El Boton emite 'seleccion' al hacer click. Como reloj=false,
-		// no hay tic/tac — solo una llamada total.
+		// no hay tic/tac - solo una llamada total.
 		expect(sonarMock).toHaveBeenCalledTimes(1);
 		expect(sonarMock).toHaveBeenCalledWith('seleccion');
 	});

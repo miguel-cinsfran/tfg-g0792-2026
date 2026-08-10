@@ -54,6 +54,11 @@
 		// abierto incluido). Primero se ofrece a los modales via evento
 		// cancelable; si nadie lo consume, la politica depende de la ruta.
 		if (Capacitor.isNativePlatform()) {
+			// Tinte de la franja superior con el color de superficie: sin
+			// esto la barra de estado queda sin tenir sobre la WebView.
+			const { StatusBar } = await import('@capacitor/status-bar');
+			await StatusBar.setBackgroundColor({ color: '#0f1413' });
+
 			const { App } = await import('@capacitor/app');
 			void App.addListener('backButton', ({ canGoBack }) => {
 				const ev = new CustomEvent('volveratras', { cancelable: true });
@@ -131,8 +136,8 @@
 	const tabs = [
 		{ href: '/', label: 'Inicio', Icono: Casa },
 		{ href: '/biblioteca', label: 'Ejercicios', Icono: Haltera },
-		{ href: '/progreso', label: 'Racha', Icono: Llama },
-		{ href: '/config', label: 'Perfil', Icono: CirculoUsuario }
+		{ href: '/progreso', label: 'Progreso', Icono: Llama },
+		{ href: '/perfil', label: 'Perfil', Icono: CirculoUsuario }
 	] as const satisfies ReadonlyArray<{ href: string; label: string; Icono: Component }>;
 
 	let currentPath = $derived(page.url.pathname);
@@ -145,10 +150,10 @@
 		if (routed) return;
 		if (data?.perfil === undefined) return; // error case
 		routed = true;
+		// Sin perfil la app arranca por el onboarding; con perfil, la URL
+		// actual se conserva: los deep links llegan a su ruta.
 		if (data.perfil == null) {
 			goto(resolve('/onboarding'), { replaceState: true });
-		} else if (currentPath !== '/') {
-			goto(resolve('/'), { replaceState: true });
 		}
 	});
 </script>
@@ -174,9 +179,9 @@
 	     El lector sigue siendo anunciado por las regiones sr-only. -->
 	<AvisoVisible />
 
-	<div class="mx-auto max-w-lg px-4 pt-[calc(1.5rem+env(safe-area-inset-top))] pb-24">
+	<main class="mx-auto max-w-lg px-4 pt-[calc(1.5rem+env(safe-area-inset-top))] pb-24">
 		{@render children()}
-	</div>
+	</main>
 
 	{#if mostrarBarraPestanas}
 		<!-- El patron WAI de tabs (role=tablist + aria-selected) no funciona
@@ -189,7 +194,7 @@
 			<ul class="flex justify-around list-none m-0 p-0">
 				{#each tabs as tab (tab.href)}
 					{@const activo = currentPath === tab.href}
-					<li class="flex-1">
+					<li class="flex-1 min-w-0">
 						<button
 							type="button"
 							aria-label={activo ? `${tab.label} seleccionada` : tab.label}
@@ -203,7 +208,10 @@
 							class="flex flex-col items-center justify-center gap-1 w-full px-2 py-2 min-h-12 text-center no-underline border-t-2 -mt-px transition-colors hover:text-acento active:text-acento text-xs {activo ? 'text-acento font-bold border-acento' : 'text-text-secondary border-transparent'}"
 						>
 							<tab.Icono tamano={24} />
-							<span>{tab.label}</span>
+							<!-- El nombre accesible completo va en aria-label del boton;
+							     esta etiqueta puede recortarse con el texto agrandado sin
+							     que el lector pierda la palabra entera. -->
+							<span class="block max-w-full truncate">{tab.label}</span>
 						</button>
 					</li>
 				{/each}

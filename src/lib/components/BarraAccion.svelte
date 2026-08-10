@@ -29,23 +29,26 @@
 </script>
 
 <!-- Espaciador en flujo con la altura de la barra: garantiza que todo
-     el contenido pueda scrollearse por encima de ella. -->
-<div style:height="{altoBarra}px" aria-hidden="true"></div>
+     el contenido pueda scrollearse por encima de ella. Existe solo
+     porque la barra es fixed: si la barra vuelve al flujo, se oculta. -->
+<div style:height="{altoBarra}px" aria-hidden="true" class="[@media(max-height:480px)]:hidden"></div>
 
 <div
 	bind:clientHeight={altoBarra}
-	class="fixed bottom-0 left-0 right-0 z-10 bg-surface border-t border-border pb-[env(safe-area-inset-bottom)]"
+	class="fixed bottom-0 left-0 right-0 z-10 bg-surface border-t border-border pb-[env(safe-area-inset-bottom)] [@media(max-height:480px)]:static"
 	role="region"
 	aria-label="Acciones de la pantalla"
 >
 	<div class="mx-auto max-w-lg px-4 py-3 flex flex-col gap-2 sm:flex-row sm:gap-3">
-		<div class="flex-1">
-			{@render primaria()}
+	<div class="flex-1">
+		{@render primaria()}
+	</div>
+	{#if secundaria}
+		<!-- Sin flex-shrink-0 la secundaria puede comprimirse: la primaria
+		     flex-1 crece con el espacio sobrante y nunca queda mas angosta. -->
+		<div>
+			{@render secundaria()}
 		</div>
-		{#if secundaria}
-			<div class="sm:flex-shrink-0">
-				{@render secundaria()}
-			</div>
-		{/if}
+	{/if}
 	</div>
 </div>

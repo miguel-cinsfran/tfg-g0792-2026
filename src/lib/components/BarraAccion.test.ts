@@ -1,7 +1,12 @@
 // @vitest-environment jsdom
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { readFileSync } from 'node:fs';
 import { mount, unmount, flushSync, createRawSnippet } from 'svelte';
 import BarraAccion from './BarraAccion.svelte';
+
+// jsdom no aplica media queries: la condicion de pantalla baja se fija
+// sobre el texto del componente, no sobre el layout renderizado.
+const fuente = readFileSync('src/lib/components/BarraAccion.svelte', 'utf-8');
 
 // jsdom no trae ResizeObserver, que Svelte usa para bind:clientHeight
 // (la medicion del espaciador). Stub inerte: aca no se mide layout real.
@@ -131,5 +136,35 @@ describe('BarraAccion', () => {
 		const idxPrimaria = todos.indexOf('PRIMARIA');
 		const idxSecundaria = todos.indexOf('SECUNDARIA');
 		expect(idxPrimaria).toBeLessThan(idxSecundaria);
+	});
+});
+
+describe('BarraAccion (estructural: pantalla baja por altura)', () => {
+	// La condicion de la media query se declara sobre la ALTURA, nunca
+	// sobre la anchura: la barra vuelve al flujo en horizontal y con
+	// fuente agrandada, y el vertical queda intacto.
+	it('la barra vuelve al flujo con una media query por max-height', () => {
+		expect(fuente).toMatch(/\[@media\(max-height:[^)]*\)\]:static/);
+		expect(fuente).not.toMatch(/max-width/);
+	});
+
+	it('el espaciador aria-hidden se oculta en la misma media query', () => {
+		expect(fuente).toMatch(/\[@media\(max-height:[^)]*\)\]:hidden/);
+	});
+
+	it('la barra conserva position fixed por defecto (caso vertical intacto)', () => {
+		expect(fuente).toMatch(/fixed/);
+	});
+});
+
+describe('BarraAccion (estructural: jerarquia de las acciones)', () => {
+	// La primaria flex-1 crece con el espacio sobrante; si la secundaria
+	// no puede comprimirse (flex-shrink-0), se queda ancha y la primaria
+	// termina mas angosta con texto en dos lineas. Con compresion
+	// permitida, la primaria nunca queda mas chica que la secundaria.
+	// El orden del DOM lo sigue fijando el caso renderizado de arriba.
+	it('la primaria conserva flex-1 y la secundaria puede comprimirse (sin flex-shrink-0)', () => {
+		expect(fuente).toMatch(/flex-1/);
+		expect(fuente).not.toMatch(/sm:flex-shrink-0/);
 	});
 });

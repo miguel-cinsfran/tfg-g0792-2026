@@ -27,6 +27,12 @@ vi.mock('$lib/perf', () => ({
 	medir: vi.fn(),
 }));
 
+// Mock de prepararConsejoDelArranque (no-op en tests)
+const prepararConsejoMock = vi.fn();
+vi.mock('$lib/consejos/estado', () => ({
+	prepararConsejoDelArranque: (...args: unknown[]) => prepararConsejoMock(...args),
+}));
+
 import { db } from '$lib/db/db';
 
 const perfilEjemplo = {
@@ -53,6 +59,7 @@ describe('iniciarApp', () => {
 	beforeEach(() => {
 		popularCatalogoMock.mockReset();
 		obtenerPerfilMock.mockReset();
+		prepararConsejoMock.mockReset();
 		vi.mocked(db.perfil.count).mockReset();
 	});
 
@@ -117,6 +124,8 @@ describe('iniciarApp', () => {
 		expect(first).toEqual({ perfil: perfilEjemplo });
 		expect(second).toEqual({ perfil: perfilEjemplo });
 		expect(popularCatalogoMock).toHaveBeenCalledTimes(1);
+		expect(prepararConsejoMock).toHaveBeenCalledTimes(1);
+		expect(prepararConsejoMock).toHaveBeenCalledWith(perfilEjemplo);
 	});
 });
 

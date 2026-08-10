@@ -1,5 +1,6 @@
 import type { Perfil } from '$lib/motor/schema';
 import { popularCatalogo } from '$lib/catalogo/cargar';
+import { prepararConsejoDelArranque } from '$lib/consejos/estado';
 import { obtenerPerfil } from '$lib/db/perfil';
 import { db } from '$lib/db/db';
 import { crearError } from '$lib/errores/crear';
@@ -41,6 +42,7 @@ export async function iniciarApp(): Promise<ResultadoBootstrap> {
 
 	// Sin perfil: null es la senal de "primera vez" para el caller.
 	perfilCache = resultado ?? null;
+	prepararConsejoDelArranque(perfilCache);
 	iniciada = true;
 	medir('bootstrap', t0);
 	return { perfil: perfilCache };

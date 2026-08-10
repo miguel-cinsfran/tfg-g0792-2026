@@ -18,7 +18,7 @@ import { sonar } from '$lib/sonido/reproducir';
 const anunciarPoliteMock = vi.mocked(anunciarPolite);
 const sonarMock = vi.mocked(sonar);
 
-describe('Temporizador — hitos de voz', () => {
+describe('Temporizador - hitos de voz', () => {
 	let instancia: ReturnType<typeof mount>;
 
 	beforeEach(() => {
@@ -144,7 +144,7 @@ describe('Temporizador — hitos de voz', () => {
 	});
 });
 
-describe('Temporizador — ultimos 5 segundos anunciados de a uno', () => {
+describe('Temporizador - ultimos 5 segundos anunciados de a uno', () => {
 	let instancia: ReturnType<typeof mount>;
 
 	beforeEach(() => {
@@ -248,7 +248,7 @@ describe('Temporizador — ultimos 5 segundos anunciados de a uno', () => {
 	});
 });
 
-describe('Temporizador — cadencia del reloj', () => {
+describe('Temporizador - cadencia del reloj', () => {
 	let instancia: ReturnType<typeof mount>;
 
 	beforeEach(() => {

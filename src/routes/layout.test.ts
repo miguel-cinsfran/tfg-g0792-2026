@@ -24,7 +24,8 @@ const estadoMock = vi.hoisted(() => ({
 	pausarMusicaMock: vi.fn(),
 	reanudarMusicaMock: vi.fn(),
 	esPlataformaNativa: false,
-	registerSWMock: vi.fn()
+	registerSWMock: vi.fn(),
+	statusBarMock: vi.fn()
 }));
 
 vi.mock('$app/state', () => ({
@@ -87,6 +88,20 @@ vi.mock('@capacitor/core', () => ({
 	Capacitor: { isNativePlatform: () => estadoMock.esPlataformaNativa }
 }));
 
+// El layout importa ambos plugins con import() dinamico DENTRO del
+// bloque nativo: sin estos mocks, el modulo real intentaria el bridge
+// nativo de la WebView y fallaria en jsdom.
+vi.mock('@capacitor/status-bar', () => ({
+	StatusBar: { setBackgroundColor: (...args: unknown[]) => estadoMock.statusBarMock(...args) }
+}));
+
+vi.mock('@capacitor/app', () => ({
+	App: {
+		addListener: () => Promise.resolve({ remove: () => Promise.resolve() }),
+		minimizeApp: () => Promise.resolve()
+	}
+}));
+
 // virtual:pwa-register lo importa el layout dentro de onMount con
 // import() dinamico; sin el mock el build del modulo virtual falla en
 // el entorno de Vitest.
@@ -96,10 +111,11 @@ vi.mock('virtual:pwa-register', () => ({
 
 import Layout from './+layout.svelte';
 
-// Perfil valido cualquiera: el $effect del layout hace goto si la ruta
-// no es '/', asi que pasamos data con perfil y pathname '/' para que no
-// redirija. El shape minimo es lo unico que el layout mira (testea
-// `data?.perfil`); el contenido real se valida en bootstrap.test.ts.
+// Perfil valido cualquiera: el $effect del layout redirige a /onboarding
+// solo cuando no hay perfil; con perfil presente ninguna ruta redirige
+// (los deep links llegan a su destino). El shape minimo es lo unico que
+// el layout mira (testea `data?.perfil`); el contenido real se valida
+// en bootstrap.test.ts.
 const perfilMinimo = {
 	id: 1 as const,
 	nombre: 'Test',
@@ -125,7 +141,10 @@ const perfilMinimo = {
 	fecha_primera_sesion: null
 };
 
-function montar(pathname: '/' | '/biblioteca' | '/progreso' | '/config') {
+function montar(
+	pathname: '/' | '/biblioteca' | '/progreso' | '/perfil',
+	perfil: typeof perfilMinimo | null = perfilMinimo
+) {
 	// Mutar pathname antes del mount: el layout hace
 	// `currentPath = $derived(page.url.pathname)` y el objeto `page` se
 	// evalua en el momento del mount. Re-montamos en cada test (no
@@ -140,7 +159,7 @@ function montar(pathname: '/' | '/biblioteca' | '/progreso' | '/config') {
 	const instancia = mount(Layout, {
 		target: document.body,
 		props: {
-			data: { perfil: perfilMinimo },
+			data: { perfil },
 			children
 		}
 	});
@@ -155,6 +174,8 @@ describe('Barra de pestanas (+layout.svelte)', () => {
 		document.body.innerHTML = '';
 		estadoMock.gotoMock.mockReset();
 		estadoMock.sonarMock.mockReset();
+		estadoMock.statusBarMock.mockReset();
+		estadoMock.esPlataformaNativa = false;
 	});
 
 	afterEach(() => {
@@ -205,6 +226,27 @@ describe('Barra de pestanas (+layout.svelte)', () => {
 		expect(activos[0].getAttribute('aria-label')).toBe('Ejercicios seleccionada');
 	});
 
+	it('en /perfil la cuarta pestaña lleva "Perfil seleccionada"', () => {
+		instancia = montar('/perfil');
+		const activos = Array.from(
+			document.body.querySelectorAll<HTMLButtonElement>(
+				'nav[aria-label="Navegación principal"] button'
+			)
+		).filter((b) => b.getAttribute('aria-label')?.endsWith(' seleccionada'));
+		expect(activos.length).toBe(1);
+		expect(activos[0].getAttribute('aria-label')).toBe('Perfil seleccionada');
+	});
+
+	it('con perfil en /perfil no redirige (los deep links llegan a su destino)', () => {
+		instancia = montar('/perfil');
+		expect(estadoMock.gotoMock).not.toHaveBeenCalled();
+	});
+
+	it('sin perfil redirige a /onboarding con replaceState', () => {
+		instancia = montar('/perfil', null);
+		expect(estadoMock.gotoMock).toHaveBeenCalledWith('/onboarding', { replaceState: true });
+	});
+
 	it('el aria-label nunca lleva la palabra "pestaña" (para no duplicarse con el roledescription)', () => {
 		instancia = montar('/');
 		const botones = Array.from(
@@ -222,5 +264,103 @@ describe('Barra de pestanas (+layout.svelte)', () => {
 		instancia = montar('/');
 		const nav = document.body.querySelector('nav');
 		expect(nav?.getAttribute('aria-label')).toBe('Navegación principal');
+	});
+
+	it('la region global #live-assertive conserva role="alert" y aria-live="assertive"', () => {
+		instancia = montar('/');
+		const region = document.body.querySelector('#live-assertive');
+		expect(region?.getAttribute('role')).toBe('alert');
+		expect(region?.getAttribute('aria-live')).toBe('assertive');
+	});
+});
+
+describe('Tinte de la barra de estado (+layout.svelte)', () => {
+	let instancia: ReturnType<typeof mount> | null = null;
+
+	beforeEach(() => {
+		document.body.innerHTML = '';
+		estadoMock.statusBarMock.mockReset();
+		estadoMock.esPlataformaNativa = false;
+	});
+
+	afterEach(() => {
+		if (instancia) unmount(instancia);
+		instancia = null;
+	});
+
+	it('en plataforma nativa tine la barra con el color de superficie', async () => {
+		estadoMock.esPlataformaNativa = true;
+		instancia = montar('/');
+		// onMount es async: el import dinamico del plugin resuelve en un
+		// tick posterior al flushSync, por eso se espera el mock.
+		await vi.waitFor(() => {
+			expect(estadoMock.statusBarMock).toHaveBeenCalledWith({ color: '#0f1413' });
+		});
+	});
+
+	it('en web no tine la barra de estado', async () => {
+		estadoMock.esPlataformaNativa = false;
+		instancia = montar('/');
+		await flushSync();
+		expect(estadoMock.statusBarMock).not.toHaveBeenCalled();
+	});
+});
+
+describe('Guardia de view transitions (+layout.svelte)', () => {
+	let instancia: ReturnType<typeof mount> | null = null;
+
+	const matchMediaOriginal = window.matchMedia;
+
+	// La guardia JS de onNavigate no se toca en este cambio: estas tres
+	// rutas la fijan para que las reglas CSS nuevas no la contradigan.
+	function ultimoCallbackOnNavigate(): (nav: unknown) => unknown {
+		const llamadas = estadoMock.onNavigateMock.mock.calls;
+		return llamadas[llamadas.length - 1]?.[0] as (nav: unknown) => unknown;
+	}
+
+	function conMatchMedia(matches: boolean) {
+		window.matchMedia = ((consulta: string) =>
+			({
+				matches: matches ? consulta.includes('prefers-reduced-motion') : false,
+				media: consulta,
+				onchange: null,
+				addListener: () => {},
+				removeListener: () => {},
+				addEventListener: () => {},
+				removeEventListener: () => {},
+				dispatchEvent: () => false
+			}) as MediaQueryList) as typeof window.matchMedia;
+	}
+
+	afterEach(() => {
+		if (instancia) unmount(instancia);
+		instancia = null;
+		window.matchMedia = matchMediaOriginal;
+		delete (document as { startViewTransition?: unknown }).startViewTransition;
+	});
+
+	it('sin soporte de view transitions omite la transicion', () => {
+		instancia = montar('/');
+		// jsdom no implementa startViewTransition: la guardia corta.
+		expect(ultimoCallbackOnNavigate()({})).toBeUndefined();
+	});
+
+	it('con prefers-reduced-motion omite la transicion aunque haya soporte', () => {
+		instancia = montar('/');
+		const stub = vi.fn();
+		(document as { startViewTransition?: unknown }).startViewTransition = stub;
+		conMatchMedia(true);
+		expect(ultimoCallbackOnNavigate()({ complete: Promise.resolve() })).toBeUndefined();
+		expect(stub).not.toHaveBeenCalled();
+	});
+
+	it('con soporte y movimiento permitido llama a startViewTransition', () => {
+		instancia = montar('/');
+		const stub = vi.fn();
+		(document as { startViewTransition?: unknown }).startViewTransition = stub;
+		conMatchMedia(false);
+		const resultado = ultimoCallbackOnNavigate()({ complete: Promise.resolve() });
+		expect(resultado).toBeInstanceOf(Promise);
+		expect(stub).toHaveBeenCalledOnce();
 	});
 });
