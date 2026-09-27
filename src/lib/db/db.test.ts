@@ -4,7 +4,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import type { Perfil, EstadoEjercicio, Zona, SesionCompletada, RegistroDolor } from '$lib/motor/schema';
 import { db, generarId } from './db';
 import { obtenerPerfil, guardarPerfil, actualizarPerfil, marcarPrimeraSesion, borrarPerfil, restablecerBase } from './perfil';
-import { obtenerEstadosTodos, obtenerEstado, obtenerEstadosBloqueados, actualizarFechaUltimoUso, bloquearEjercicio, marcarResuelto, reprogramarRevision, guardarEstado } from './estado';
+import { obtenerEstadosTodos, obtenerEstado, obtenerEstadosBloqueados, actualizarFechaUltimoUso, bloquearEjercicio, ampliarBloqueo, marcarResuelto, reprogramarRevision, guardarEstado } from './estado';
 import { obtenerHistorial, obtenerUltimaSesion, cerrarSesion } from './sesiones';
 import { obtenerHistorialDolor } from './dolor';
 
@@ -348,6 +348,32 @@ describe('bloquearEjercicio', () => {
 		expect(estado?.bloqueado).toBe(false);
 		const historial = await db.historial_dolor.toArray();
 		expect(historial).toHaveLength(0);
+	});
+});
+
+describe('ampliarBloqueo', () => {
+	it('amplia razon_bloqueo y actualiza la unica entrada de historial', async () => {
+		await db.estado_ejercicios.put(estadoEjemplo);
+		await bloquearEjercicio('ej-001', ['rodillas'], 10000);
+		await ampliarBloqueo('ej-001', ['rodillas', 'cadera'], 20000);
+
+		const estado = await obtenerEstado('ej-001');
+		expect(estado?.razon_bloqueo).toBe('Dolor en rodillas, cadera');
+		const historial = await db.historial_dolor.where('ejercicio_id').equals('ej-001').toArray();
+		expect(historial).toHaveLength(1);
+		expect(historial[0].zonas).toEqual(['rodillas', 'cadera']);
+	});
+
+	it('sin entrada previa en el historial, crea la entrada (no se pierde el registro)', async () => {
+		await db.estado_ejercicios.put(estadoEjemplo);
+		await ampliarBloqueo('ej-001', ['rodillas', 'cadera'], 20000);
+
+		const estado = await obtenerEstado('ej-001');
+		expect(estado?.razon_bloqueo).toBe('Dolor en rodillas, cadera');
+		const historial = await db.historial_dolor.where('ejercicio_id').equals('ej-001').toArray();
+		expect(historial).toHaveLength(1);
+		expect(historial[0].zonas).toEqual(['rodillas', 'cadera']);
+		expect(historial[0].estado).toBe('bloqueado');
 	});
 });
 

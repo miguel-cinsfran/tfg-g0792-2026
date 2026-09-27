@@ -2,14 +2,38 @@
 <html lang="es">
 	<head>
 		<meta charset="utf-8" />
-		<!-- Sin zoom de pellizco: escala la pantalla como una foto, sin
-		     reflow, y desorienta. Agrandar letras va por el tamaño de
-		     fuente del sistema, que el WebView aplica con reflow. -->
-		<meta
-			name="viewport"
-			content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"
-		/>
-		<meta name="theme-color" content="#0f1413" />
+		<!-- Zoom de pellizco permitido: quien necesita más grande acerca
+		     el contenido; el tamaño de fuente del sistema sigue aplicando
+		     reflow. -->
+		<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+		<meta name="theme-color" content="#F7F4EE" />
+		<script>
+			// Duplica la regla de resolución de src/lib/aspecto/aspecto.ts para pintar el tema antes del bundle.
+			try {
+				var preferenciaAspecto = localStorage.getItem('aspecto');
+				if (
+					preferenciaAspecto !== 'sistema' &&
+					preferenciaAspecto !== 'claro' &&
+					preferenciaAspecto !== 'oscuro' &&
+					preferenciaAspecto !== 'contraste'
+				) {
+					preferenciaAspecto = 'sistema';
+				}
+				var temaAspecto =
+					preferenciaAspecto === 'sistema'
+						? window.matchMedia('(prefers-color-scheme: dark)').matches
+							? 'oscuro'
+							: 'claro'
+						: preferenciaAspecto;
+				document.documentElement.setAttribute('data-tema', temaAspecto);
+				var colorTema =
+					temaAspecto === 'contraste' ? '#000000' : temaAspecto === 'oscuro' ? '#1C1917' : '#F7F4EE';
+				var metaTema = document.querySelector('meta[name="theme-color"]');
+				if (metaTema) metaTema.setAttribute('content', colorTema);
+			} catch (e) {
+				// Sin storage o sin matchMedia queda el claro por defecto.
+			}
+		</script>
 		<link rel="manifest" href="%sveltekit.assets%/manifest.json" />
 		<link rel="icon" href="%sveltekit.assets%/favicon.png" type="image/png" />
 		<link rel="apple-touch-icon" href="%sveltekit.assets%/iconos/icon-192.png" />

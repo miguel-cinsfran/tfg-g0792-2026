@@ -14,6 +14,7 @@ import {
 	cancelar,
 	descartar,
 	registrarDolor,
+	corregirDolor,
 	sustituir,
 	cerrar,
 } from './sesion.svelte';
@@ -96,6 +97,10 @@ describe('sesion store - transiciones sin sesion lanzan Error', () => {
 		expect(() => registrarDolor(['hombros'], AHORA)).toThrow('No hay sesión activa');
 	});
 
+	it('corregirDolor sin sesion lanza', () => {
+		expect(() => corregirDolor(['hombros'], [], AHORA)).toThrow('No hay sesión activa');
+	});
+
 	it('sustituir sin sesion lanza', () => {
 		expect(() => sustituir(ejercicioBase({ id: 'ej-alt' }), [], AHORA)).toThrow('No hay sesión activa');
 	});
@@ -113,6 +118,25 @@ describe('sesion store - transiciones sin sesion lanzan Error', () => {
 
 	it('cerrar sin sesion lanza', async () => {
 		await expect(cerrar(AHORA)).rejects.toThrow('No hay sesión activa');
+	});
+});
+
+describe('sesion store - dolor del ejercicio en curso', () => {
+	it('registrarDolor acumula sobre el mismo reporte sin duplicar', () => {
+		comenzar(plan3Ejercicios(), 'FULL_BODY' as TipoSesion, AHORA);
+		registrarDolor(['hombros'], AHORA);
+		registrarDolor(['hombros', 'codos'], AHORA);
+		const sesion = obtenerSesion()!;
+		expect(sesion.ejecutados[0].zonas_dolor_reportadas).toEqual(['hombros', 'codos']);
+	});
+
+	it('corregirDolor quita las zonas que el reporte ya no confirma y agrega las nuevas', () => {
+		comenzar(plan3Ejercicios(), 'FULL_BODY' as TipoSesion, AHORA);
+		registrarDolor(['hombros', 'codos'], AHORA);
+		// Segunda confirmacion del mismo reporte: quita codos, agrega rodillas.
+		corregirDolor(['hombros', 'codos'], ['hombros', 'rodillas'], AHORA);
+		const sesion = obtenerSesion()!;
+		expect(sesion.ejecutados[0].zonas_dolor_reportadas).toEqual(['hombros', 'rodillas']);
 	});
 });
 

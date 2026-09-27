@@ -26,6 +26,7 @@ const PerfilSchema = z.object({
 	objetivo: z.enum(OBJETIVOS),
 	nivel_experiencia: z.enum(NIVELES),
 	evaluacion_por_patron: z.record(z.enum(PATRONES_EVALUABLES), z.enum(NIVELES)),
+	grupos_desde_base: z.array(z.enum(PATRONES_EVALUABLES)).optional(),
 	ajuste_desbalance_activo: AjusteDesbalanceSchema.nullable(),
 	fecha_evaluacion: z.number(),
 	dias_semana: z.number().min(1).max(5),

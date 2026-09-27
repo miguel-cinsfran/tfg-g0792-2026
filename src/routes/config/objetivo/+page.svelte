@@ -10,14 +10,13 @@
 	import { OBJETIVOS, type Objetivo, type Perfil } from '$lib/motor/schema';
 	import { etiquetaObjetivo, descripcionObjetivo } from '$lib/catalogo/etiquetas';
 	import { M } from '$lib/mensajes/ui';
-	import Boton from '$lib/components/Boton.svelte';
+	import GrupoSeleccion from '$lib/components/GrupoSeleccion.svelte';
 	import Cabecera from '$lib/components/Cabecera.svelte';
 
 	let heading = $state<HTMLElement>();
 	let perfil = $state<Perfil | null | undefined>(undefined);
 	let errorLectura = $state<string | null>(null);
-	let objetivoSeleccionado = $state<Objetivo | null>(null);
-	let guardando = $state(false);
+	let objetivoElegido = $state<Objetivo | null>(null);
 	let errorEscritura = $state<string | null>(null);
 
 	$effect(() => {
@@ -27,36 +26,41 @@
 		);
 	});
 
-	// El radio arranca preseleccionado con el objetivo actual del perfil.
-	let prellenado = false;
+	// La elección arranca con el objetivo actual. Cada cambio se aplica
+	// al instante, sin Guardar ni Cancelar: se sale con el Atrás.
 	$effect(() => {
-		if (prellenado) return;
 		if (perfil === null || perfil === undefined) return;
-		objetivoSeleccionado = perfil.objetivo;
-		prellenado = true;
+		if (objetivoElegido === null) objetivoElegido = perfil.objetivo;
 	});
 
 	$effect(() => {
 		enfocarPrincipal(heading);
 	});
 
-	async function guardar() {
-		if (objetivoSeleccionado === null) return;
-		guardando = true;
+	// Solo dispara ante un cambio real: el prellenado iguala al perfil y
+	// la suscripción lo vuelve a igualar tras aplicar.
+	$effect(() => {
+		const elegido = objetivoElegido;
+		if (elegido === null || perfil === null || perfil === undefined) return;
+		if (elegido === perfil.objetivo) return;
+		void aplicar(elegido);
+	});
+
+	async function aplicar(objetivo: Objetivo) {
 		errorEscritura = null;
 		try {
-			await actualizarPerfil({ objetivo: objetivoSeleccionado });
-			avisar(M.configuracion.objetivo.avisoGuardado, 'exito');
-			goto(resolve('/config'));
+			await actualizarPerfil({ objetivo });
+			avisar(M.configuracion.objetivo.avisoAplicado(etiquetaObjetivo(objetivo)), 'exito');
 		} catch (e) {
+			// Vuelve a lo guardado: la tarjeta muestra lo elegido, no lo
+			// que quedó.
+			objetivoElegido = perfil?.objetivo ?? null;
 			errorEscritura = mensajePara((e as { code?: string }).code ?? CODIGO_ESCRITURA_FALLIDA);
 			anunciarAssertive(errorEscritura);
-		} finally {
-			guardando = false;
 		}
 	}
 
-	function cancelar() {
+	function volver() {
 		goto(resolve('/config'));
 	}
 </script>
@@ -64,36 +68,31 @@
 <svelte:head><title>{M.configuracion.objetivo.titulo}</title></svelte:head>
 
 {#if errorLectura !== null}
-	<Cabecera onclick={cancelar}>
+	<Cabecera onclick={volver}>
 		<h1 tabindex="-1" bind:this={heading}>{M.configuracion.objetivo.titulo}</h1>
 	</Cabecera>
 	<p>{errorLectura}</p>
-{:else if perfil === undefined}
-	<Cabecera onclick={cancelar}>
+{:else if perfil === undefined || objetivoElegido === null}
+	<Cabecera onclick={volver}>
 		<h1 tabindex="-1" bind:this={heading}>{M.configuracion.objetivo.titulo}</h1>
 	</Cabecera>
 	<p>{M.configuracion.objetivo.cargando}</p>
 {:else}
-	<Cabecera onclick={cancelar}>
+	<Cabecera onclick={volver}>
 		<h1 tabindex="-1" bind:this={heading}>{M.configuracion.objetivo.titulo}</h1>
 	</Cabecera>
-	<fieldset>
-		<legend>{M.configuracion.objetivo.seleccionaTuObjetivo}</legend>
-		{#each OBJETIVOS as obj (obj)}
-			<div>
-				<input type="radio" id="obj-{obj}" name="objetivo" value={obj} bind:group={objetivoSeleccionado} />
-				<label for="obj-{obj}">
-					<strong>{etiquetaObjetivo(obj)}</strong>
-					<span>: {descripcionObjetivo(obj)}</span>
-				</label>
-			</div>
-		{/each}
-	</fieldset>
+	<GrupoSeleccion
+		leyenda={M.configuracion.objetivo.eligeTuObjetivo}
+		nombre="objetivo"
+		opciones={OBJETIVOS.map((obj) => ({
+			valor: obj,
+			etiqueta: etiquetaObjetivo(obj),
+			descripcion: descripcionObjetivo(obj)
+		}))}
+		bind:valor={objetivoElegido}
+		id="grupo-objetivo-config"
+	/>
 	{#if errorEscritura !== null}
 		<p>{errorEscritura}</p>
 	{/if}
-	<div class="mt-6 flex gap-4">
-		<Boton variante="secundario" onclick={cancelar} deshabilitado={guardando}>{M.configuracion.cancelar}</Boton>
-		<Boton variante="primario" onclick={guardar} deshabilitado={guardando || objetivoSeleccionado === null}>{M.configuracion.guardar}</Boton>
-	</div>
 {/if}

@@ -10,7 +10,13 @@
 	import {
 		armarParcheDatos,
 		inputsDesdePerfil,
-		validarDatosEditados
+		validarNombre,
+		validarEdad,
+		validarPeso,
+		validarAlturaCm,
+		MENSAJE_NOMBRE_VACIO,
+		MENSAJE_EDAD_INVALIDA,
+		MENSAJE_PESO_INVALIDO
 	} from '$lib/onboarding/validacion-datos';
 	import type { Perfil } from '$lib/motor/schema';
 	import { M } from '$lib/mensajes/ui';
@@ -42,7 +48,8 @@
 	});
 
 	// Los campos arrancan con los datos actuales; el usuario edita sobre
-	// ellos. La edad se muestra como edad, no como anio de nacimiento.
+	// ellos. La edad se muestra como edad, no como año de nacimiento, y
+	// la altura en centímetros enteros, igual que en el alta.
 	let prellenado = false;
 	$effect(() => {
 		if (prellenado) return;
@@ -51,7 +58,7 @@
 		nombreEdit = inputs.nombre;
 		edadEdit = inputs.edad;
 		pesoEdit = inputs.peso;
-		alturaEdit = inputs.altura;
+		alturaEdit = perfil.altura_cm != null ? String(perfil.altura_cm) : '';
 		prellenado = true;
 	});
 
@@ -60,25 +67,27 @@
 	});
 
 	async function guardar() {
-		const resultado = validarDatosEditados(nombreEdit, edadEdit, pesoEdit, alturaEdit);
-		errorNombreEdit = resultado.errores.nombre;
-		errorEdadEdit = resultado.errores.edad;
-		errorPesoEdit = resultado.errores.peso;
-		errorAlturaEdit = resultado.errores.altura;
+		const nombreOk = validarNombre(nombreEdit);
+		const edadOk = validarEdad(edadEdit);
+		const pesoOk = validarPeso(pesoEdit);
+		const alturaOk = validarAlturaCm(alturaEdit);
+		errorNombreEdit = nombreOk ? null : MENSAJE_NOMBRE_VACIO;
+		errorEdadEdit = edadOk ? null : MENSAJE_EDAD_INVALIDA;
+		errorPesoEdit = pesoOk ? null : MENSAJE_PESO_INVALIDO;
+		errorAlturaEdit = alturaOk ? null : M.onboarding.datos.errorAlturaCm;
 
-		if (!resultado.valido) {
+		if (!nombreOk || !edadOk || !pesoOk || !alturaOk) {
 			// Foco al primer campo con error; el boton siempre es pulsable
 			// (un disabled no recibe foco y TalkBack lo salta).
 			anunciarAssertive(M.configuracion.datos.avisoValidacion);
-			if (resultado.primerError !== null) {
-				const id = {
-					nombre: 'datos-nombre',
-					edad: 'datos-edad',
-					peso: 'datos-peso',
-					altura: 'datos-altura'
-				}[resultado.primerError];
-				document.getElementById(id)?.focus();
-			}
+			const id = !nombreOk
+				? 'datos-nombre'
+				: !edadOk
+					? 'datos-edad'
+					: !pesoOk
+						? 'datos-peso'
+						: 'datos-altura';
+			document.getElementById(id)?.focus();
 			return;
 		}
 
@@ -185,15 +194,15 @@
 						<div class="flex items-center gap-2">
 							<input
 								type="text"
-								inputmode="decimal"
-								pattern={'[0-9]+([.,][0-9]{1,2})?'}
+								inputmode="numeric"
+								pattern="[0-9]*"
 								autocomplete="off"
 								id="datos-altura"
 								bind:value={alturaEdit}
 								aria-invalid={errorAlturaEdit !== null ? 'true' : undefined}
 								aria-describedby={errorAlturaEdit !== null ? M.configuracion.datos.campos.unidadAltura + ' ' + M.configuracion.datos.campos.errorAltura : M.configuracion.datos.campos.unidadAltura}
 							/>
-							<span id="unidad-datos-altura" class="text-text-secondary shrink-0">m</span>
+							<span id="unidad-datos-altura" class="text-text-secondary shrink-0">cm</span>
 						</div>
 						{#if errorAlturaEdit}
 							<p id="error-datos-altura" class="mt-1 text-sm text-error">{errorAlturaEdit}</p>
@@ -205,9 +214,13 @@
 		{#if errorEscritura !== null}
 			<p class="mt-4">{errorEscritura}</p>
 		{/if}
-		<div class="mt-6 flex flex-col gap-2">
-			<Boton variante="secundario" onclick={cancelar} deshabilitado={guardando}>{M.configuracion.cancelar}</Boton>
-			<Boton variante="primario" type="submit" deshabilitado={guardando}>{M.configuracion.guardar}</Boton>
+		<div class="mt-6 flex gap-4">
+			<div class="min-w-0 flex-1">
+				<Boton variante="secundario" onclick={cancelar} deshabilitado={guardando}>{M.configuracion.cancelar}</Boton>
+			</div>
+			<div class="min-w-0 flex-1">
+				<Boton variante="primario" type="submit" deshabilitado={guardando}>{M.configuracion.guardar}</Boton>
+			</div>
 		</div>
 	</form>
 {/if}

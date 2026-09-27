@@ -7,7 +7,45 @@
 // palabra "RIR" esta prohibida), numeros en cifras. Los mensajes de
 // ERROR viven aparte, en lib/errores/mensajes.ts.
 
+import type { CategoriaImc } from '$lib/salud/imc';
+import type { Nivel } from '$lib/motor/schema';
+import type { ResultadoEvaluacion, GrupoEvaluable } from '$lib/motor/evaluacion';
+
 export type Unidad = 'repeticiones' | 'segundos';
+
+// Record y no cadena de ternarios: si manana el calculo del IMC gana una
+// categoria, el compilador exige el texto en vez de devolver "normal".
+const CATEGORIA_IMC: Record<CategoriaImc, string> = {
+	bajo_peso: 'bajo peso',
+	normal: 'normal',
+	sobrepeso: 'sobrepeso',
+	obesidad: 'obesidad',
+};
+
+// Si se afloja a Record<string, string>, un patron nuevo del motor se
+// lee como "undefined" en la frase del punto flojo.
+const PATRON_TEXTO: Record<keyof ResultadoEvaluacion['evaluacion_por_patron'], string> = {
+	PUSH: 'empujar (flexiones)',
+	PULL: 'tirar (remo)',
+	LEGS: 'piernas (sentadillas)',
+	CORE: 'abdomen (plancha)',
+};
+
+// Nombre de cada prueba del alta en la lista del resumen.
+const ETIQUETA_GRUPO_PRUEBA: Record<GrupoEvaluable, string> = {
+	PUSH: 'Empujar',
+	PULL: 'Tirar',
+	LEGS: 'Piernas',
+	CORE: 'Abdomen',
+};
+
+// Sustantivo contable de cada prueba ("12 flexiones", "45 segundos de plancha").
+const UNIDAD_PRUEBA: Record<GrupoEvaluable, string> = {
+	PUSH: 'flexiones',
+	PULL: 'repeticiones de remo',
+	LEGS: 'sentadillas',
+	CORE: 'segundos de plancha',
+};
 
 /** Duracion en segundos a texto en espanol. Minutos exactos: sin "0 segundos". */
 export function formatearTiempo(segundos: number): string {
@@ -38,8 +76,21 @@ export function formatearDias(n: number): string {
 	return `${n} ${n === 1 ? 'día' : 'días'}`;
 }
 
-export const M = {
-	sesion: {
+/** Numero en palabras para la bienvenida a las pruebas (2 a 4). */
+const NUMERO_PREGUNTAS: Record<number, string> = {
+	2: 'dos',
+	3: 'tres',
+	4: 'cuatro',
+};
+
+/** Decimal con coma para lo visible (IMC). Intl con locale 'es' usa la
+coma como separador (MDN: Intl.NumberFormat). */
+const FORMATO_DECIMAL_ES = new Intl.NumberFormat('es', {
+	minimumFractionDigits: 1,
+	maximumFractionDigits: 1,
+});
+
+export const M = {	sesion: {
 		botonSerieTerminada: 'Terminar serie',
 		botonContinuar: 'Continuar',
 		botonComoHacer: 'Cómo se hace',
@@ -50,20 +101,37 @@ export const M = {
 		sostenerEtiqueta: 'Sosteniendo',
 
 		confirmacionPostSerie: (valor: number, unidad: Unidad) =>
-			`Quedó registrado: ${formatearCantidad(valor, unidad)}.`,
+			`Registrado: ${formatearCantidad(valor, unidad)}.`,
 		botonAjustarReps: 'Corregir cantidad',
 		anuncioSiguienteSerie: (s: number, total: number, nombre: string) =>
 			`Serie ${s} de ${total} de ${nombre}.`,
+		// Se anuncia al reanudar una sesión que quedó en el descanso: la
+		// app se cerró mientras corría y el descanso ya concluyó.
+		tiempoDescansoConcluido: 'Tiempo de descanso concluido',
 
 		tituloReanudar: 'Tienes una sesión sin terminar',
 		textoReanudar:
-			'La sesión quedó guardada. ¿Sigues donde quedaste o empiezas una nueva?',
-		botonReanudar: 'Seguir donde quedaste',
+			'La sesión se guardó. Puedes seguir donde estabas o empezar una nueva.',
+		botonReanudar: 'Seguir donde estabas',
 		botonEmpezarDeNuevo: 'Empezar una sesión nueva',
 		anuncioReanudada: 'Sesión retomada',
 
+		// Terminar la sesión antes de su final: con series hechas se
+		// cierra por el camino normal; sin ellas se descarta sin
+		// guardar nada, a propósito.
+		botonTerminarSesion: 'Terminar la sesión',
+		tituloTerminarSesion: '¿Terminar la sesión ahora?',
+		textoTerminarConSeries:
+			'Se guarda lo que hiciste hasta aquí y la sesión queda cerrada.',
+		textoTerminarSinSeries:
+			'Todavía no completaste ninguna serie, así que no se guarda nada.',
+		botonConfirmarTerminar: 'Sí, terminar',
+		botonSeguirEntrenando: 'Seguir entrenando',
+		anuncioSesionDescartada: 'Sesión descartada. No se guardó nada.',
+
 		avisoChequeo:
-			'Hoy toca el chequeo de la semana. Al terminar cada ejercicio hay una pregunta corta sobre el esfuerzo; con eso se ajusta tu plan.',
+			'Hoy corresponde la revisión semanal. Al terminar cada ejercicio hay una pregunta corta sobre el esfuerzo. Con esa respuesta se ajusta tu plan.',
+		anuncioPatronesSinPool: 'Hoy no hay ejercicios para algunos patrones',
 
 		progresoEjercicio: (n: number, total: number) => `Ejercicio ${n} de ${total}`,
 		progresoSerie: (s: number, total: number) => `Serie ${s} de ${total}`,
@@ -77,17 +145,15 @@ export const M = {
 		},
 
 		tituloPostSerie: (s: number, total: number) => `Serie ${s} de ${total} terminada`,
-		cuantasHiciste: (unidad: Unidad) =>
-			unidad === 'segundos' ? '¿Cuántos segundos sostuviste?' : '¿Cuántas repeticiones hiciste?',
 		preguntaEsfuerzo: (unidad: Unidad) =>
 			unidad === 'segundos'
-				? 'Para ajustar tu plan: ¿cuánto más habrías aguantado?'
+				? 'Para ajustar tu plan: ¿cuánto más habrías podido sostener?'
 				: 'Para ajustar tu plan: ¿cuántas más habrías podido hacer?',
 		esfuerzoMuchas: (unidad: Unidad) => (unidad === 'segundos' ? 'Mucho más' : 'Muchas más'),
 		esfuerzoAlgunas: (unidad: Unidad) => (unidad === 'segundos' ? 'Bastante más' : 'Algunas más'),
-		esfuerzoPocas: (unidad: Unidad) => (unidad === 'segundos' ? 'Un poco más' : 'Pocas más'),
-		esfuerzoNinguna: 'Nada, llegué al tope',
-		errorPostSerieSinEsfuerzo: 'Elige cuánto esfuerzo te quedó para continuar.',
+		esfuerzoPocas: (unidad: Unidad) => (unidad === 'segundos' ? 'Ligeramente más' : 'Pocas más'),
+		esfuerzoNinguna: 'Ninguna más',
+		errorPostSerieSinEsfuerzo: 'Elige una opción de esfuerzo para continuar.',
 
 		// Un anuncio por transicion: encadenados se pisan en la region live.
 		anuncioSerieConDescanso: (s: number, total: number, g: number, G: number, descanso: number) =>
@@ -99,14 +165,14 @@ export const M = {
 
 		sugerenciaProgresionTitulo: 'Conviene subir la dificultad',
 		sugerenciaProgresionPregunta: (nombre: string) =>
-			`${nombre} te está quedando fácil. ¿Subes a una variante más exigente para la próxima sesión?`,
+			`${nombre} te resulta fácil. ¿Pasas a una variante más exigente en la próxima sesión?`,
 		sugerenciaProgresionBotonSi: 'Sí, subir',
-		sugerenciaProgresionBotonNo: 'Quedarme aquí',
-		sugerenciaProgresionError: 'No se pudo aplicar el cambio. Prueba quedarte donde estás por ahora.',
+		sugerenciaProgresionBotonNo: 'Seguir en este nivel',
+		sugerenciaProgresionError: 'No se pudo aplicar el cambio. Sigue en el nivel actual por ahora.',
 		anuncioSugerencia: (nombre: string) =>
 			`Conviene subir la dificultad de ${nombre}.`,
 		anuncioProgresionAplicada: (nombre: string) =>
-			`Listo. ${nombre} entra en juego desde tu próxima sesión.`,
+			`${nombre} estará en tu próxima sesión.`,
 
 		titulo: 'Sesión de entrenamiento',
 		cargando: 'Cargando...',
@@ -118,22 +184,36 @@ export const M = {
 		botonInterrumpirSesion: 'Interrumpir la sesión',
 		botonVolverDescanso: 'Volver al descanso',
 		botonVolverAlEjercicio: 'Volver al ejercicio',
-		botonOmitirPatron: 'Omitir este patrón hoy',
-		botonRevisarZonas: 'Revisar mis zonas con dolor',
+		botonOmitirPatron: 'Saltar este ejercicio hoy',
+		// Polite, no assertive: el foco ya aterriza en el ejercicio
+		// siguiente y el lector lo lee; este anuncio llega despues.
+		patronOmitido: 'Ejercicio saltado',
+		botonRevisarZonas: 'Revisar tus zonas con dolor',
 		errorPlanVacio:
 			'No hay ejercicios seguros para tus zonas con dolor actuales. Revisa tus zonas para desbloquear ejercicios.',
+		errorSinPerfil: 'No hay perfil. Completa el registro para empezar.',
 		botonContinuarCambio: 'Continuar con el cambio',
 		descansoTitulo: 'Descanso',
+		// Lo que viene tras el descanso: la serie siguiente o el final.
+		lineaDespues: (nombre: string | null, serie: number, total: number) =>
+			nombre === null
+				? 'Después: terminas la sesión'
+				: `Después: ${nombre}, serie ${serie} de ${total}`,
+		botonSumarDescanso: '+30 segundos',
+		anuncioDescansoExtendido: (segundos: number) => `Descanso: ${formatearTiempo(segundos)}`,
+		corregirTitulo: 'Corregir cantidad',
 		ejerciciosHechosTitulo: 'Ejercicios que hiciste',
 		proximaSesionTitulo: 'Tu próxima sesión',
 		tituloComoHacer: (nombre: string) => `Cómo hacer ${nombre}`,
-		dolorZonasTitulo: 'Zonas con dolor',
 		dolorZonasLeyenda: 'Marca todas las zonas donde sientes dolor',
+		errorSinZonasDolor: 'Marca al menos una zona donde sientes dolor para continuar.',
 		dolorSustitutoTitulo: (actual: string, sustituto: string) =>
-			`Cambiamos ${actual} por ${sustituto}`,
+			`Cambio: ${actual} por ${sustituto}`,
 		dolorSustitutoCuerpo: (zonas: string) =>
 			`Trabaja el mismo patrón sin pasar por ${zonas}.`,
-		dolorSinReemplazoTitulo: 'No hay un reemplazo seguro',
+		anuncioBloqueadoPorDolor: 'Ejercicio bloqueado por dolor',
+		anuncioContinuarSustituto: (nombre: string) => `Sigues con ${nombre}`,
+		dolorSinReemplazoTitulo: 'No hay otro ejercicio que no cargue esa zona',
 		rachaCierreSemanaCompleta: (n: number) =>
 			`¡Semana completa! Racha: ${formatearSemanas(n)}`,
 		rachaCierre: (n: number) => `Racha: ${formatearSemanas(n)}`,
@@ -142,11 +222,11 @@ export const M = {
 	},
 
 	ayuda: {
-		titulo: 'Cómo te avisa la app',
+		titulo: 'Ayuda',
 		vibracionTitulo: 'Vibraciones',
 		vibracionTexto:
-			'Una vibración larga marca un cambio: comenzó un ejercicio, terminaste una serie o se acabó el descanso. Durante el descanso, tres vibraciones cortas seguidas avisan que faltan 3 segundos: es el momento de ponerte en posición antes de la señal final.',
-		chequeoTitulo: 'Chequeo semanal',
+			'Una vibración larga marca un cambio: empezó un ejercicio, terminaste una serie o se acabó el descanso. Durante el descanso, tres vibraciones cortas seguidas avisan que faltan 3 segundos: es el momento de ponerte en posición antes de la señal final.',
+		chequeoTitulo: 'Revisión semanal',
 		chequeoTexto:
 			'La primera sesión de la semana pregunta, al final de cada ejercicio, cuántas repeticiones más habrías podido hacer. Con eso se ajusta el plan a tu nivel real. El resto de la semana no te pregunta nada: la idea es molestarte lo menos posible.',
 		rachaTitulo: '¿Qué cuenta como racha?',
@@ -154,10 +234,13 @@ export const M = {
 			'La racha son semanas completas, no días sueltos. Una semana cuenta si entrenas los días que elegiste en tu plan. Cada día vale una vez: entrenar dos veces el mismo día no suma doble. La racha solo sube cuando termina la semana con esos días hechos. Si la semana actual está a medias, las que ya cerraste no se borran. Las sesiones interrumpidas por dolor no cuentan para la meta. En la pantalla de Progreso también ves tu mejor racha, que es la mayor cantidad de semanas seguidas que alcanzaste.',
 		sonidosTitulo: 'Sonidos',
 		sonidosTexto:
-			'Los avisos importantes suenan: cambio de pestaña, inicio de serie, fin del descanso, sesión completada y racha, entre otros. Desde Perfil puedes apagar los efectos o la música y ajustar el volumen de cada uno por separado.',
-		reanudarTitulo: 'Si la app se cierra a mitad de sesión',
+			'Los avisos importantes suenan: cambio de pestaña, al empezar una serie, fin del descanso, sesión completada y racha, entre otros. Desde Perfil puedes apagar los efectos o la música y ajustar el volumen de cada uno por separado.',
+		reanudarTitulo: 'Si la aplicación se cierra a mitad de sesión',
 		reanudarTexto:
-			'La sesión se guarda en tu teléfono a cada paso. Si Android cierra la app o la cierras sin querer, al volver a entrar la sesión te pregunta si sigues donde estabas o empiezas una nueva.',
+			'La sesión se guarda en tu teléfono a cada paso. Si Android cierra la aplicación o la cierras sin querer, al volver la aplicación te pregunta si sigues donde estabas o empiezas una nueva.',
+		nivelTitulo: 'Qué significa tu nivel',
+		nivelTexto:
+			'Tu nivel sale de tus pruebas: es el que más se repitió entre ellas. El grupo más débil tiene prioridad en tus entrenamientos.',
 	},
 
 	modal: {
@@ -179,9 +262,33 @@ export const M = {
 		extremoFacil: 'Ya estás en la variante más fácil de esta cadena.',
 		confirmarCambio: (nombre: string) =>
 			`Pasar a ${nombre}. El cambio se aplica desde la próxima sesión; la de hoy sigue igual.`,
-		cambioHecho: (nombre: string) => `Listo. ${nombre} entra en tu próxima sesión.`,
+		cambioHecho: (nombre: string) => `${nombre} entra en tu próxima sesión.`,
 		nivelDeEjercicio: (nivel: string, bloqueado: boolean) =>
 			`Nivel ${nivel}${bloqueado ? ', bloqueado por dolor' : ''}`,
+		// Segunda linea cuando el perfil deja el ejercicio fuera: la
+		// causa visible y leible por el lector.
+		fueraPorAnclaje: 'No entra en tu plan: necesita barra o anclaje',
+		fueraPorDolor: (zonas: string) => `No entra en tu plan: carga ${zonas}`,
+		// Las frases compuestas viven enteras acá: el lector las recorre
+		// de corrido, y partidas nadie puede revisar cómo suenan.
+		lineaNivel: (patron: string, nivel: Nivel) => `${patron}, nivel ${nivel}`,
+		bloqueadoPorDolor: (razon: string | null) =>
+			razon
+				? `Este ejercicio está bloqueado por dolor (${razon.toLowerCase()}).`
+				: 'Este ejercicio está bloqueado por dolor.',
+		fraseRevision: (fecha: string) => `La aplicación te pregunta si mejoró el ${fecha}.`,
+		anuncioReactivado: (nombre: string) => `${nombre} habilitado de nuevo`,
+		// Reactivación de un ejercicio bloqueado por dolor.
+		botonReactivar: 'Reactivar ahora',
+		tituloReactivar: 'Reactivar ejercicio',
+		confirmarReactivar: 'Vuelve a aparecer en tus sesiones. ¿Confirmas?',
+		botonRehabilitar: 'Sí, rehabilitar',
+		cancelar: 'Cancelar',
+		botonConfirmarCambio: 'Confirmar el cambio',
+		// Respaldo del título cuando el id no está en el catálogo.
+		tituloRespaldo: 'Ejercicio',
+		tituloNoEncontrado: 'Ejercicio no encontrado',
+		textoNoEncontrado: 'El ejercicio que pediste no está en el catálogo.',
 	},
 
 	progreso: {
@@ -197,7 +304,7 @@ export const M = {
 		sesionesTitulo: 'Sesiones',
 		historialTitulo: 'Historial de sesiones',
 		eventosDolorTitulo: 'Eventos de dolor',
-		botonIniciarPrimeraSesion: 'Iniciar primera sesión',
+		botonIniciarPrimeraSesion: 'Empezar primera sesión',
 		eventoZonas: (detalle: string) => `Zonas: ${detalle}`,
 		eventoEstado: (detalle: string) => `Estado: ${detalle}`,
 		// Fallback cuando el evento de dolor no registro zonas.
@@ -227,7 +334,7 @@ export const M = {
 			`${nombre}: ${hechas} de ${planificadas} series. Cada serie: ${valores}`,
 		// Estados vacíos del contrato de voz: impersonal y tuteo.
 		sinRacha: 'Todavía no tienes racha. Empieza esta semana.',
-		sinSesiones: 'Todavía no tienes sesiones. Empieza la primera y comienza tu racha.',
+		sinSesiones: 'Todavía no tienes sesiones. Empieza la primera. Así empieza tu racha.',
 	},
 
 	inicio: {
@@ -235,22 +342,24 @@ export const M = {
 		titulo: (sufijo: string) => `Tu entrenamiento${sufijo}`,
 		cargando: 'Cargando...',
 		botonEmpezarEntrenamiento: 'Empezar entrenamiento',
+		// Con una sesion guardada, el boton dice a donde lleva: seguir.
+		botonEmpezarEntrenamientoSesion: 'Continuar sesión',
 		botonCompletarRegistro: 'Completar el registro',
 		// Card del bloqueo por dolor.
 		ejercicioBloqueadoTitulo: 'Ejercicio bloqueado',
 		bloqueado: (ejercicio: string, zona: string) =>
 			`Hace 28 días se bloqueó ${ejercicio} por molestia en ${zona}. ¿Cómo está esa zona ahora?`,
 		zonaSinDetalle: 'alguna zona',
-		botonSinDolor: 'Sin dolor, me recuperé',
+		botonSinDolor: 'Sin dolor',
 		botonSigueMolestando: 'Sigue molestando',
-		botonLoDecidoMasTarde: 'Lo decido más tarde',
+		botonLoDecidoMasTarde: 'Más tarde',
 		atencionTitulo: 'Atención',
 		atencionTexto: 'Si el dolor sigue, consulta al médico antes de volver a entrenar.',
 		proximaSesionTitulo: 'Tu próxima sesión',
 		proximaSesionResumen: (tipo: string, ejercicios: number, duracionSegundos: number) =>
 			`${tipo}, ${ejercicios} ${ejercicios === 1 ? 'ejercicio' : 'ejercicios'}, ~${formatearTiempo(duracionSegundos)}`,
 		patronesSinPool: (patrones: string) =>
-			`Hoy no hay ejercicios disponibles para algunos patrones (${patrones}).`,
+			`Hoy no hay ejercicios de ${patrones} que no carguen una zona con dolor.`,
 		progresoTitulo: 'Progreso',
 		semanaSinEmpezar: 'Sin empezar',
 		semana: (n: number) => `Semana ${n}`,
@@ -265,32 +374,153 @@ export const M = {
 	},
 
 	onboarding: {
+		indice: {
+			titulo: 'Registro',
+			cargando: 'Cargando'
+		},
+		comun: {
+			continuar: 'Continuar'
+		},
+		datos: {
+			titulo: 'Tus datos',
+			sobreTi: 'Sobre ti',
+			medidas: 'Medidas',
+			avisoEdad: 'Si tienes 40 años o más, considera una consulta médica previa.',
+			errorAlturaCm: 'Escribe tu altura en centímetros, entre 100 y 230, o déjala vacía.'
+		},
+		objetivo: {
+			titulo: 'Tu objetivo',
+			leyenda: 'Elige tu objetivo',
+			errorSeleccion: 'Elige un objetivo para continuar.'
+		},
+		dolor: {
+			titulo: 'Zonas con dolor previo',
+			leyenda: 'Elige las zonas con dolor previo',
+			sinDolor: 'Si no te duele nada, sigue adelante sin marcar nada.'
+		},
+		equipamiento: {
+			titulo: 'Equipamiento disponible',
+			leyenda: '¿Tienes una barra o un anclaje para suspensión?',
+			errorSeleccion: 'Elige una opción para continuar.',
+			explicacion:
+				'Sirve una barra de dominadas de marco de puerta, unas anillas o una correa de suspensión colgada de un anclaje firme.',
+			sinAnclaje:
+				'Sin un anclaje no se evalúa la tracción: ese patrón parte del nivel principiante.'
+		},
+		disponibilidad: {
+			titulo: 'Tu disponibilidad',
+			leyendaDias: 'Días por semana',
+			leyendaDuracion: 'Duración de la sesión',
+			errorDias: 'Elige cuántos días por semana.',
+			errorDuracion: 'Elige cuánto dura la sesión.'
+		},
 		disclaimer: {
 			titulo: 'Antes de empezar',
 			introduccion:
-				'Hola. En unos minutos armamos tu plan, a tu medida y sin equipo. Primero, algo para cuidarte.',
+				'Tu plan usa solo tu peso corporal y no necesita equipo. Antes de empezar, lee este aviso de seguridad.',
 			avisoTitulo: 'Aviso médico',
 			avisoCuerpo:
-				'Esta app te ayuda a entrenar con tu peso; no reemplaza al médico. Si tienes alguna condición de salud o dudas sobre si puedes hacer ejercicio, consulta con un profesional antes de arrancar.',
-			noArranquesTitulo: 'No arranques hoy si tienes:',
-			noArranquesItems: [
-				'Dolor fuerte que todavía no sabes a qué se debe.',
-				'Una lesión activa sin el visto bueno de un médico.',
-				'Problemas del corazón sin controlar.',
-				'Mareos o desmayos seguidos.'
+				'Esta aplicación es una guía de entrenamiento con peso corporal y no sustituye la consulta médica. Si tienes una condición de salud, o dudas de si puedes hacer ejercicio, consulta a un profesional antes de empezar.',
+			noEntrenesTitulo: 'No entrenes hoy si tienes:',
+			noEntrenesItems: [
+				'Dolor intenso de causa desconocida.',
+				'Una lesión sin autorización médica para entrenar.',
+				'Una afección cardíaca sin control médico.',
+				'Mareos o desmayos frecuentes.'
 			] as const,
 			duranteCuerpo:
-				'Mientras entrenas, si sientes dolor en el pecho, te cuesta mucho respirar, te mareas fuerte o aparece un dolor agudo en una articulación, detente. Si no se pasa, busca atención médica.',
+				'Durante el entrenamiento, detente si aparece dolor en el pecho, dificultad para respirar, mareo intenso o dolor agudo en una articulación. Si el síntoma continúa, busca atención médica.',
 			cerrarCuerpo:
-				'Entrenar con tu peso es seguro para la mayoría, pero nadie conoce tu cuerpo como tú: si algo no se siente bien, corta.',
-			casillaLabel:
-				'Leí y entiendo: sé que tengo que consultar al médico si tengo dudas y parar si siento dolor anormal.',
+				'El entrenamiento con peso corporal es seguro para la mayoría de las personas. Aun así, tú conoces tu cuerpo mejor que nadie: si algo no se siente bien, detén la sesión.',
+			casillaLabel: 'He leído y entiendo el aviso médico.',
 			casillaError: 'Marca la casilla para continuar.',
-			respaldoTitulo: '¿Ya usabas la app? Recuperar una copia de seguridad',
-			respaldoCuerpo:
-				'Si tienes una copia de seguridad, puedes recuperarla ahora. Reemplaza cualquier dato de esta instalación.',
+			respaldoTitulo: 'Si ya usabas la aplicación, recupera tu copia de seguridad.',
+			respaldoCuerpo: 'Al recuperarla, se reemplazan los datos de esta instalación.',
 			respaldoBoton: 'Recuperar mis datos',
 			botonContinuar: 'Aceptar y continuar'
+		},
+		evaluacion: {
+			// Lo que comparten los cuatro subpasos: el botón y el rango
+			// valen para todos; el bloque de repeticiones, para push,
+			// legs y pull. core mide segundos y vive aparte.
+			comun: {
+				continuar: 'Continuar',
+				rangoValido: 'Entero entre 0 y 300.',
+				preguntaRepeticiones: '¿Cuántas repeticiones puedes hacer?',
+				noPuedoNinguna: 'No puedo hacer ninguna',
+				// "No puedo" no navega: anota 0 y manda al Continuar.
+				anotadoNinguna: 'Anotado: ninguna. Toca «Continuar» para seguir.',
+				tituloConteo: 'Tu conteo',
+				mensajeInvalidoRepeticiones:
+					'Escribe cuántas repeticiones hiciste, o usa «No puedo hacer ninguna».'
+			},
+			push: {
+				titulo: 'Evaluación: flexiones',
+				comoHacer: 'Cómo hacer flexiones',
+				// El numero sale de las pruebas que quedan en el orden
+				// efectivo: tres sin anclaje, menos las salteadas por
+				// dolor. Con una sola, en singular.
+				introduccion: (restantes: number) =>
+					restantes <= 1
+						? 'Última pregunta, y es física: una prueba corta de empujar, tirar, piernas y abdomen. Con tus resultados, las primeras sesiones salen a tu medida. Si un ejercicio no te sale, «No puedo hacer ninguna» también es una respuesta válida, y puedes descansar lo que necesites entre una prueba y otra.'
+						: `Últimas ${NUMERO_PREGUNTAS[restantes] ?? restantes} preguntas, y son físicas: una prueba corta de empujar, tirar, piernas y abdomen. Con tus resultados, las primeras sesiones salen a tu medida. Si un ejercicio no te sale, «No puedo hacer ninguna» también es una respuesta válida, y puedes descansar lo que necesites entre una prueba y otra.`
+			},
+			legs: {
+				titulo: 'Evaluación: sentadillas',
+				comoHacer: 'Cómo hacer sentadillas'
+			},
+			pull: {
+				titulo: 'Evaluación: remo en suspensión',
+				comoHacer: 'Cómo hacer remo en suspensión'
+			},
+			core: {
+				titulo: 'Evaluación: plancha',
+				comoHacer: 'Cómo hacer la plancha',
+				medicion: 'Medición',
+				introduccion:
+					'Toca «Empezar a contar»: tienes 5 segundos para ponerte en posición. Cuando ya no puedas sostener la plancha, toca «Detener»: los segundos se registran solos. Si prefieres, puedes escribirlos a mano desplegando «Escribir a mano».',
+				anotarAMano: 'Escribir a mano',
+				preguntaSegundos: '¿Cuántos segundos sostuviste la plancha?',
+				noPuedoSostenerla: 'No puedo sostenerla',
+			mensajeInvalidoSegundos:
+				'Escribe cuántos segundos sostuviste, o usa «No puedo sostenerla».'
+			}
+		},
+		resumen: {
+			titulo: 'Tu resumen',
+			botonEmpezar: 'Empezar mi primer entrenamiento',
+			botonAyuda: 'Ayuda',
+			tituloNivel: 'Tu nivel',
+			tituloPruebas: 'Tus pruebas',
+			tituloPlan: 'Tu plan',
+			tituloPatronReforzar: 'Patrón a reforzar',
+			nivel: {
+				principiante: 'Principiante',
+				intermedio: 'Intermedio',
+				avanzado: 'Avanzado'
+			},
+			patronDebil: (patron: keyof ResultadoEvaluacion['evaluacion_por_patron']) =>
+				`Tu punto más débil es ${PATRON_TEXTO[patron]}. Tendrá prioridad en tus entrenamientos.`,
+			// El nivel es el que mas se repitio entre las pruebas hechas.
+			fraseNivel: (nivel: Nivel, pruebas: number) =>
+				pruebas <= 0
+					? `Tu nivel es ${nivel}: no hubo pruebas y se parte del nivel inicial.`
+					: pruebas === 1
+						? `Tu nivel es ${nivel}: es el de tu única prueba.`
+						: `Tu nivel es ${nivel}: es el que más se repitió en tus ${NUMERO_PREGUNTAS[pruebas] ?? pruebas} pruebas.`,
+			lineaPrueba: (grupo: GrupoEvaluable, valor: number, nivel: Nivel) =>
+				`${ETIQUETA_GRUPO_PRUEBA[grupo]}: ${valor} ${UNIDAD_PRUEBA[grupo]}, ${nivel}.`,
+			pruebaSalteadaDolor: (grupo: GrupoEvaluable, zonas: string) =>
+				`${ETIQUETA_GRUPO_PRUEBA[grupo]}: no se probó por el dolor en ${zonas}.`,
+			pruebaSinAnclaje: 'Tirar: no se probó, no tienes barra ni anclaje.',
+			fraseFueraPorAnclaje:
+				'Tu plan no incluye ejercicios de tirar porque necesitan una barra o un anclaje.',
+			fraseFueraPorDolor: (zonas: string) =>
+				`Tu plan deja fuera los ejercicios que cargan las zonas con dolor que marcaste: ${zonas}.`,
+			planResumen: (dias: number, duracion: string) =>
+				`Entrenas ${formatearDias(dias)} por semana en sesiones de ${duracion}.`,
+			primeraSesion: (tipo: string, ejercicios: string) =>
+				`Tu primera sesión es de ${tipo}: ${ejercicios}.`
 		}
 	},
 
@@ -311,8 +541,15 @@ export const M = {
 			plan: {
 				titulo: 'Tu plan',
 				objetivo: 'Objetivo',
-				diasYDuracion: 'Días y duración',
-				misDatos: 'Mis datos'
+				diasPorSemana: 'Días por semana',
+				diasFila: (n: number) => `Días por semana: ${n}`,
+				duracion: 'Duración',
+				duracionFila: (minutos: number) => `Duración: ${formatearTiempo(minutos * 60)}`,
+				duracionCorta: (minutos: number) => formatearTiempo(minutos * 60),
+				tusDatos: 'Datos personales',
+				equipo: 'Equipo',
+				equipoValor: (tieneAnclaje: boolean) =>
+					tieneAnclaje ? 'Con barra o anclaje' : 'Sin barra ni anclaje'
 			},
 			sonidoYMusica: {
 				titulo: 'Sonido y música',
@@ -331,7 +568,7 @@ export const M = {
 					activado: 'Anunciar el consejo al entrar: activado',
 					desactivado: 'Anunciar el consejo al entrar: desactivado'
 				},
-				// Aviso al togglear, patron de "La pantalla queda encendida".
+				// Aviso al togglear, patron de "La pantalla permanece encendida".
 				mostrarAviso: {
 					activado: 'Los consejos aparecen en la portada',
 					desactivado: 'Los consejos dejan de aparecer'
@@ -354,54 +591,84 @@ export const M = {
 			dolor: {
 				titulo: 'Dolor',
 				zonasConDolor: 'Zonas con dolor',
-				// Conteo de bloqueados de la fila: singular/plural segun n.
-				bloqueado: (n: number) => (n === 1 ? 'bloqueado' : 'bloqueados')
+				// Primera línea de la fila: las zonas declaradas o ninguna.
+				zonasFila: (detalle: string) => `Zonas con dolor: ${detalle}`,
+				// Segunda línea, solo si hay ejercicios en pausa por dolor
+				// reportado en sesión: singular y plural.
+				enPausa: (n: number) => (n === 1 ? '1 ejercicio en pausa' : `${n} ejercicios en pausa`)
 			},
 			tusDatos: {
-				titulo: 'Tus datos',
-				exportarMisDatos: 'Exportar mis datos',
+				titulo: 'Copia de seguridad',
+				exportarTusDatos: 'Exportar tus datos',
 				importarDatos: 'Importar datos',
 				borrarTodo: 'Borrar todo'
 			},
 			general: {
 				titulo: 'General',
-				mantenerPantallaEncendida: 'Mantener la pantalla encendida'
+				mantenerPantallaEncendida: 'Mantener la pantalla encendida durante el entrenamiento'
 			},
 			// El aria-label del interruptor repite el nombre con el
 			// estado: el lector anuncia ambos en un solo gesto.
 			pantallaEncendida: {
-				activado: 'Mantener la pantalla encendida: activado',
-				desactivado: 'Mantener la pantalla encendida: desactivado'
+				activado: 'Mantener la pantalla encendida durante el entrenamiento: activado',
+				desactivado: 'Mantener la pantalla encendida durante el entrenamiento: desactivado'
 			},
 			// Anuncio al alternar; la region live dice lo mismo que la fila.
 			pantallaEncendidaAviso: {
-				activado: 'La pantalla queda encendida',
+				activado: 'La pantalla permanece encendida',
 				desactivado: 'La pantalla puede apagarse'
 			},
 			informacion: {
-				titulo: 'Información'
+				titulo: 'Información',
+				acercaDe: 'Acerca de'
 			}
+		},
+
+		acerca: {
+			titulo: 'Acerca de',
+			version: (version: string) => `Versión ${version}`,
+			hechaPor: 'Hecha por Miguel Ángel Insfrán Caballero',
+			datosLocales:
+				'Tus datos no salen del teléfono: la aplicación funciona sin conexión y no envía nada a ningún servidor.'
 		},
 
 		objetivo: {
 			titulo: 'Objetivo',
 			cargando: 'Cargando...',
-			seleccionaTuObjetivo: 'Selecciona tu objetivo',
-			avisoGuardado: 'Objetivo guardado'
+			eligeTuObjetivo: 'Elige tu objetivo',
+			// Elegir aplica al instante: el aviso nombra el valor nuevo.
+			avisoAplicado: (etiqueta: string) => `Objetivo: ${etiqueta}`
+		},
+
+		aspecto: {
+			titulo: 'Aspecto',
+			leyenda: 'Elige cómo se ve la aplicación',
+			sistemaEtiqueta: 'Según el teléfono',
+			sistemaDescripcion: 'Claro u oscuro, igual que el resto del teléfono.',
+			claroEtiqueta: 'Claro',
+			claroDescripcion: 'Fondo claro y texto oscuro.',
+			oscuroEtiqueta: 'Oscuro',
+			oscuroDescripcion: 'Fondo oscuro y texto claro. Puede molestar menos si la luz te incomoda.',
+			contrasteEtiqueta: 'Alto contraste',
+			contrasteDescripcion:
+				'Negro, blanco y amarillo, con bordes marcados. Pensado para baja visión.',
+			// Elegir aplica al instante: el aviso nombra la opción nueva.
+			avisoAplicado: (etiqueta: string) => `Aspecto: ${etiqueta}`
 		},
 
 		disponibilidad: {
-			titulo: 'Días y duración',
-			cargando: 'Cargando...',
-			seleccionaLosDias: 'Selecciona los días',
+			eligeLosDias: 'Elige los días',
 			duracionSesion: 'Duración de la sesión',
 			opcionDias: (n: number) => `${formatearDias(n)} por semana`,
 			opcionDuracion: (minutos: number) => `${formatearTiempo(minutos * 60)} por sesión`,
-			avisoGuardado: 'Disponibilidad guardada'
+			// Elegir aplica al instante y cierra la ventana: el aviso
+			// nombra el valor nuevo, igual que la fila.
+			avisoDias: (n: number) => `Días por semana: ${n}`,
+			avisoDuracion: (minutos: number) => `Duración: ${formatearTiempo(minutos * 60)}`
 		},
 
 		datos: {
-			titulo: 'Mis datos',
+			titulo: 'Datos personales',
 			cargando: 'Cargando...',
 			introduccion:
 				'Edita tu nombre, edad, peso y altura. Esos datos se usan para mostrarte el índice de masa corporal; el plan de entrenamiento no cambia.',
@@ -422,7 +689,7 @@ export const M = {
 				errorPeso: 'error-datos-peso',
 				errorAltura: 'error-datos-altura'
 			},
-			avisoValidacion: 'Revisa los datos: hay campos por completar.',
+			avisoValidacion: 'Revisa los datos: hay campos con errores.',
 			avisoGuardado: 'Datos guardados'
 		},
 
@@ -437,7 +704,13 @@ export const M = {
 			sinBloqueados: 'No tienes ejercicios bloqueados.',
 			detalleBloqueado: 'Toca un ejercicio para ver el detalle o reactivarlo antes de tiempo.',
 			fechaRevision: (fecha: string) => `Se te pregunta el ${fecha}`,
-			avisoGuardado: 'Zonas guardadas'
+			// Elegir aplica al instante: el aviso nombra las zonas nuevas.
+			avisoAplicado: (detalle: string) => `Zonas con dolor: ${detalle}`,
+			ninguna: 'ninguna'
+		},
+
+		equipamiento: {
+			cargando: 'Cargando...'
 		},
 
 		audio: {
@@ -490,14 +763,14 @@ export const M = {
 		importar: {
 			titulo: 'Importar datos',
 			explicacion:
-				'Esto reemplaza TODOS tus datos (perfil, historial, estado de ejercicios y eventos de dolor) por los del archivo. El archivo se valida antes: si no es una exportación válida, no se modifica nada.',
-			etiquetaBoton: 'Importar y reemplazar mis datos'
+				'Esto reemplaza todos tus datos (perfil, historial, estado de ejercicios y eventos de dolor) por los del archivo. El archivo se valida antes: si no es una exportación válida, no se modifica nada.',
+			etiquetaBoton: 'Importar y reemplazar tus datos'
 		},
 
 		rehacer: {
 			titulo: 'Volver a hacer la evaluación',
 			explicacion:
-				'Borra tu perfil y tu evaluación y te lleva de nuevo al registro. Tu historial de sesiones queda como está.',
+				'Borra tu perfil y tu evaluación y te lleva de nuevo al registro. Tu historial de sesiones se conserva.',
 			botonContinuar: 'Continuar'
 		},
 
@@ -505,16 +778,16 @@ export const M = {
 			titulo: 'Volver a hacer la evaluación',
 			estasSeguro: '¿Estás seguro?',
 			noSePuedeDeshacer: 'Esto no se puede deshacer.',
-			botonConfirmar: 'Sí, borrar mi perfil y rehacer la evaluación',
-			botonConservar: 'No, conservar mi perfil',
-			avisoBorrado: 'Perfil eliminado'
+			botonConfirmar: 'Sí, borrar tu perfil y rehacer la evaluación',
+			botonConservar: 'No, conservar tu perfil',
+			avisoBorrado: 'Perfil borrado'
 		},
 
 		borrar: {
 			titulo: 'Borrar todo',
-			vamosABorrar: 'Vamos a borrar todos tus datos',
+			avisoBorrar: 'Se borrarán todos tus datos',
 			explicacion:
-				'Vas a perder tu perfil, tu historial de sesiones, el estado de tus ejercicios y el historial de dolor. La preferencia de sonido queda igual.',
+				'Vas a perder tu perfil, tu historial de sesiones, el estado de tus ejercicios y el historial de dolor. La preferencia de sonido no cambia.',
 			sugerenciaExportar: 'Si quieres conservar una copia, exporta tus datos antes de seguir.',
 			botonExportarPrimero: 'Exportar primero',
 			botonSeguirSinExportar: 'Seguir sin exportar'
@@ -525,8 +798,8 @@ export const M = {
 			estasSeguro: '¿Estás seguro?',
 			explicacion: 'No se puede deshacer. Borra todo y te lleva al registro inicial.',
 			botonConfirmar: 'Sí, borrar todo y empezar de cero',
-			botonConservar: 'No, conservar mis datos',
-			avisoBorrado: 'Borramos todos tus datos'
+			botonConservar: 'No, conservar tus datos',
+			avisoBorrado: 'Todos tus datos se borraron'
 		}
 	},
 
@@ -540,21 +813,96 @@ export const M = {
 			tuPlan: 'Tu plan',
 			nombre: 'Nombre:',
 			objetivo: 'Objetivo:',
-			diasSemana: (n: number) => `Entrenas ${formatearDias(n)} por semana.`,
-			duracionSesion: (formateado: string) =>
-				formateado.startsWith('1 ')
-					? `Sesión de ${formateado}.`
-					: `Sesiones de ${formateado}.`,
+			diasSemana: (n: number) => `Días por semana: ${n}`,
+			duracion: (minutos: number) => `Duración: ${formatearTiempo(minutos * 60)}`,
 			nivel: 'Nivel:',
+			equipo: (tieneAnclaje: boolean) =>
+				tieneAnclaje ? 'Equipo: con barra o anclaje' : 'Equipo: sin barra ni anclaje',
+			zonasDolor: (zonas: string) => `Zonas con dolor: ${zonas}`,
+			zonasDolorNinguna: 'Zonas con dolor: ninguna',
 			imcTitulo: 'Índice de masa corporal',
-			imcValor: (valor: number) => `${valor.toFixed(1)}`,
+			imcValor: (valor: number) => FORMATO_DECIMAL_ES.format(valor),
 			imcCategoria: 'Categoría:',
+			categoriaImc: (categoria: CategoriaImc) => CATEGORIA_IMC[categoria],
 			imcNoDisponibleSinAltura: 'No disponible. Carga tu altura en el registro para ver el IMC.',
 			imcNoDisponibleFaltaAltura: 'No disponible (falta tu altura).',
 			imcSalvedad:
 				'El IMC es una razón entre tu peso y tu altura, un indicador general. No mide grasa corporal: su relación con la composición real cambia con la edad, la contextura y el origen.',
-			botonAyuda: 'Ayuda',
 			botonConfiguracion: 'Configuración'
+		}
+	},
+
+	navegacion: {
+		// Pestanas de la barra inferior y su nombre accesible.
+		inicio: 'Inicio',
+		ejercicios: 'Ejercicios',
+		progreso: 'Progreso',
+		perfil: 'Perfil',
+		// Sufijo del aria-label de la pestana activa: "Inicio seleccionada".
+		seleccionada: ' seleccionada',
+		navegacionPrincipal: 'Navegación principal',
+		pestania: 'pestaña',
+		// Aviso del doble atras y pantalla de error fatal del layout.
+		avisoSalir: 'Toca atrás otra vez para salir',
+		botonReintentar: 'Volver a intentar',
+		tituloError: 'Error'
+	},
+
+	componentes: {
+		cronometro: {
+			empezar: 'Empezar a contar',
+			detener: 'Detener',
+			// Cuenta atras previa al conteo: 5 s para ponerse en posicion.
+			cancelar: 'Cancelar',
+			ya: 'Ya',
+			cuentaAtras: (n: number) => `Ponte en posición: ${n}`,
+			// El tiempo ya viene formateado (formatearTiempo en el
+			// componente): aca vive solo el prefijo del anuncio.
+			tiempo: (tiempo: string) => `Tiempo: ${tiempo}`
+		},
+		temporizador: {
+			descanso: 'Descanso',
+			faltan: (tiempo: string) => `Faltan ${tiempo}`,
+			// La linea visible del conteo: etiqueta mas los segundos
+			// que restan, tal como se lee (sin pasar por formatearTiempo,
+			// que cambia el texto a partir del minuto).
+			contador: (etiqueta: string, restantes: number) =>
+				`${etiqueta}: ${restantes} segundos`
+		},
+		contadorReps: {
+			grupoRepeticiones: 'Repeticiones',
+			grupoSegundos: 'Segundos',
+			grupoPorcentaje: 'Porcentaje',
+			restarSegundo: 'Restar un segundo',
+			sumarSegundo: 'Sumar un segundo',
+			restarCincoPorCiento: 'Restar cinco por ciento',
+			sumarCincoPorCiento: 'Sumar cinco por ciento',
+			quitarRepeticion: 'Quitar una repetición',
+			agregarRepeticion: 'Agregar una repetición',
+			anuncioPorCiento: (n: number) => `${n} por ciento`,
+			anuncioCantidad: (valor: number, unidad: string) => `${valor} ${unidad}`
+		},
+		importarRespaldo: {
+			etiquetaBoton: 'Importar y reemplazar tus datos',
+			eligeArchivo: 'Elige primero el archivo de exportación.',
+			datosImportados: 'Datos importados',
+			etiquetaArchivo: 'Archivo de exportación (.json)'
+		},
+		botonVolver: {
+			atras: 'Atrás'
+		},
+		barraAccion: {
+			accionesPantalla: 'Acciones de la pantalla'
+		},
+		descripcionEjercicio: {
+			posicionInicial: 'Posición inicial',
+			ejecucion: 'Ejecución',
+			referenciasPropioceptivas: 'Cómo notar que lo haces bien',
+			erroresComunes: 'Errores comunes',
+			clavesForma: 'Claves de forma y errores comunes'
+		},
+		progresoOnboarding: {
+			pasoDe: (paso: number, total: number) => `Paso ${paso} de ${total}`
 		}
 	}
 } as const;

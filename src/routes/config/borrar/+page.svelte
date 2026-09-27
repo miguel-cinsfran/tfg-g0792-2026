@@ -20,8 +20,6 @@
 		enfocarPrincipal(heading);
 	});
 
-	// La logica de exportacion vive en $lib/importar/compartir (rama
-	// APK vs navegador). Este handler solo orquesta y traduce errores.
 	async function exportarPrimero() {
 		guardando = true;
 		errorEscritura = null;
@@ -53,7 +51,7 @@
 <Cabecera onclick={volver}>
 	<h1 tabindex="-1" bind:this={heading}>{M.configuracion.borrar.titulo}</h1>
 </Cabecera>
-<h2>{M.configuracion.borrar.vamosABorrar}</h2>
+<h2>{M.configuracion.borrar.avisoBorrar}</h2>
 <p>{M.configuracion.borrar.explicacion}</p>
 <p>{M.configuracion.borrar.sugerenciaExportar}</p>
 {#if errorEscritura !== null}

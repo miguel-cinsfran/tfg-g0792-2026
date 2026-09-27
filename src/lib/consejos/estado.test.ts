@@ -74,13 +74,12 @@ describe('prepararConsejoDelArranque', () => {
 		vi.resetModules();
 		const estado = await import('./estado');
 		const todosLosIds = CONSEJOS.map((c) => c.id);
-		// Siete arranques: el primero no selecciona (contador 1) y los seis
-		// siguientes agotan el pool (contadores 2 a 7).
-		for (let i = 0; i < 7; i++) {
+		// Primer arranque no selecciona; los siguientes agotan el pool.
+		for (let i = 0; i < todosLosIds.length + 1; i++) {
 			estado.prepararConsejoDelArranque(perfil);
 		}
 		expect(leerMostrados()).toEqual(todosLosIds);
-		// El octavo arranque recibe el pool completo y reinicia a [id].
+		// El siguiente arranque reinicia el pool y vuelve a [id].
 		estado.prepararConsejoDelArranque(perfil);
 		const elegido = estado.consejoDelArranque();
 		expect(elegido).not.toBeNull();

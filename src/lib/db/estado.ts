@@ -93,6 +93,41 @@ export async function bloquearEjercicio(ejercicio_id: string, zonas: Zona[], aho
 	}
 }
 
+// Transaccion atomica: amplia el bloqueo ya registrado con el conjunto
+// completo de zonas. Reescribe razon_bloqueo y actualiza la ultima
+// entrada del historial del ejercicio en vez de agregar otra: una sola
+// entrada por episodio, no una por confirmacion. Si no hubiera entrada
+// previa, la crea (misma razon que el upsert de bloquearEjercicio: un
+// update de Dexie seria no-op silencioso y se perderia el registro).
+export async function ampliarBloqueo(ejercicio_id: string, zonas: Zona[], ahora: number): Promise<void> {
+	try {
+		await db.transaction('rw', db.estado_ejercicios, db.historial_dolor, async () => {
+			await db.estado_ejercicios.update(ejercicio_id, {
+				razon_bloqueo: PREFIJO_RAZON_DOLOR + zonas.join(', '),
+			});
+			const historial = await db.historial_dolor
+				.where('ejercicio_id')
+				.equals(ejercicio_id)
+				.reverse()
+				.sortBy('fecha');
+			const ultima = historial[0];
+			if (ultima) {
+				await db.historial_dolor.update(ultima.id, { zonas });
+			} else {
+				await db.historial_dolor.add({
+					id: generarId(),
+					ejercicio_id,
+					zonas,
+					fecha: ahora,
+					estado: 'bloqueado',
+				});
+			}
+		});
+	} catch (error) {
+		throw crearError('ERR-DB-WRITE', 'Error al ampliar bloqueo', error);
+	}
+}
+
 // Reprograma la fecha_revision sin tocar historial_dolor (single-table).
 export async function reprogramarRevision(ejercicio_id: string, ahora: number): Promise<void> {
 	try {

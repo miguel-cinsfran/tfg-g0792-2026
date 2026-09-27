@@ -41,7 +41,8 @@ describe('pool de consejos', () => {
 	});
 
 	it('no hay consejos de salud', () => {
-		expect(new Set(CONSEJOS.map((c) => c.familia))).toEqual(new Set(['tecnica', 'uso_app']));
+		const familias = new Set(CONSEJOS.map((c) => c.familia));
+		for (const f of familias) expect(['tecnica', 'uso_app']).toContain(f);
 		// Regla dura: la salud queda fuera del pool. La lista es la
 		// definicion ejecutable de "contenido de salud" para este pool.
 		const terminosDeSalud = ['salud', 'médic', 'doctor', 'lesión', 'rehabilit', 'diagnóstic', 'tratamiento', 'fisioterap'];

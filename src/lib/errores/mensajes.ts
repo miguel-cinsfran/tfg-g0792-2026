@@ -16,6 +16,8 @@ const mensajes: Record<string, string> = {
 		'El archivo no tiene el formato esperado. Revísalo e inténtalo de nuevo.',
 	'ERR-IMPORT-VERSION':
 		'El archivo corresponde a una versión anterior de la aplicación. Genera una exportación nueva.',
+	'ERR-IMPORT-NO-BACKUP':
+		'El archivo no es una copia de seguridad de la aplicación. Elige el archivo que generaste desde Exportar mis datos.',
 };
 
 // Codigos de fallback que las rutas usan al traducir un error: la

@@ -12,7 +12,6 @@
 	import { etiquetaZona } from '$lib/catalogo/etiquetas';
 	import { M } from '$lib/mensajes/ui';
 	import GrupoSeleccionMultiple from '$lib/components/GrupoSeleccionMultiple.svelte';
-	import Boton from '$lib/components/Boton.svelte';
 	import Cabecera from '$lib/components/Cabecera.svelte';
 	import ChevronDerecha from '$lib/components/iconos/ChevronDerecha.svelte';
 
@@ -21,9 +20,8 @@
 	let heading = $state<HTMLElement>();
 	let perfil = $state<Perfil | null | undefined>(undefined);
 	let errorLectura = $state<string | null>(null);
-	let zonasEdit = $state<Zona[]>([]);
+	let zonasElegidas = $state<Zona[]>([]);
 	let bloqueados = $state<EstadoEjercicio[] | undefined>(undefined);
-	let guardando = $state(false);
 	let errorEscritura = $state<string | null>(null);
 
 	$effect(() => {
@@ -40,12 +38,13 @@
 		);
 	});
 
-	// Las zonas arrancan con las que el perfil ya declaro como permanentes.
+	// Las zonas arrancan con las declaradas. Cada cambio se aplica al
+	// instante, sin Guardar ni Cancelar: se sale con el Atrás.
 	let prellenado = false;
 	$effect(() => {
 		if (prellenado) return;
 		if (perfil === null || perfil === undefined) return;
-		zonasEdit = [...(perfil.zonas_dolor_preexistente ?? [])];
+		zonasElegidas = [...(perfil.zonas_dolor_preexistente ?? [])];
 		prellenado = true;
 	});
 
@@ -53,22 +52,40 @@
 		enfocarPrincipal(heading);
 	});
 
-	async function guardar() {
-		guardando = true;
+	function mismaSeleccion(a: Zona[], b: Zona[]): boolean {
+		return a.length === b.length && a.every((z) => b.includes(z));
+	}
+
+	function detalle(zonas: Zona[]): string {
+		return zonas.length === 0
+			? M.configuracion.dolor.ninguna
+			: zonas.map((z) => etiquetaZona(z).toLowerCase()).join(', ');
+	}
+
+	// Solo dispara ante un cambio real: el prellenado iguala al perfil y
+	// la suscripción lo vuelve a igualar tras aplicar.
+	$effect(() => {
+		const elegidas = zonasElegidas;
+		if (!prellenado || perfil === null || perfil === undefined) return;
+		if (mismaSeleccion(elegidas, perfil.zonas_dolor_preexistente ?? [])) return;
+		void aplicar(elegidas);
+	});
+
+	async function aplicar(zonas: Zona[]) {
 		errorEscritura = null;
 		try {
-			await actualizarPerfil({ zonas_dolor_preexistente: [...zonasEdit] });
-			avisar(M.configuracion.dolor.avisoGuardado, 'exito');
-			goto(resolve('/config'));
+			await actualizarPerfil({ zonas_dolor_preexistente: [...zonas] });
+			avisar(M.configuracion.dolor.avisoAplicado(detalle(zonas)), 'exito');
 		} catch (e) {
+			// Vuelve a lo guardado: el grupo muestra lo elegido, no lo
+			// que quedó.
+			zonasElegidas = [...(perfil?.zonas_dolor_preexistente ?? [])];
 			errorEscritura = mensajePara((e as { code?: string }).code ?? CODIGO_ESCRITURA_FALLIDA);
 			anunciarAssertive(errorEscritura);
-		} finally {
-			guardando = false;
 		}
 	}
 
-	function cancelar() {
+	function volver() {
 		goto(resolve('/config'));
 	}
 </script>
@@ -76,17 +93,17 @@
 <svelte:head><title>{M.configuracion.dolor.titulo}</title></svelte:head>
 
 {#if errorLectura !== null}
-	<Cabecera onclick={cancelar}>
+	<Cabecera onclick={volver}>
 		<h1 tabindex="-1" bind:this={heading}>{M.configuracion.dolor.titulo}</h1>
 	</Cabecera>
 	<p>{errorLectura}</p>
 {:else if perfil === undefined}
-	<Cabecera onclick={cancelar}>
+	<Cabecera onclick={volver}>
 		<h1 tabindex="-1" bind:this={heading}>{M.configuracion.dolor.titulo}</h1>
 	</Cabecera>
 	<p>{M.configuracion.dolor.cargando}</p>
 {:else}
-	<Cabecera onclick={cancelar}>
+	<Cabecera onclick={volver}>
 		<h1 tabindex="-1" bind:this={heading}>{M.configuracion.dolor.titulo}</h1>
 	</Cabecera>
 
@@ -98,15 +115,11 @@
 			leyenda={M.configuracion.dolor.leyendaZonas}
 			nombre="zonas-config"
 			opciones={ZONAS.map((zona) => ({ valor: zona, etiqueta: etiquetaZona(zona) }))}
-			bind:valores={zonasEdit}
+			bind:valores={zonasElegidas}
 		/>
 		{#if errorEscritura !== null}
 			<p>{errorEscritura}</p>
 		{/if}
-		<div class="mt-4 flex gap-4">
-			<Boton variante="secundario" onclick={cancelar} deshabilitado={guardando}>{M.configuracion.cancelar}</Boton>
-			<Boton variante="primario" onclick={guardar} deshabilitado={guardando}>{M.configuracion.guardar}</Boton>
-		</div>
 	</section>
 
 	<section aria-labelledby="sec-dolor-bloqueados" class="mt-8">
@@ -130,7 +143,7 @@
 								<span class="block text-sm text-text-secondary">{M.configuracion.dolor.fechaRevision(FORMATO_FECHA.format(b.fecha_revision))}</span>
 							{/if}
 						</span>
-						<ChevronDerecha tamano={20} clase="text-text-secondary shrink-0" />
+						<ChevronDerecha tamano="1.25em" clase="text-text-secondary shrink-0" />
 					</button>
 				{/each}
 			</div>

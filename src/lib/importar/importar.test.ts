@@ -3,6 +3,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import 'fake-indexeddb/auto';
 import { db } from '$lib/db/db';
 import { importarDatos, exportarDatos, validarExporte } from './importar';
+import { mensajePara } from '$lib/errores/mensajes';
 import { VERSION_EXPORTE } from './schema';
 import { perfilBase } from '../../../tests/fixtures/perfil-base';
 import { sesionBase } from '../../../tests/fixtures/sesion-base';
@@ -28,9 +29,46 @@ function exporteValido() {
 }
 
 describe('validarExporte', () => {
+	it('perfil con grupos_desde_base valida; sin el campo tambien (perfil viejo)', () => {
+		expect(() =>
+			validarExporte({
+				...exporteValido(),
+				perfil: { ...perfilBase(), grupos_desde_base: ['LEGS'] },
+			}),
+		).not.toThrow();
+		expect(() => validarExporte(exporteValido())).not.toThrow();
+	});
 	it('version desconocida lanza ERR-IMPORT-VERSION', () => {
 		expect(() => validarExporte({ ...exporteValido(), version: 99 })).toThrow(
 			expect.objectContaining({ code: 'ERR-IMPORT-VERSION' }),
+		);
+	});
+
+	// Un archivo sin campo de version no es una copia de una version
+	// anterior: no es una copia de seguridad. Dos casos distintos, dos
+	// mensajes distintos (el texto vive en lib/errores/mensajes.ts).
+	it('sin campo de version lanza ERR-IMPORT-NO-BACKUP y muestra el mensaje nuevo', () => {
+		const sinVersion = { perfil: null, estado_ejercicios: [], sesiones: [], historial_dolor: [] };
+		expect(() => validarExporte(sinVersion)).toThrow(
+			expect.objectContaining({ code: 'ERR-IMPORT-NO-BACKUP' }),
+		);
+		expect(mensajePara('ERR-IMPORT-NO-BACKUP')).toBe(
+			'El archivo no es una copia de seguridad de la aplicación. Elige el archivo que generaste desde Exportar mis datos.',
+		);
+	});
+
+	it('version con forma no numerica lanza ERR-IMPORT-NO-BACKUP', () => {
+		expect(() => validarExporte({ version: '1.0', perfil: null })).toThrow(
+			expect.objectContaining({ code: 'ERR-IMPORT-NO-BACKUP' }),
+		);
+	});
+
+	it('version numerica anterior sigue siendo ERR-IMPORT-VERSION con el mensaje de siempre', () => {
+		expect(() => validarExporte({ ...exporteValido(), version: 0 })).toThrow(
+			expect.objectContaining({ code: 'ERR-IMPORT-VERSION' }),
+		);
+		expect(mensajePara('ERR-IMPORT-VERSION')).toBe(
+			'El archivo corresponde a una versión anterior de la aplicación. Genera una exportación nueva.',
 		);
 	});
 

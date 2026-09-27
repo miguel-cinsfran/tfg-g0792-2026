@@ -20,6 +20,7 @@
 	import { M } from '$lib/mensajes/ui';
 	import Cabecera from '$lib/components/Cabecera.svelte';
 	import ContadorReps from '$lib/components/ContadorReps.svelte';
+	import Interruptor from '$lib/components/Interruptor.svelte';
 
 	let heading = $state<HTMLElement>();
 
@@ -80,7 +81,10 @@
 			class="fila-configuracion"
 		>
 			<span>{M.configuracion.audio.efectosDeSonido}</span>
-			<span class="text-text-secondary">{sonidos ? M.configuracion.audio.estadoVisibleEfectos.activado : M.configuracion.audio.estadoVisibleEfectos.desactivado}</span>
+			<span class="flex items-center gap-2 min-w-0">
+				<span class="text-text-secondary">{sonidos ? M.configuracion.audio.estadoVisibleEfectos.activado : M.configuracion.audio.estadoVisibleEfectos.desactivado}</span>
+				<Interruptor activado={sonidos} />
+			</span>
 		</button>
 		<!-- El <input type="range"> es inaccesible con TalkBack en WebView
 		     (no anuncia el valor al cambiar, ajusta por porcentaje con
@@ -112,7 +116,10 @@
 			class="fila-configuracion"
 		>
 			<span>{M.configuracion.audio.musicaDeFondo}</span>
-			<span class="text-text-secondary">{musica ? M.configuracion.audio.estadoVisibleMusica.activado : M.configuracion.audio.estadoVisibleMusica.desactivado}</span>
+			<span class="flex items-center gap-2 min-w-0">
+				<span class="text-text-secondary">{musica ? M.configuracion.audio.estadoVisibleMusica.activado : M.configuracion.audio.estadoVisibleMusica.desactivado}</span>
+				<Interruptor activado={musica} />
+			</span>
 		</button>
 		<!-- El modulo de musica aplica el volumen al Audio sonando en vivo,
 		     asi que el cambio se oye al toque sin muestra extra. -->

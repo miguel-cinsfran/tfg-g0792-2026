@@ -4,7 +4,7 @@
 
 import { crearEstadoInicial, cancelarSesionEnCurso, cerrarSesionEnCurso } from '$lib/motor/cierre';
 import { aplicarSerieCompletada, pasarSiguienteEjercicio, corregirUltimaSerie as corregirUltimaSerieMotor } from '$lib/motor/serie';
-import { registrarZonasDolor, aplicarSustitucion } from '$lib/motor/dolor';
+import { registrarZonasDolor, corregirZonasDolor, aplicarSustitucion } from '$lib/motor/dolor';
 import { cerrarSesion } from '$lib/db/sesiones';
 import { guardarSesionEnCurso, borrarSesionEnCurso } from '$lib/db/sesion-en-curso';
 import { obtenerEstadosTodos } from '$lib/db/estado';
@@ -60,6 +60,15 @@ export function corregirUltimaSerie(reps: number, ahora: number): void {
 export function registrarDolor(zonas: Zona[], ahora: number): void {
 	if (estado === null) throw new Error(SIN_SESION);
 	estado = registrarZonasDolor(estado, zonas);
+	respaldar(ahora);
+}
+
+// Segunda confirmacion del mismo reporte de dolor ("Revisar mis zonas"):
+// corrige lo que ese reporte habia marcado en vez de acumular (que
+// conservaria las zonas quitadas).
+export function corregirDolor(zonasPrevias: Zona[], zonas: Zona[], ahora: number): void {
+	if (estado === null) throw new Error(SIN_SESION);
+	estado = corregirZonasDolor(estado, zonasPrevias, zonas);
 	respaldar(ahora);
 }
 

@@ -11,8 +11,13 @@ export function validarExporte(datos: unknown): Exporte {
 		throw crearError('ERR-IMPORT-INVALID', 'El archivo no es un JSON de exportacion');
 	}
 	const version = (datos as { version?: unknown }).version;
+	// Sin campo de version, o con una forma que no es numerica: no es
+	// una copia de seguridad, no una version anterior del exporte.
+	if (typeof version !== 'number') {
+		throw crearError('ERR-IMPORT-NO-BACKUP', 'El archivo no parece una copia de seguridad');
+	}
 	if (version !== VERSION_EXPORTE) {
-		throw crearError('ERR-IMPORT-VERSION', `Version de exporte no soportada: ${String(version)}`);
+		throw crearError('ERR-IMPORT-VERSION', `Version de exporte no soportada: ${version}`);
 	}
 	const resultado = ExporteSchema.safeParse(datos);
 	if (!resultado.success) {

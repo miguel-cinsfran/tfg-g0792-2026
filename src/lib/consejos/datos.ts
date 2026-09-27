@@ -14,36 +14,53 @@ export interface Consejo {
 // verifican leyendo la app. La salud queda fuera del pool.
 export const CONSEJOS: Consejo[] = [
 	{
-		id: 'tec-01',
-		familia: 'tecnica',
-		texto: 'El trabajo se nota en el pecho y los hombros, no en la parte baja de la espalda.',
-		fuente: 'ej-001-push-h-flexion-pared',
-	},
-	{
-		id: 'tec-02',
-		familia: 'tecnica',
-		texto: 'Las rodillas siguen la línea de los pies, ni hacia adentro ni hacia afuera.',
-		fuente: 'ej-040-squat-sentadilla',
-	},
-	{
-		id: 'tec-03',
-		familia: 'tecnica',
-		texto: 'El empuje sale de los talones y los glúteos, no de arquear la espalda.',
-		fuente: 'ej-051-hinge-puente-gluteos',
-	},
-	{
 		id: 'uso-01',
 		familia: 'uso_app',
-		texto: 'Cada pantalla anuncia su nombre al abrirse.',
+		texto: 'Cada pantalla anuncia su nombre al abrirse.'
 	},
 	{
 		id: 'uso-02',
 		familia: 'uso_app',
-		texto: 'Al cambiar de pantalla, el foco va al título.',
+		texto: 'Al cambiar de pantalla, el foco va al título.'
 	},
 	{
 		id: 'uso-03',
 		familia: 'uso_app',
-		texto: 'Borrar todo no apaga la música ni el sonido.',
+		texto: 'La música y los efectos tienen volúmenes separados.'
 	},
+	{
+		id: 'uso-04',
+		familia: 'uso_app',
+		texto: 'Todo funciona sin conexión: tus datos no salen del teléfono.'
+	},
+	{
+		id: 'uso-05',
+		familia: 'uso_app',
+		texto: 'Después de terminar una serie puedes corregir la cantidad.'
+	},
+	{
+		id: 'uso-06',
+		familia: 'uso_app',
+		texto: 'Si aparece dolor en un ejercicio, la sesión te ofrece otro en su lugar.'
+	},
+	{
+		id: 'uso-07',
+		familia: 'uso_app',
+		texto: 'La racha cuenta semanas completas, no días seguidos.'
+	},
+	{
+		id: 'uso-08',
+		familia: 'uso_app',
+		texto: 'Puedes guardar una copia de tus datos desde Configuración y volver a cargarla.'
+	},
+	{
+		id: 'uso-09',
+		familia: 'uso_app',
+		texto: 'En la portada, el botón atrás pide una segunda vez para salir.'
+	},
+	{
+		id: 'uso-10',
+		familia: 'uso_app',
+		texto: 'Los consejos se apagan desde Configuración.'
+	}
 ];
