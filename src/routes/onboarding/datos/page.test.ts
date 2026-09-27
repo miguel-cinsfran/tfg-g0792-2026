@@ -3,7 +3,7 @@
 // Pagina de datos del onboarding: el anuncio assertive del PRIMER campo
 // con error corre en el mismo tick del click (antes del flushSync que
 // nace el parrafo) y el foco va a ese campo, en el orden nombre -> edad
-// -> peso -> altura (R2-001). El parrafo de error no lleva role propio
+// -> peso -> altura. El parrafo de error no lleva role propio
 // que duplique el anuncio por region global. Las aserciones comparan
 // contra las constantes del modulo validacion-datos (identidad, no
 // redaccion).
@@ -51,7 +51,7 @@ vi.mock('$lib/onboarding/estado', () => ({
 	puedeVisitar: () => true
 }));
 
-// Spy del canal assertivo: el contrato R2-001 es que la pagina anuncia
+// Spy del canal assertivo: la pagina anuncia
 // por la region global y no por rol propio del parrafo.
 vi.mock('$lib/a11y/live-region', () => ({
 	anunciarPolite: (...args: unknown[]) => estadoMock.anunciarPoliteMock(...args),
@@ -118,7 +118,7 @@ describe('Pagina de datos', () => {
 		expect(document.getElementById('nombre')).toBe(document.activeElement);
 	});
 
-	it('nombre y edad vacios: primer error y foco en nombre (orden R2-001), sin role propio', () => {		instancia = mount(PaginaDatos, { target: document.body });
+	it('nombre y edad vacios: primer error y foco en nombre (primero del orden), sin role propio', () => {		instancia = mount(PaginaDatos, { target: document.body });
 		flushSync();
 
 		clickContinuar();

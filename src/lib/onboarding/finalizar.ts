@@ -1,4 +1,4 @@
-// Orquestador de cierre del onboarding. Ensambla Perfil via
+// Cierre del onboarding: ensambla el Perfil via
 // evaluacion + split, persiste, limpia estado. `ahora` por argumento
 // para no depender de Date.now() (tests deterministas).
 

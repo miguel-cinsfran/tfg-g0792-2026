@@ -1,5 +1,4 @@
-// Tests de finalizar(estado, ahora): orquestador de cierre del onboarding.
-// TDD estricto: RED primero, luego GREEN.
+// Tests de finalizar(estado, ahora): cierre del onboarding.
 // ADR-0001: nunca Date.now() en tests; usar AHORA del fixture.
 // ADR-0012: vecino al codigo, fake-indexeddb para integracion con Dexie.
 
