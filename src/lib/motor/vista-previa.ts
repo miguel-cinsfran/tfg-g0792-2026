@@ -18,6 +18,7 @@ export interface VistaPrevia {
 	plan: EjercicioPlanificado[];
 	// La UI avisa si algun patron quedo sin ejercicios disponibles.
 	patrones_sin_pool: Patron[];
+	patrones_fuera_del_plan: Patron[];
 }
 
 // `historial` son las sesiones recientes para el filtro de novedad
@@ -37,5 +38,6 @@ export function obtenerVistaPrevia(
 		tipo,
 		plan: generacion.plan,
 		patrones_sin_pool: generacion.patrones_sin_pool,
+		patrones_fuera_del_plan: generacion.patrones_fuera_del_plan,
 	};
 }

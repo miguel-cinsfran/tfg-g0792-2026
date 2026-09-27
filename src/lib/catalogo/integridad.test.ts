@@ -102,8 +102,33 @@ describe('catalogo: integridad referencial', () => {
 		}
 	});
 
+	it('requiere_anclaje es true solo en PULL_H y PULL_V', () => {
+		for (const e of catalogo) {
+			const espera = e.patron === 'PULL_H' || e.patron === 'PULL_V';
+			expect(typeof e.requiere_anclaje, e.id).toBe('boolean');
+			expect(e.requiere_anclaje, e.id).toBe(espera);
+		}
+	});
+
 	it('ningun texto quedo marcado PLACEHOLDER', () => {
 		const texto = JSON.stringify(catalogo);
 		expect(texto).not.toContain('PLACEHOLDER');
+	});
+
+	it('ninguna descripcion remite a otro ejercicio ("la misma instalacion")', () => {
+		for (const e of catalogo) {
+			for (const paso of e.descripcion.posicion_inicial) {
+				expect(paso.toLowerCase(), `${e.id}`).not.toContain('la misma instalación');
+			}
+		}
+	});
+
+	it('los dos remos en suspension traen la instalacion completa', () => {
+		const instalacion =
+			'Cuelga la correa o las anillas de un anclaje firme. Tira fuerte de ellas antes de empezar para comprobar que resisten tu peso.';
+		for (const id of ['ej-020-pull-h-remo-suspension', 'ej-022-pull-h-remo-pies-elevados']) {
+			const primero = porId.get(id)!.descripcion.posicion_inicial[0];
+			expect(primero.startsWith(instalacion), id).toBe(true);
+		}
 	});
 });

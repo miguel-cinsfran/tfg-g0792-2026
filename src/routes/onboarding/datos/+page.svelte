@@ -3,7 +3,8 @@
 	import { resolve } from '$app/paths';
 	import { enfocarPrincipal } from '$lib/a11y/foco';
 	import { anunciarPolite, anunciarAssertive } from '$lib/a11y/live-region';
-	import { obtener, actualizar, pasoPendiente, puedeVisitar } from '$lib/onboarding/estado';
+	import { M } from '$lib/mensajes/ui';
+	import { obtener, actualizar, pasoPendiente, puedeVisitar, pasoAnterior } from '$lib/onboarding/estado';
 	import {
 		entero,
 		decimalUnaCifra,
@@ -12,14 +13,12 @@
 		validarNombre,
 		validarEdad,
 		validarPeso,
-		validarAltura,
-		alturaACm,
-		metrosDesdeCm,
+		validarAlturaCm,
+		alturaCmDesdeTexto,
 		normalizarNombre,
 		MENSAJE_NOMBRE_VACIO,
 		MENSAJE_EDAD_INVALIDA,
-		MENSAJE_PESO_INVALIDO,
-		MENSAJE_ALTURA_INVALIDA
+		MENSAJE_PESO_INVALIDO
 	} from '$lib/onboarding/validacion-datos';
 	import Boton from '$lib/components/Boton.svelte';
 	import Cabecera from '$lib/components/Cabecera.svelte';
@@ -42,8 +41,8 @@
 			: ''
 	);
 	let peso = $state(estado.peso_kg?.toString() ?? '');
-	// La altura se edita en metros, como se escribe.
-	let altura = $state(estado.altura_cm != null ? metrosDesdeCm(estado.altura_cm) : '');
+	// La altura se escribe en centimetros enteros, como se dice.
+	let altura = $state(estado.altura_cm != null ? String(estado.altura_cm) : '');
 
 	let errorNombre = $state<string | null>(null);
 	let errorEdad = $state<string | null>(null);
@@ -57,7 +56,7 @@
 
 	$effect(() => {
 		if (mayorDe40 && !anunciado) {
-			anunciarPolite('Si tienes 40 años o más, considera una consulta médica previa.');
+			anunciarPolite(M.onboarding.datos.avisoEdad);
 			anunciado = true;
 		}
 		if (!mayorDe40) {
@@ -76,7 +75,7 @@
 		if (errorPeso !== null && validarPeso(peso)) errorPeso = null;
 	});
 	$effect(() => {
-		if (errorAltura !== null && validarAltura(altura)) errorAltura = null;
+		if (errorAltura !== null && validarAlturaCm(altura)) errorAltura = null;
 	});
 
 	$effect(() => {
@@ -101,12 +100,12 @@
 		const nombreValido = validarNombre(nombre);
 		const edadValida = validarEdad(edad);
 		const pesoValido = validarPeso(peso);
-		const alturaValida = validarAltura(altura);
+		const alturaValida = validarAlturaCm(altura);
 
 		if (!nombreValido) errorNombre = MENSAJE_NOMBRE_VACIO;
 		if (!edadValida) errorEdad = MENSAJE_EDAD_INVALIDA;
 		if (!pesoValido) errorPeso = MENSAJE_PESO_INVALIDO;
-		if (!alturaValida) errorAltura = MENSAJE_ALTURA_INVALIDA;
+		if (!alturaValida) errorAltura = M.onboarding.datos.errorAlturaCm;
 
 		if (nombreValido && edadValida && pesoValido && alturaValida) {
 			const patch: Parameters<typeof actualizar>[0] = {
@@ -115,7 +114,7 @@
 				peso_kg: decimalUnaCifra(peso) as number
 			};
 			if (altura.trim() !== '') {
-				patch.altura_cm = alturaACm(altura) as number;
+				patch.altura_cm = alturaCmDesdeTexto(altura) as number;
 			} else {
 				patch.altura_cm = null;
 			}
@@ -147,19 +146,20 @@
 	}
 
 	function atras() {
-		goto(resolve('/onboarding/disclaimer'));
+		// eslint-disable-next-line svelte/no-navigation-without-resolve
+		goto(pasoAnterior('/onboarding/datos') ?? resolve('/onboarding/disclaimer'));
 	}
 </script>
 
-<svelte:head><title>Tus datos</title></svelte:head>
+<svelte:head><title>{M.onboarding.datos.titulo}</title></svelte:head>
 
 <Cabecera onclick={atras}>
-	<h1 tabindex="-1" bind:this={heading}>Tus datos</h1>
+	<h1 tabindex="-1" bind:this={heading}>{M.onboarding.datos.titulo}</h1>
 </Cabecera>
 
 <form onsubmit={manejarEnvio} novalidate>
 	<div class="space-y-6">
-		<Card titulo="Sobre ti">
+		<Card titulo={M.onboarding.datos.sobreTi}>
 			<div class="space-y-4">
 				<div>
 					<label for="nombre">Nombre</label>
@@ -182,7 +182,7 @@
 			</div>
 		</Card>
 
-		<Card titulo="Medidas">
+		<Card titulo={M.onboarding.datos.medidas}>
 			<div class="space-y-4">
 				<div>
 					<label for="edad">Edad</label>
@@ -230,15 +230,15 @@
 					<div class="flex items-center gap-2">
 						<input
 							type="text"
-							inputmode="decimal"
-							pattern={'[0-9]+([.,][0-9]{1,2})?'}
+							inputmode="numeric"
+							pattern="[0-9]*"
 							autocomplete="off"
 							id="altura"
 							bind:value={altura}
 							aria-invalid={errorAltura !== null ? 'true' : undefined}
 							aria-describedby={'unidad-altura' + (errorAltura !== null ? ' error-altura' : '')}
 						/>
-						<span id="unidad-altura" class="text-text-secondary shrink-0">m</span>
+						<span id="unidad-altura" class="text-text-secondary shrink-0">cm</span>
 					</div>
 					{#if errorAltura}
 						<p id="error-altura" class="mt-1 text-sm text-error">
@@ -250,7 +250,7 @@
 		</Card>
 
 		{#if mayorDe40}
-			<p class="text-sm">Si tienes 40 años o más, considera una consulta médica previa.</p>
+			<p class="text-sm">{M.onboarding.datos.avisoEdad}</p>
 		{/if}
 	</div>
 </form>
@@ -261,7 +261,7 @@
 		     manejarEnvio. El form sigue existiendo para soportar submit
 		     con Enter desde cualquier input. -->
 		<Boton variante="primario" tamano="grande" type="button" onclick={manejarEnvio} avance>
-			Continuar
+			{M.onboarding.comun.continuar}
 		</Boton>
 	{/snippet}
 </BarraAccion>

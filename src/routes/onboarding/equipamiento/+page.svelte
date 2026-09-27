@@ -2,7 +2,8 @@
 	import { goto } from '$app/navigation';
 	import { enfocarPrincipal } from '$lib/a11y/foco';
 	import { anunciarAssertive } from '$lib/a11y/live-region';
-	import { obtener, actualizar, pasoPendiente, puedeVisitar } from '$lib/onboarding/estado';
+	import { M } from '$lib/mensajes/ui';
+	import { obtener, actualizar, pasoPendiente, puedeVisitar, pasoAnterior } from '$lib/onboarding/estado';
 	import Boton from '$lib/components/Boton.svelte';
 	import Cabecera from '$lib/components/Cabecera.svelte';
 	import GrupoSeleccion from '$lib/components/GrupoSeleccion.svelte';
@@ -40,7 +41,7 @@
 
 	function continuar() {
 		if (tieneAnclaje === null) {
-			errorSeleccion = 'Elige una opción para continuar.';
+			errorSeleccion = M.onboarding.equipamiento.errorSeleccion;
 			anunciarAssertive(errorSeleccion);
 			document.getElementById('grupo-equipamiento')?.querySelector('input')?.focus();
 			return;
@@ -52,38 +53,38 @@
 
 	function atras() {
 		// eslint-disable-next-line svelte/no-navigation-without-resolve
-		goto('/onboarding/objetivo');
+		goto(pasoAnterior('/onboarding/equipamiento') ?? '/onboarding/objetivo');
 	}
 </script>
 
-<svelte:head><title>Equipamiento disponible</title></svelte:head>
+<svelte:head><title>{M.onboarding.equipamiento.titulo}</title></svelte:head>
 
 <Cabecera onclick={atras}>
-	<h1 tabindex="-1" bind:this={heading}>Equipamiento disponible</h1>
+	<h1 tabindex="-1" bind:this={heading}>{M.onboarding.equipamiento.titulo}</h1>
 </Cabecera>
 
+<p id="explicacion-equipamiento" class="mt-2 text-sm text-text-secondary">
+	{M.onboarding.equipamiento.explicacion}
+</p>
+
 <GrupoSeleccion
-	leyenda="¿Tienes una barra o un anclaje para suspensión?"
+	leyenda={M.onboarding.equipamiento.leyenda}
 	nombre="tiene_anclaje"
 	opciones={OPCIONES}
 	bind:valor={seleccion}
 	error={errorSeleccion}
 	id="grupo-equipamiento"
+	descripcionId="explicacion-equipamiento"
 />
-
-<p class="mt-2 text-sm text-text-secondary">
-	Sirve una barra de dominadas de marco de puerta, unas anillas o una correa de
-	suspensión colgada de un anclaje firme.
-</p>
 
 {#if seleccion === 'no'}
 	<p class="mt-3 text-sm text-text-secondary">
-		Sin un anclaje no se evalúa la tracción: ese patrón arranca en nivel principiante.
+		{M.onboarding.equipamiento.sinAnclaje}
 	</p>
 {/if}
 
 <BarraAccion>
 	{#snippet primaria()}
-		<Boton variante="primario" tamano="grande" onclick={continuar} avance>Continuar</Boton>
+		<Boton variante="primario" tamano="grande" onclick={continuar} avance>{M.onboarding.comun.continuar}</Boton>
 	{/snippet}
 </BarraAccion>

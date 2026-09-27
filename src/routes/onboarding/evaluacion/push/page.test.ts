@@ -29,7 +29,8 @@ const estadoMock = vi.hoisted(() => ({
 	gotoMock: vi.fn(),
 	anunciarAssertiveMock: vi.fn(),
 	anunciarPoliteMock: vi.fn(),
-	sonarMock: vi.fn()
+	sonarMock: vi.fn(),
+	gruposOmitidosMock: vi.fn()
 }));
 
 // goto va al SvelteKit real: se mockea porque en jsdom no hay cliente.
@@ -49,7 +50,8 @@ vi.mock('$lib/onboarding/estado', () => ({
 	obtener: () => estadoMock.obtenerMock(),
 	actualizar: (...args: unknown[]) => estadoMock.actualizarMock(...args),
 	pasoPendiente: () => '/siguiente',
-	puedeVisitar: () => true
+	puedeVisitar: () => true,
+	gruposOmitidosPorDolor: () => estadoMock.gruposOmitidosMock()
 }));
 
 // Spy de los dos canales: el contraste entre ellos es el aserto clave.
@@ -74,6 +76,8 @@ describe('Pagina de evaluacion push', () => {
 		estadoMock.obtenerMock.mockReset();
 		estadoMock.anunciarAssertiveMock.mockReset();
 		estadoMock.anunciarPoliteMock.mockReset();
+		estadoMock.gruposOmitidosMock.mockReset();
+		estadoMock.gruposOmitidosMock.mockReturnValue([]);
 		estadoMock.obtenerMock.mockReturnValue({
 			disclaimer_aceptado: false,
 			fecha_aceptacion_disclaimer: null,
@@ -97,8 +101,7 @@ describe('Pagina de evaluacion push', () => {
 		if (instancia) unmount(instancia);
 	});
 
-	it('al fallar la validacion, anuncia assertive (no polite) con MENSAJE_INVALIDO y enfoca el input', () => {
-		instancia = mount(PaginaPushEvaluacion, { target: document.body });
+	it('al fallar la validacion, anuncia assertive (no polite) con MENSAJE_INVALIDO y enfoca el input', () => {		instancia = mount(PaginaPushEvaluacion, { target: document.body });
 		flushSync();
 
 		const botonContinuar = Array.from(document.body.querySelectorAll('button')).find(
@@ -122,5 +125,140 @@ describe('Pagina de evaluacion push', () => {
 			'Escribe cuántas repeticiones hiciste, o usa «No puedo hacer ninguna».'
 		);
 		expect(document.getElementById('reps-input')).toBe(document.activeElement);
+	});
+});
+
+describe('Pagina de evaluacion push - "No puedo hacer ninguna"', () => {
+	let instancia: ReturnType<typeof mount>;
+
+	beforeEach(() => {
+		document.body.innerHTML = '';
+		estadoMock.obtenerMock.mockReset();
+		estadoMock.actualizarMock.mockReset();
+		estadoMock.gotoMock.mockReset();
+		estadoMock.anunciarAssertiveMock.mockReset();
+		estadoMock.anunciarPoliteMock.mockReset();
+		estadoMock.gruposOmitidosMock.mockReset();
+		estadoMock.gruposOmitidosMock.mockReturnValue([]);
+		estadoMock.obtenerMock.mockReturnValue({
+			disclaimer_aceptado: false,
+			fecha_aceptacion_disclaimer: null,
+			nombre: null,
+			anio_nacimiento: null,
+			peso_kg: null,
+			altura_cm: null,
+			objetivo: null,
+			tiene_anclaje: true,
+			zonas_dolor_preexistente: null,
+			dias_semana: null,
+			duracion_sesion_min: null,
+			reps_push: null,
+			reps_pull: null,
+			reps_legs: null,
+			segundos_core: null
+		});
+	});
+
+	afterEach(() => {
+		if (instancia) unmount(instancia);
+	});
+
+	function botonNoPuedo(): HTMLButtonElement {
+		const boton = Array.from(document.body.querySelectorAll('button')).find(
+			(b) => b.textContent?.trim() === 'No puedo hacer ninguna'
+		);
+		if (!boton) throw new Error('No hay boton "No puedo hacer ninguna"');
+		return boton as HTMLButtonElement;
+	}
+
+	it('no navega: pone el campo en 0, anuncia y enfoca Continuar', () => {
+		instancia = mount(PaginaPushEvaluacion, { target: document.body });
+		flushSync();
+
+		botonNoPuedo().click();
+		flushSync();
+
+		expect(estadoMock.gotoMock).not.toHaveBeenCalled();
+		expect(estadoMock.actualizarMock).toHaveBeenCalledWith({ reps_push: 0 });
+		expect((document.getElementById('reps-input') as HTMLInputElement).value).toBe('0');
+		expect(estadoMock.anunciarPoliteMock).toHaveBeenCalledWith(
+			'Anotado: ninguna. Toca «Continuar» para seguir.'
+		);
+		expect(document.activeElement).toBe(document.getElementById('continuar'));
+	});
+
+	it('Continuar tras "No puedo" avanza al paso siguiente', () => {
+		instancia = mount(PaginaPushEvaluacion, { target: document.body });
+		flushSync();
+
+		botonNoPuedo().click();
+		flushSync();
+		(document.getElementById('continuar') as HTMLButtonElement).click();
+		flushSync();
+
+		expect(estadoMock.gotoMock).toHaveBeenCalledWith('/siguiente');
+	});
+});
+
+describe('Pagina de evaluacion push - conteo de preguntas', () => {
+	let instancia: ReturnType<typeof mount>;
+
+	function estadoBase(overrides: Record<string, unknown> = {}): Record<string, unknown> {
+		return {
+			disclaimer_aceptado: false,
+			fecha_aceptacion_disclaimer: null,
+			nombre: null,
+			anio_nacimiento: null,
+			peso_kg: null,
+			altura_cm: null,
+			objetivo: null,
+			tiene_anclaje: true,
+			zonas_dolor_preexistente: null,
+			dias_semana: null,
+			duracion_sesion_min: null,
+			reps_push: null,
+			reps_pull: null,
+			reps_legs: null,
+			segundos_core: null,
+			...overrides
+		};
+	}
+
+	beforeEach(() => {
+		document.body.innerHTML = '';
+		estadoMock.obtenerMock.mockReset();
+		estadoMock.gruposOmitidosMock.mockReset();
+		estadoMock.gruposOmitidosMock.mockReturnValue([]);
+	});
+
+	afterEach(() => {
+		if (instancia) unmount(instancia);
+	});
+
+	it('con anclaje y sin dolor: ultimas cuatro preguntas', () => {
+		estadoMock.obtenerMock.mockReturnValue(estadoBase());
+		instancia = mount(PaginaPushEvaluacion, { target: document.body });
+		flushSync();
+
+		expect(document.body.textContent).toContain('Últimas cuatro preguntas');
+	});
+
+	it('sin anclaje: ultimas tres preguntas', () => {
+		estadoMock.obtenerMock.mockReturnValue(estadoBase({ tiene_anclaje: false }));
+		instancia = mount(PaginaPushEvaluacion, { target: document.body });
+		flushSync();
+
+		expect(document.body.textContent).toContain('Últimas tres preguntas');
+		expect(document.body.textContent).not.toContain('Últimas cuatro preguntas');
+	});
+
+	it('con tres grupos salteados por dolor: ultima pregunta en singular', () => {
+		estadoMock.obtenerMock.mockReturnValue(estadoBase());
+		estadoMock.gruposOmitidosMock.mockReturnValue(['PULL', 'LEGS', 'CORE']);
+		instancia = mount(PaginaPushEvaluacion, { target: document.body });
+		flushSync();
+
+		expect(document.body.textContent).toContain('Última pregunta');
+		expect(document.body.textContent).not.toContain('Últimas');
 	});
 });

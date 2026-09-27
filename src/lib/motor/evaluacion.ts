@@ -1,6 +1,6 @@
 // Nivel global desde la evaluacion inicial. Umbrales en rules.evaluacion_inicial.
 
-import type { AjusteDesbalance, Nivel } from './schema.js';
+import type { AjusteDesbalance, Nivel, Patron, Zona } from './schema.js';
 import { NIVELES } from './schema.js';
 import { rules } from './reglas.js';
 
@@ -27,6 +27,41 @@ export interface ResultadoEvaluacion {
 	// null si no hay patron debil. En MVP se guarda y se informa, pero
 	// no modifica el volumen.
 	ajuste_desbalance_activo: AjusteDesbalance | null;
+}
+
+// Grupo evaluable en el alta y su correspondencia con patrones del
+// catalogo. El generador filtra nivel por grupo, no por global.
+export const PATRONES_POR_GRUPO = {
+	PUSH: ['PUSH_H', 'PUSH_V'],
+	PULL: ['PULL_H', 'PULL_V'],
+	LEGS: ['SQUAT', 'HINGE', 'UNILATERAL'],
+	CORE: ['CORE'],
+} as const;
+
+export type GrupoEvaluable = keyof typeof PATRONES_POR_GRUPO;
+
+export function grupoDePatron(patron: Patron): GrupoEvaluable {
+	for (const [grupo, patrones] of Object.entries(PATRONES_POR_GRUPO)) {
+		if ((patrones as readonly string[]).includes(patron)) return grupo as GrupoEvaluable;
+	}
+	throw new RangeError(`Patron desconocido: ${patron}`);
+}
+
+// Dice si las zonas con dolor declarado vacian el pool de TODOS los
+// patrones del grupo (mismo criterio que el generador). El alta
+// saltea la prueba de un grupo vaciado: no se va a entrenar.
+export function grupoVaciadoPorDolor(
+	grupo: GrupoEvaluable,
+	zonasDolor: readonly Zona[],
+	catalogo: readonly { patron: Patron; zonas_involucradas: readonly Zona[] }[],
+): boolean {
+	const dolor = new Set(zonasDolor);
+	return PATRONES_POR_GRUPO[grupo].every(
+		(patron) =>
+			!catalogo.some(
+				(e) => e.patron === patron && e.zonas_involucradas.every((z) => !dolor.has(z)),
+			),
+	);
 }
 
 function clasificar(valor: number, maxPrincipiante: number, maxIntermedio: number): Nivel {

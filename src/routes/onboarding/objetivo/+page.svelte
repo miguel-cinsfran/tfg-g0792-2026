@@ -2,7 +2,8 @@
 	import { goto } from '$app/navigation';
 	import { enfocarPrincipal } from '$lib/a11y/foco';
 	import { anunciarAssertive } from '$lib/a11y/live-region';
-	import { obtener, actualizar, pasoPendiente, puedeVisitar } from '$lib/onboarding/estado';
+	import { M } from '$lib/mensajes/ui';
+	import { obtener, actualizar, pasoPendiente, puedeVisitar, pasoAnterior } from '$lib/onboarding/estado';
 	import Boton from '$lib/components/Boton.svelte';
 	import Cabecera from '$lib/components/Cabecera.svelte';
 	import GrupoSeleccion from '$lib/components/GrupoSeleccion.svelte';
@@ -40,7 +41,7 @@
 
 	function continuar() {
 		if (seleccionado === null) {
-			errorSeleccion = 'Elige un objetivo para continuar.';
+			errorSeleccion = M.onboarding.objetivo.errorSeleccion;
 			anunciarAssertive(errorSeleccion);
 			document.getElementById('grupo-objetivo')?.querySelector('input')?.focus();
 			return;
@@ -52,18 +53,18 @@
 
 	function atras() {
 		// eslint-disable-next-line svelte/no-navigation-without-resolve
-		goto('/onboarding/datos');
+		goto(pasoAnterior('/onboarding/objetivo') ?? '/onboarding/datos');
 	}
 </script>
 
-<svelte:head><title>Tu objetivo</title></svelte:head>
+<svelte:head><title>{M.onboarding.objetivo.titulo}</title></svelte:head>
 
 <Cabecera onclick={atras}>
-	<h1 tabindex="-1" bind:this={heading}>Tu objetivo</h1>
+	<h1 tabindex="-1" bind:this={heading}>{M.onboarding.objetivo.titulo}</h1>
 </Cabecera>
 
 <GrupoSeleccion
-	leyenda="Selecciona tu objetivo"
+	leyenda={M.onboarding.objetivo.leyenda}
 	nombre="objetivo"
 	opciones={OPCIONES}
 	bind:valor={seleccionado}
@@ -73,6 +74,6 @@
 
 <BarraAccion>
 	{#snippet primaria()}
-		<Boton variante="primario" tamano="grande" onclick={continuar} avance>Continuar</Boton>
+		<Boton variante="primario" tamano="grande" onclick={continuar} avance>{M.onboarding.comun.continuar}</Boton>
 	{/snippet}
 </BarraAccion>

@@ -11,6 +11,7 @@ export function ejercicioBase(overrides: Partial<Ejercicio> = {}): Ejercicio {
 		patron: 'PUSH_H',
 		nivel_requerido: 'principiante',
 		zonas_involucradas: ['hombros', 'codos'],
+		requiere_anclaje: false,
 		reps_iniciales: 10,
 		progresion_id: null,
 		regresion_id: null,

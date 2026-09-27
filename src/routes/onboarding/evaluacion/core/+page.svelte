@@ -1,8 +1,9 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { enfocarPrincipal } from '$lib/a11y/foco';
-	import { anunciarAssertive } from '$lib/a11y/live-region';
-	import { obtener, actualizar, pasoPendiente, puedeVisitar } from '$lib/onboarding/estado';
+	import { anunciarPolite, anunciarAssertive } from '$lib/a11y/live-region';
+	import { M } from '$lib/mensajes/ui';
+	import { obtener, actualizar, pasoPendiente, puedeVisitar, pasoAnterior } from '$lib/onboarding/estado';
 	import { entero, validarConteo } from '$lib/onboarding/validacion-datos';
 	import Boton from '$lib/components/Boton.svelte';
 	import Cabecera from '$lib/components/Cabecera.svelte';
@@ -26,9 +27,6 @@
 	// visualmente cerrado.
 	let anotarAbierto = $state(false);
 
-	const MENSAJE_INVALIDO =
-		"Escribe cuántos segundos aguantaste, o usa «No puedo sostenerla».";
-
 	$effect(() => {
 		const e = obtener();
 		if (e[CAMPO] !== null) valor = String(e[CAMPO]);
@@ -51,8 +49,8 @@
 
 	function continuar() {
 		if (!validarConteo(valor)) {
-			error = MENSAJE_INVALIDO;
-			anunciarAssertive(MENSAJE_INVALIDO);
+			error = M.onboarding.evaluacion.core.mensajeInvalidoSegundos;
+			anunciarAssertive(M.onboarding.evaluacion.core.mensajeInvalidoSegundos);
 			// Abrir el desplegable antes de enfocar.
 			anotarAbierto = true;
 			input?.focus();
@@ -63,34 +61,36 @@
 		goto(pasoPendiente());
 	}
 
+	// "No puedo" es una respuesta mas: anota 0 y manda al Continuar
+	// sin navegar, como las demas respuestas. Un toque accidental se
+	// corrige escribiendo otro numero antes de continuar.
 	function noPuedo() {
 		actualizar({ [CAMPO]: 0 });
-		// eslint-disable-next-line svelte/no-navigation-without-resolve
-		goto(pasoPendiente());
+		valor = '0';
+		anunciarPolite(M.onboarding.evaluacion.comun.anotadoNinguna);
+		document.getElementById('continuar')?.focus();
 	}
 
 	function atras() {
 		// eslint-disable-next-line svelte/no-navigation-without-resolve
-		goto('/onboarding/evaluacion/legs');
+		goto(pasoAnterior('/onboarding/evaluacion/core') ?? '/onboarding/evaluacion/legs');
 	}
 </script>
 
-<svelte:head><title>Evaluación: plancha</title></svelte:head>
+<svelte:head><title>{M.onboarding.evaluacion.core.titulo}</title></svelte:head>
 
 <Cabecera onclick={atras}>
-	<h1 tabindex="-1" bind:this={heading}>Evaluación: plancha</h1>
+	<h1 tabindex="-1" bind:this={heading}>{M.onboarding.evaluacion.core.titulo}</h1>
 </Cabecera>
 
 <div class="space-y-6">
-	<Card titulo="Cómo hacer la plancha">
+	<Card titulo={M.onboarding.evaluacion.core.comoHacer}>
 		<DescripcionEjercicio descripcion={DESCRIPCION_PLANCHA} plegarClaves />
 	</Card>
 
-	<Card titulo="Medición">
+	<Card titulo={M.onboarding.evaluacion.core.medicion}>
 		<p>
-			Toca "Empezar a contar", ponte en posición y sostén la plancha. Cuando
-			no aguantes más, toca "Parar": los segundos quedan registrados solos. Si
-			prefieres, también puedes anotarlos a mano desplegando «Anotar a mano».
+			{M.onboarding.evaluacion.core.introduccion}
 		</p>
 		<div class="mt-3">
 			<Cronometro
@@ -104,9 +104,9 @@
 	</Card>
 
 	<details class="clase-tema-anotar desplegable" bind:open={anotarAbierto}>
-		<summary>Anotar a mano</summary>
+		<summary>{M.onboarding.evaluacion.core.anotarAMano}</summary>
 		<label for="segundos-input" class="block text-text-primary">
-			¿Cuántos segundos aguantaste la plancha?
+			{M.onboarding.evaluacion.core.preguntaSegundos}
 		</label>
 		<input
 			id="segundos-input"
@@ -120,20 +120,20 @@
 			aria-describedby={error !== null ? 'error-segundos' : undefined}
 			class="mt-2 text-2xl font-bold tabular-nums font-mono"
 		/>
-		<p class="mt-1 text-sm text-text-secondary">Entero entre 0 y 300.</p>
+		<p class="mt-1 text-sm text-text-secondary">{M.onboarding.evaluacion.comun.rangoValido}</p>
 		{#if error}
 			<p id="error-segundos" class="mt-1 text-sm text-error">{error}</p>
 		{/if}
 	</details>
 
 	<div class="mt-4">
-		<Boton variante="secundario" onclick={noPuedo}>No puedo sostenerla</Boton>
+		<Boton variante="secundario" onclick={noPuedo}>{M.onboarding.evaluacion.core.noPuedoSostenerla}</Boton>
 	</div>
 </div>
 <BarraAccion>
 	{#snippet primaria()}
-		<Boton variante="primario" tamano="grande" onclick={continuar} avance>
-			Continuar
+		<Boton variante="primario" tamano="grande" onclick={continuar} avance id="continuar">
+			{M.onboarding.evaluacion.comun.continuar}
 		</Boton>
 	{/snippet}
 </BarraAccion>

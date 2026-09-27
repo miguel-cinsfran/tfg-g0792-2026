@@ -17,7 +17,9 @@ import {
 	MENSAJE_PESO_INVALIDO,
 	normalizarNombre,
 	validarAltura,
+	validarAlturaCm,
 	alturaACm,
+	alturaCmDesdeTexto,
 	metrosDesdeCm,
 	validarConteo,
 	validarDatosEditados,
@@ -268,6 +270,26 @@ describe('validarAltura', () => {
 
 	it('"0,9" es invalido (fuera de rango en metros)', () => {
 		expect(validarAltura('0,9')).toBe(false);
+	});
+});
+
+describe('validarAlturaCm (alta en centimetros enteros)', () => {
+	it('"175" es valido y vale 175', () => {
+		expect(validarAlturaCm('175')).toBe(true);
+		expect(alturaCmDesdeTexto('175')).toBe(175);
+	});
+
+	it('vacio sigue siendo valido (opcional)', () => {
+		expect(validarAlturaCm('')).toBe(true);
+	});
+
+	it('"1,75" es invalido: ya no se aceptan metros', () => {
+		expect(validarAlturaCm('1,75')).toBe(false);
+		expect(alturaCmDesdeTexto('1,75')).toBeNull();
+	});
+
+	it('"99" es invalido (menor que 100)', () => {
+		expect(validarAlturaCm('99')).toBe(false);
 	});
 });
 

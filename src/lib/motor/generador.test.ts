@@ -83,6 +83,42 @@ describe('generarSesion (ALG-04)', () => {
 		expect(r.plan).toHaveLength(5);
 	});
 
+	it('usa el nivel del grupo, no el global: LEGS principiante no recibe SQUAT intermedio', () => {
+		const catalogo = catalogoMinimo().map((e) =>
+			e.id === 'ej-squat' ? { ...e, nivel_requerido: 'intermedio' as const } : e,
+		);
+		const perfil = perfilBase({
+			nivel_experiencia: 'intermedio',
+			evaluacion_por_patron: {
+				PUSH: 'intermedio',
+				PULL: 'intermedio',
+				LEGS: 'principiante',
+				CORE: 'intermedio',
+			},
+		});
+		const r = generarSesion('FULL_BODY', perfil, catalogo, [], []);
+		expect(r.patrones_sin_pool).toEqual(['SQUAT']);
+		expect(r.plan.map((p) => p.ejercicio_id)).not.toContain('ej-squat');
+	});
+
+	it('con LEGS intermedio el SQUAT intermedio si entra', () => {
+		const catalogo = catalogoMinimo().map((e) =>
+			e.id === 'ej-squat' ? { ...e, nivel_requerido: 'intermedio' as const } : e,
+		);
+		const perfil = perfilBase({
+			nivel_experiencia: 'intermedio',
+			evaluacion_por_patron: {
+				PUSH: 'intermedio',
+				PULL: 'intermedio',
+				LEGS: 'intermedio',
+				CORE: 'intermedio',
+			},
+		});
+		const r = generarSesion('FULL_BODY', perfil, catalogo, [], []);
+		expect(r.patrones_sin_pool).toEqual([]);
+		expect(r.plan.map((p) => p.ejercicio_id)).toContain('ej-squat');
+	});
+
 	it('un estado propio habilita un ejercicio por encima del nivel (variante elegida)', () => {
 		// La eleccion explicita (cambio de variante, sugerencia aceptada)
 		// crea estado; el filtro conservador de nivel no la pisa.
@@ -106,6 +142,103 @@ describe('generarSesion (ALG-04)', () => {
 		expect(r.plan).toHaveLength(6);
 	});
 
+	it('sin anclaje excluye los que requieren anclaje y reporta el patron', () => {
+		const catalogo = catalogoMinimo().map((e) =>
+			e.patron === 'PULL_H' ? { ...e, requiere_anclaje: true } : e,
+		);
+		const r = generarSesion('FULL_BODY', perfilBase({ tiene_anclaje: false }), catalogo, [], []);
+		expect(r.patrones_sin_pool).toEqual([]);
+		expect(r.patrones_fuera_del_plan).toEqual(['PULL_H']);
+		expect(r.plan).toHaveLength(5);
+		expect(r.plan.map((p) => p.ejercicio_id)).not.toContain('ej-pull-h');
+	});
+
+	it('con anclaje los PULL siguen disponibles', () => {
+		const catalogo = catalogoMinimo().map((e) =>
+			e.patron === 'PULL_H' ? { ...e, requiere_anclaje: true } : e,
+		);
+		const r = generarSesion('FULL_BODY', perfilBase({ tiene_anclaje: true }), catalogo, [], []);
+		expect(r.patrones_sin_pool).toEqual([]);
+		expect(r.plan.map((p) => p.ejercicio_id)).toContain('ej-pull-h');
+	});
+
+	it('con LEGS en grupos_desde_base el pool se limita a la base de cada cadena', () => {
+		const catalogo = [
+			...catalogoMinimo(),
+			ejercicioBase({
+				id: 'ej-squat-2',
+				patron: 'SQUAT',
+				zonas_involucradas: ['rodillas'],
+				regresion_id: 'ej-squat',
+			}),
+		];
+		const perfil = perfilBase({ grupos_desde_base: ['LEGS'] });
+		// ej-squat ya se uso: sin el limite, la novedad elegiria ej-squat-2.
+		const historial = [sesionBase({ ejercicios: [ejecutado('ej-squat')] })];
+		const r = generarSesion('FULL_BODY', perfil, catalogo, [], historial);
+		expect(r.plan.map((p) => p.ejercicio_id)).toContain('ej-squat');
+		expect(r.plan.map((p) => p.ejercicio_id)).not.toContain('ej-squat-2');
+	});
+
+	it('el estado propio levanta el limite de base (progresion aceptada)', () => {
+		const catalogo = [
+			...catalogoMinimo(),
+			ejercicioBase({
+				id: 'ej-squat-2',
+				patron: 'SQUAT',
+				zonas_involucradas: ['rodillas'],
+				regresion_id: 'ej-squat',
+			}),
+		];
+		const perfil = perfilBase({ grupos_desde_base: ['LEGS'] });
+		const estados = [estadoBase({ ejercicio_id: 'ej-squat-2', reps_objetivo: 8 })];
+		const historial = [sesionBase({ ejercicios: [ejecutado('ej-squat')] })];
+		const r = generarSesion('FULL_BODY', perfil, catalogo, estados, historial);
+		expect(r.plan.map((p) => p.ejercicio_id)).toContain('ej-squat-2');
+	});
+
+	it('perfil viejo sin grupos_desde_base no limita el pool', () => {
+		const catalogo = [
+			...catalogoMinimo(),
+			ejercicioBase({
+				id: 'ej-squat-2',
+				patron: 'SQUAT',
+				zonas_involucradas: ['rodillas'],
+				regresion_id: 'ej-squat',
+			}),
+		];
+		// perfilBase() no trae el campo: asi llegan los perfiles viejos.
+		const historial = [sesionBase({ ejercicios: [ejecutado('ej-squat')] })];
+		const r = generarSesion('FULL_BODY', perfilBase(), catalogo, [], historial);
+		expect(r.plan.map((p) => p.ejercicio_id)).toContain('ej-squat-2');
+	});
+
+	it('sin anclaje y sin bloqueos: los PULL van fuera del plan, no a sin_pool', () => {
+		const catalogo = [
+			...catalogoMinimo(),
+			ejercicioBase({ id: 'ej-pull-v', patron: 'PULL_V', zonas_involucradas: ['codos'] }),
+		].map((e) =>
+			e.patron === 'PULL_H' || e.patron === 'PULL_V' ? { ...e, requiere_anclaje: true } : e,
+		);
+		const r = generarSesion('UPPER', perfilBase({ tiene_anclaje: false }), catalogo, [], []);
+		expect(r.patrones_sin_pool).toEqual([]);
+		expect(r.patrones_fuera_del_plan).toEqual(['PULL_H', 'PULL_V']);
+		expect(r.plan).toHaveLength(3);
+	});
+
+	it('el bloqueo en sesion va a sin_pool; el equipo, fuera del plan', () => {
+		const catalogo = [
+			...catalogoMinimo(),
+			ejercicioBase({ id: 'ej-pull-v', patron: 'PULL_V', zonas_involucradas: ['codos'] }),
+		].map((e) =>
+			e.patron === 'PULL_H' || e.patron === 'PULL_V' ? { ...e, requiere_anclaje: true } : e,
+		);
+		const estados = [estadoBase({ ejercicio_id: 'ej-push-h', bloqueado: true })];
+		const r = generarSesion('UPPER', perfilBase({ tiene_anclaje: false }), catalogo, estados, []);
+		expect(r.patrones_sin_pool).toEqual(['PUSH_H']);
+		expect(r.patrones_fuera_del_plan).toEqual(['PULL_H', 'PULL_V']);
+	});
+
 	it('excluye ejercicios bloqueados', () => {
 		const estados = [estadoBase({ ejercicio_id: 'ej-pull-h', bloqueado: true })];
 		const r = generarSesion('FULL_BODY', perfilBase(), catalogoMinimo(), estados, []);
@@ -115,7 +248,8 @@ describe('generarSesion (ALG-04)', () => {
 	it('excluye ejercicios que tocan zonas de dolor preexistente', () => {
 		const perfil = perfilBase({ zonas_dolor_preexistente: ['rodillas'] });
 		const r = generarSesion('FULL_BODY', perfil, catalogoMinimo(), [], []);
-		expect(r.patrones_sin_pool).toEqual(['SQUAT']);
+		expect(r.patrones_sin_pool).toEqual([]);
+		expect(r.patrones_fuera_del_plan).toEqual(['SQUAT']);
 	});
 
 	it('respeta el subpatron del slot de CORE', () => {
@@ -123,7 +257,8 @@ describe('generarSesion (ALG-04)', () => {
 			e.id === 'ej-core' ? { ...e, subpatron: 'ANTI_ROTATION' as const } : e,
 		);
 		const r = generarSesion('FULL_BODY', perfilBase(), catalogo, [], []);
-		expect(r.patrones_sin_pool).toEqual(['CORE']);
+		expect(r.patrones_sin_pool).toEqual([]);
+		expect(r.patrones_fuera_del_plan).toEqual(['CORE']);
 	});
 
 	it('novedad: prefiere el candidato no usado en las sesiones recientes', () => {

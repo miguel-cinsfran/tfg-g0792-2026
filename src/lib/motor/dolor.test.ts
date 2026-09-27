@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
 	buscarSustituto,
 	registrarZonasDolor,
+	corregirZonasDolor,
 	aplicarSustitucion,
 	bloqueosVencidos,
 	reactivarEjercicio,
@@ -162,6 +163,41 @@ describe('registrarZonasDolor', () => {
 		const s1 = registrarZonasDolor(registrarZonasDolor(s0, ['hombros']), ['hombros', 'lumbar']);
 		expect(s1.ejecutados[0].zonas_dolor_reportadas).toEqual(['hombros', 'lumbar']);
 		expect(s1.ejecutados[0].series_completadas).toBe(1);
+	});
+});
+
+// Al revisar las zonas y quitar una, el registro de la serie no puede
+// quedar con la zona quitada: contradiria la razon del bloqueo.
+// corregirZonasDolor corrige SOLO este reporte:
+// quita lo que ya no confirma y agrega lo nuevo, sin tocar las zonas de
+// reportes anteriores. El tercer caso es el que justifica la funcion.
+describe('corregirZonasDolor', () => {
+	it('quitar una zona deja solo la que sigue marcada', () => {
+		const s0 = registrarZonasDolor(crearEstadoInicial(plan(), 'FULL_BODY', AHORA), [
+			'rodillas',
+			'cadera',
+		]);
+		const s1 = corregirZonasDolor(s0, ['rodillas', 'cadera'], ['rodillas']);
+		expect(s1.ejecutados[0].zonas_dolor_reportadas).toEqual(['rodillas']);
+	});
+
+	it('quitar una y agregar otra a la vez deja el conjunto nuevo', () => {
+		const s0 = registrarZonasDolor(crearEstadoInicial(plan(), 'FULL_BODY', AHORA), [
+			'rodillas',
+			'cadera',
+		]);
+		const s1 = corregirZonasDolor(s0, ['rodillas', 'cadera'], ['rodillas', 'hombros']);
+		expect(s1.ejecutados[0].zonas_dolor_reportadas).toEqual(['rodillas', 'hombros']);
+	});
+
+	it('una zona de un reporte anterior no se borra', () => {
+		// hombros vino de un reporte previo; cadera la agrego este reporte.
+		const s0 = registrarZonasDolor(
+			registrarZonasDolor(crearEstadoInicial(plan(), 'FULL_BODY', AHORA), ['hombros']),
+			['cadera'],
+		);
+		const s1 = corregirZonasDolor(s0, ['cadera'], []);
+		expect(s1.ejecutados[0].zonas_dolor_reportadas).toEqual(['hombros']);
 	});
 });
 

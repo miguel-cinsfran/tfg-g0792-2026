@@ -196,7 +196,7 @@ describe('cerrarSesionEnCurso + reintroduccion gradual (ALG-10)', () => {
 	});
 });
 
-describe('cerrarSesionEnCurso + dolor sin series (defecto 8 ago 2026)', () => {
+describe('cerrarSesionEnCurso + dolor sin series', () => {
 	// Dolor reportado antes de la primera serie deja un ejecutado con
 	// series_completadas: 0 (dolor.ts, registrarZonasDolor). Ese ejecutado
 	// no entreno nada: el cierre no debe escribir estado para el.

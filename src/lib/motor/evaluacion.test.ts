@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { evaluarNivelInicial, nivelNumerico } from './evaluacion';
+import { evaluarNivelInicial, nivelNumerico, grupoVaciadoPorDolor } from './evaluacion';
 import { AHORA, DIA_MS } from '../../../tests/fixtures/ahora';
 
 // Umbrales reales de rules.json (ADR-0002 regla 3: los tests usan los
@@ -118,5 +118,23 @@ describe('evaluarNivelInicial (ALG-01)', () => {
 		expect(ajuste?.porcentaje).toBe(15);
 		expect(ajuste?.fecha_inicio).toBe(AHORA);
 		expect(ajuste?.fecha_revision).toBe(AHORA + 4 * 7 * DIA_MS);
+	});
+});
+
+describe('grupoVaciadoPorDolor', () => {
+	const catalogo = [
+		{ patron: 'PUSH_H' as const, zonas_involucradas: ['hombros' as const] },
+		{ patron: 'PUSH_V' as const, zonas_involucradas: ['muñecas' as const] },
+		{ patron: 'PULL_H' as const, zonas_involucradas: ['hombros' as const] },
+		{ patron: 'PULL_V' as const, zonas_involucradas: ['hombros' as const] },
+	];
+
+	it('true cuando el dolor toca todos los patrones del grupo', () => {
+		expect(grupoVaciadoPorDolor('PUSH', ['hombros', 'muñecas'], catalogo)).toBe(true);
+	});
+
+	it('false cuando un patron del grupo conserva pool', () => {
+		expect(grupoVaciadoPorDolor('PUSH', ['muñecas'], catalogo)).toBe(false);
+		expect(grupoVaciadoPorDolor('PULL', ['muñecas'], catalogo)).toBe(false);
 	});
 });

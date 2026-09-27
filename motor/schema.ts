@@ -56,6 +56,9 @@ export interface Perfil {
   objetivo: Objetivo;
   nivel_experiencia: Nivel;
   evaluacion_por_patron: Record<"PUSH" | "PULL" | "LEGS" | "CORE", Nivel>;
+  // Grupos cuya prueba dio 0: entrenan desde la base de cada cadena
+  // (ejercicios sin regresion_id). Ausente en perfiles viejos = [].
+  grupos_desde_base?: ("PUSH" | "PULL" | "LEGS" | "CORE")[];
 
   // Solo se compensa el patron mas debil. Si hay mas de uno debil,
   // se toma el de mayor diferencia con el nivel global.
@@ -92,6 +95,8 @@ export interface Ejercicio {
   subpatron?: SubpatronCore; // solo para CORE
   nivel_requerido: Nivel;
   zonas_involucradas: Zona[];
+  // Solo traccion (PULL_H y PULL_V) pide barra o anclaje.
+  requiere_anclaje: boolean;
 
   reps_iniciales: number;    // cuando el usuario llega a esta variante por primera vez
 

@@ -1,8 +1,9 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { enfocarPrincipal } from '$lib/a11y/foco';
-	import { anunciarAssertive } from '$lib/a11y/live-region';
-	import { obtener, actualizar, pasoPendiente, puedeVisitar } from '$lib/onboarding/estado';
+	import { anunciarPolite, anunciarAssertive } from '$lib/a11y/live-region';
+	import { M } from '$lib/mensajes/ui';
+	import { obtener, actualizar, pasoPendiente, puedeVisitar, pasoAnterior } from '$lib/onboarding/estado';
 	import { entero, validarConteo } from '$lib/onboarding/validacion-datos';
 	import Boton from '$lib/components/Boton.svelte';
 	import Cabecera from '$lib/components/Cabecera.svelte';
@@ -20,9 +21,6 @@
 	// tecleado se perdia y se anunciaba como spinner.
 	let valor = $state('');
 	let error = $state<string | null>(null);
-
-	const MENSAJE_INVALIDO =
-		"Escribe cuántas repeticiones hiciste, o usa «No puedo hacer ninguna».";
 
 	$effect(() => {
 		const e = obtener();
@@ -54,8 +52,8 @@
 
 	function continuar() {
 		if (!validarConteo(valor)) {
-			error = MENSAJE_INVALIDO;
-			anunciarAssertive(MENSAJE_INVALIDO);
+			error = M.onboarding.evaluacion.comun.mensajeInvalidoRepeticiones;
+			anunciarAssertive(M.onboarding.evaluacion.comun.mensajeInvalidoRepeticiones);
 			input?.focus();
 			return;
 		}
@@ -64,32 +62,36 @@
 		goto(pasoPendiente());
 	}
 
+	// "No puedo" es una respuesta mas: anota 0 y manda al Continuar
+	// sin navegar, como las demas respuestas. Un toque accidental se
+	// corrige escribiendo otro numero antes de continuar.
 	function noPuedo() {
 		actualizar({ [CAMPO]: 0 });
-		// eslint-disable-next-line svelte/no-navigation-without-resolve
-		goto(pasoPendiente());
+		valor = '0';
+		anunciarPolite(M.onboarding.evaluacion.comun.anotadoNinguna);
+		document.getElementById('continuar')?.focus();
 	}
 
 	function atras() {
 		// eslint-disable-next-line svelte/no-navigation-without-resolve
-		goto('/onboarding/evaluacion/push');
+		goto(pasoAnterior('/onboarding/evaluacion/pull') ?? '/onboarding/evaluacion/push');
 	}
 </script>
 
-<svelte:head><title>Evaluación: remo en suspensión</title></svelte:head>
+<svelte:head><title>{M.onboarding.evaluacion.pull.titulo}</title></svelte:head>
 
 <Cabecera onclick={atras}>
-	<h1 tabindex="-1" bind:this={heading}>Evaluación: remo en suspensión</h1>
+	<h1 tabindex="-1" bind:this={heading}>{M.onboarding.evaluacion.pull.titulo}</h1>
 </Cabecera>
 
 <div class="space-y-6">
-	<Card titulo="Cómo hacer remo en suspensión">
+	<Card titulo={M.onboarding.evaluacion.pull.comoHacer}>
 		<DescripcionEjercicio descripcion={DESCRIPCION_REMO_SUSPENSION} plegarClaves />
 	</Card>
 
-	<Card titulo="Tu conteo">
+	<Card titulo={M.onboarding.evaluacion.comun.tituloConteo}>
 		<label for="reps-input" class="block text-text-primary">
-			¿Cuántas repeticiones puedes hacer?
+			{M.onboarding.evaluacion.comun.preguntaRepeticiones}
 		</label>
 		<input
 			id="reps-input"
@@ -103,20 +105,20 @@
 			aria-describedby={error !== null ? 'error-reps' : undefined}
 			class="mt-2 text-2xl font-bold tabular-nums font-mono"
 		/>
-		<p class="mt-1 text-sm text-text-secondary">Entero entre 0 y 300.</p>
+		<p class="mt-1 text-sm text-text-secondary">{M.onboarding.evaluacion.comun.rangoValido}</p>
 		{#if error}
 			<p id="error-reps" class="mt-1 text-sm text-error">{error}</p>
 		{/if}
 	</Card>
 
 	<div class="mt-4">
-		<Boton variante="secundario" onclick={noPuedo}>No puedo hacer ninguna</Boton>
+		<Boton variante="secundario" onclick={noPuedo}>{M.onboarding.evaluacion.comun.noPuedoNinguna}</Boton>
 	</div>
 </div>
 <BarraAccion>
 	{#snippet primaria()}
-		<Boton variante="primario" tamano="grande" onclick={continuar} avance>
-			Continuar
+		<Boton variante="primario" tamano="grande" onclick={continuar} avance id="continuar">
+			{M.onboarding.evaluacion.comun.continuar}
 		</Boton>
 	{/snippet}
 </BarraAccion>

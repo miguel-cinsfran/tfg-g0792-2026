@@ -14,7 +14,8 @@ import type {
 import { rules, templates, parametrosDeObjetivo } from './reglas.js';
 import type { PrioridadSeries } from './reglas.js';
 import { ordenarParaSeleccion } from './seleccion.js';
-import { nivelNumerico } from './evaluacion.js';
+import { nivelNumerico, grupoDePatron } from './evaluacion.js';
+import type { GrupoEvaluable } from './evaluacion.js';
 
 export type Prioridad = PrioridadSeries;
 
@@ -30,6 +31,9 @@ export interface GeneracionResultado {
 	// Patrones cuyo pool quedo vacio tras los filtros. La UI lo resuelve
 	// con el menu de contingencia de ALG-07.
 	patrones_sin_pool: Patron[];
+	// Patrones vacios por causa permanente (equipo o dolor declarado
+	// en el alta): fuera del plan, no se avisan como contingencia.
+	patrones_fuera_del_plan: Patron[];
 }
 
 // Suma un descanso por cada serie, incluida la ultima: hace que las
@@ -123,7 +127,13 @@ export function generarSesion(
 	const idsBloqueados = new Set(estados.filter((e) => e.bloqueado).map((e) => e.ejercicio_id));
 	const estadoPorId = new Map(estados.map((e) => [e.ejercicio_id, e]));
 	const zonasDolor = new Set(perfil.zonas_dolor_preexistente);
-	const nivelUsuario = nivelNumerico(perfil.nivel_experiencia);
+	const desdeBase = new Set(perfil.grupos_desde_base ?? []);
+	const nivelPorGrupo: Record<GrupoEvaluable, number> = {
+		PUSH: nivelNumerico(perfil.evaluacion_por_patron.PUSH),
+		PULL: nivelNumerico(perfil.evaluacion_por_patron.PULL),
+		LEGS: nivelNumerico(perfil.evaluacion_por_patron.LEGS),
+		CORE: nivelNumerico(perfil.evaluacion_por_patron.CORE),
+	};
 
 	// Un mismo ejercicio no se repite dentro de la sesion aunque dos
 	// slots compartan pool. Defensa ante templates futuros.
@@ -131,6 +141,7 @@ export function generarSesion(
 
 	const itemsConPrioridad: ItemPlanConPrioridad[] = [];
 	const patronesSinPool: Patron[] = [];
+	const patronesFueraDelPlan: Patron[] = [];
 
 	for (const slot of plantilla.slots) {
 		// Nivel: el filtro conservador no pisa una eleccion explicita del
@@ -141,7 +152,10 @@ export function generarSesion(
 		let pool = catalogo.filter(
 			(e) =>
 				e.patron === slot.patron &&
-				(nivelNumerico(e.nivel_requerido) <= nivelUsuario || estadoPorId.has(e.id)) &&
+				(nivelNumerico(e.nivel_requerido) <= nivelPorGrupo[grupoDePatron(slot.patron)] ||
+					estadoPorId.has(e.id)) &&
+				(!desdeBase.has(grupoDePatron(e.patron)) || e.regresion_id === null || estadoPorId.has(e.id)) &&
+				(!e.requiere_anclaje || perfil.tiene_anclaje) &&
 				!idsBloqueados.has(e.id) &&
 				!idsElegidos.has(e.id) &&
 				e.zonas_involucradas.every((zona) => !zonasDolor.has(zona)),
@@ -151,7 +165,17 @@ export function generarSesion(
 		}
 
 		if (pool.length === 0) {
-			patronesSinPool.push(slot.patron);
+			// Causa permanente (equipo o dolor declarado) vs bloqueo en
+			// sesion: el pool sin nivel, base ni bloqueos decide.
+			const poolPermanente = catalogo.filter(
+				(e) =>
+					e.patron === slot.patron &&
+					(!e.requiere_anclaje || perfil.tiene_anclaje) &&
+					e.zonas_involucradas.every((zona) => !zonasDolor.has(zona)) &&
+					(slot.subpatron === undefined || e.subpatron === slot.subpatron),
+			);
+			if (poolPermanente.length === 0) patronesFueraDelPlan.push(slot.patron);
+			else patronesSinPool.push(slot.patron);
 			continue;
 		}
 
@@ -202,5 +226,9 @@ export function generarSesion(
 		presupuesto['RULE-PRESUPUESTO-MIN-SERIES'],
 	);
 
-	return { plan: recortado.map((i) => i.entry), patrones_sin_pool: patronesSinPool };
+	return {
+		plan: recortado.map((i) => i.entry),
+		patrones_sin_pool: patronesSinPool,
+		patrones_fuera_del_plan: patronesFueraDelPlan,
+	};
 }

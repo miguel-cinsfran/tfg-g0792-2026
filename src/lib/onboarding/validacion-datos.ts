@@ -82,6 +82,20 @@ export function validarAltura(v: string): boolean {
 	return alturaACm(v) !== null;
 }
 
+// La altura del alta se escribe en centimetros enteros ("175").
+// Solo digitos, sin coma ni punto: 100 a 230.
+export function alturaCmDesdeTexto(texto: string): number | null {
+	const n = entero(texto);
+	if (n === null || n < 100 || n > 230) return null;
+	return n;
+}
+
+/** Valida que la altura sea vacia (opcional) o centimetros enteros 100-230. */
+export function validarAlturaCm(v: string): boolean {
+	if (v.trim() === '') return true;
+	return alturaCmDesdeTexto(v) !== null;
+}
+
 /**
  * Normaliza un nombre: trim, colapsa espacios multiples, capitaliza
  * cada palabra. Ej: "  miguel   insfran " -> "Miguel Insfran".
@@ -113,7 +127,7 @@ export interface ErroresDatos {
 export const MENSAJE_NOMBRE_VACIO = 'Escribe tu nombre.';
 export const MENSAJE_EDAD_INVALIDA = 'Escribe tu edad en años, entre 14 y 100.';
 export const MENSAJE_PESO_INVALIDO =
-	'Escribe tu peso en kilos, entre 20 y 300. Puedes usar un decimal para los gramos (por ejemplo 66.8).';
+	'Escribe tu peso en kilos, entre 20 y 300. Puedes usar un decimal para los gramos (por ejemplo 66,8).';
 export const MENSAJE_ALTURA_INVALIDA =
 	'Escribe tu altura en metros (por ejemplo 1,60), o déjala vacía.';
 

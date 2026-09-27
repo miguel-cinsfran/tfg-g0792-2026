@@ -54,9 +54,9 @@
 		{M.onboarding.disclaimer.avisoCuerpo}
 	</p>
 
-	<p class="font-semibold mt-4">{M.onboarding.disclaimer.noArranquesTitulo}</p>
+	<p class="font-semibold mt-4">{M.onboarding.disclaimer.noEntrenesTitulo}</p>
 	<ul>
-		{#each M.onboarding.disclaimer.noArranquesItems as item (item)}
+		{#each M.onboarding.disclaimer.noEntrenesItems as item (item)}
 			<li>{item}</li>
 		{/each}
 	</ul>
@@ -100,8 +100,8 @@
      datos no es un nuevo evento de consentimiento. Tras importar, se
      invalida el load del layout para que el perfil recien cargado se
      refleje en la UI (sin location.reload). -->
-<details class="mt-8 desplegable">
-	<summary class="cursor-pointer">{M.onboarding.disclaimer.respaldoTitulo}</summary>
+<details class="mt-8 desplegable desplegable-fila">
+	<summary>{M.onboarding.disclaimer.respaldoTitulo}</summary>
 	<p class="mt-2">
 		{M.onboarding.disclaimer.respaldoCuerpo}
 	</p>

@@ -118,8 +118,7 @@ describe('Pagina de datos', () => {
 		expect(document.getElementById('nombre')).toBe(document.activeElement);
 	});
 
-	it('nombre y edad vacios: primer error y foco en nombre (orden R2-001), sin role propio', () => {
-		instancia = mount(PaginaDatos, { target: document.body });
+	it('nombre y edad vacios: primer error y foco en nombre (orden R2-001), sin role propio', () => {		instancia = mount(PaginaDatos, { target: document.body });
 		flushSync();
 
 		clickContinuar();
@@ -137,5 +136,80 @@ describe('Pagina de datos', () => {
 		// Sin role propio: el anuncio va por la region global.
 		expect(parrafo?.getAttribute('role')).toBeNull();
 		expect(document.getElementById('nombre')).toBe(document.activeElement);
+	});
+});
+
+describe('Pagina de datos - altura en centimetros', () => {
+	let instancia: ReturnType<typeof mount>;
+
+	function estadoBase(overrides: Record<string, unknown> = {}): Record<string, unknown> {
+		return {
+			disclaimer_aceptado: false,
+			fecha_aceptacion_disclaimer: null,
+			nombre: null,
+			anio_nacimiento: null,
+			peso_kg: null,
+			altura_cm: null,
+			objetivo: null,
+			tiene_anclaje: null,
+			zonas_dolor_preexistente: null,
+			dias_semana: null,
+			duracion_sesion_min: null,
+			reps_push: null,
+			reps_pull: null,
+			reps_legs: null,
+			segundos_core: null,
+			...overrides
+		};
+	}
+
+	beforeEach(() => {
+		document.body.innerHTML = '';
+		estadoMock.obtenerMock.mockReset();
+		estadoMock.actualizarMock.mockReset();
+		estadoMock.gotoMock.mockReset();
+		estadoMock.anunciarAssertiveMock.mockReset();
+	});
+
+	afterEach(() => {
+		if (instancia) unmount(instancia);
+	});
+
+	function escribir(id: string, valor: string) {
+		const input = document.getElementById(id) as HTMLInputElement;
+		input.value = valor;
+		input.dispatchEvent(new Event('input', { bubbles: true }));
+	}
+
+	it('una altura de 175 cm guardada se escribe 175', () => {
+		estadoMock.obtenerMock.mockReturnValue(estadoBase({ altura_cm: 175 }));
+		instancia = mount(PaginaDatos, { target: document.body });
+		flushSync();
+
+		expect((document.getElementById('altura') as HTMLInputElement).value).toBe('175');
+		expect(document.getElementById('unidad-altura')?.textContent).toBe('cm');
+	});
+
+	it('escribir 175 guarda altura_cm 175', () => {
+		estadoMock.obtenerMock.mockReturnValue(estadoBase());
+		instancia = mount(PaginaDatos, { target: document.body });
+		flushSync();
+
+		escribir('nombre', 'Ana');
+		escribir('edad', '30');
+		escribir('peso', '70');
+		escribir('altura', '175');
+		flushSync();
+
+		const boton = Array.from(document.body.querySelectorAll('button')).find(
+			(b) => b.textContent?.trim() === 'Continuar'
+		);
+		(boton as HTMLButtonElement).click();
+		flushSync();
+
+		expect(estadoMock.actualizarMock).toHaveBeenCalledWith(
+			expect.objectContaining({ altura_cm: 175 })
+		);
+		expect(estadoMock.gotoMock).toHaveBeenCalledWith('/siguiente');
 	});
 });

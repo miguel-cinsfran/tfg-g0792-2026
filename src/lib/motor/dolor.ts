@@ -79,6 +79,40 @@ export function registrarZonasDolor(sesion: SesionEnCurso, zonas: Zona[]): Sesio
 	return { ...sesion, ejecutados };
 }
 
+// Corrige el reporte que se esta haciendo (segunda confirmacion tras
+// "Revisar mis zonas"): quita las zonas que este reporte ya habia
+// marcado y ya no confirma, y agrega las nuevas. Las zonas de reportes
+// anteriores (las que no estan en `zonasPreviasDelReporte`) no se tocan.
+// No reemplaza registrarZonasDolor: esa acumula porque cada reporte
+// cuenta, esta corrige el mismo reporte.
+export function corregirZonasDolor(
+	sesion: SesionEnCurso,
+	zonasPreviasDelReporte: Zona[],
+	zonasConfirmadas: Zona[],
+): SesionEnCurso {
+	if (sesion.indice_ejercicio >= sesion.plan.length) {
+		throw new Error('corregirZonasDolor: no hay ejercicio en curso');
+	}
+	const id = sesion.plan[sesion.indice_ejercicio].ejercicio_id;
+	const ejecutados = [...sesion.ejecutados];
+	let i = ejecutados.findIndex((e) => e.ejercicio_id === id);
+	if (i === -1) {
+		ejecutados.push(crearEjecutado(sesion));
+		i = ejecutados.length - 1;
+	}
+	const actual = ejecutados[i];
+	const previas = new Set(zonasPreviasDelReporte);
+	const confirmadas = new Set(zonasConfirmadas);
+	const corregidas = actual.zonas_dolor_reportadas.filter(
+		(z) => !previas.has(z) || confirmadas.has(z),
+	);
+	for (const z of zonasConfirmadas) {
+		if (!previas.has(z) && !corregidas.includes(z)) corregidas.push(z);
+	}
+	ejecutados[i] = { ...actual, zonas_dolor_reportadas: corregidas };
+	return { ...sesion, ejecutados };
+}
+
 // Reemplaza el ejercicio actual del plan por el sustituto: series, rir
 // y descanso se heredan del slot reemplazado; las reps salen del estado
 // del sustituto o de sus reps_iniciales. La cuenta de series arranca de 0.

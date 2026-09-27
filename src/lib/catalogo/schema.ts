@@ -15,6 +15,7 @@ export const EjercicioSchema = z.object({
 	subpatron: z.enum(SUBPATRONES_CORE).optional(),
 	nivel_requerido: z.enum(NIVELES),
 	zonas_involucradas: z.array(z.enum(ZONAS)),
+	requiere_anclaje: z.boolean(),
 	reps_iniciales: z.number(),
 	// Ausente = 'repeticiones' (ver motor/schema.ts).
 	medido_en: z.enum(['repeticiones', 'segundos']).optional(),

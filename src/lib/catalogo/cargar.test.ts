@@ -11,6 +11,7 @@ const ejercicioMinimo = {
 	nivel_requerido: 'principiante' as const,
 	zonas_involucradas: ['hombros' as const],
 	reps_iniciales: 10,
+	requiere_anclaje: false,
 	progresion_id: null,
 	regresion_id: null,
 	sustituciones: {},

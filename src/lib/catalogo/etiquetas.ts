@@ -1,14 +1,14 @@
 import type { Objetivo, Patron, TipoSesion, Zona } from '$lib/motor/schema';
 
 const ETIQUETAS_PATRON: Record<Patron, string> = {
-	PUSH_H: 'empuje horizontal',
-	PUSH_V: 'empuje vertical',
-	PULL_H: 'tracción horizontal',
-	PULL_V: 'tracción vertical',
-	SQUAT: 'sentadilla',
-	HINGE: 'bisagra de cadera',
-	UNILATERAL: 'unilateral',
-	CORE: 'core',
+	PUSH_H: 'empujar hacia delante',
+	PUSH_V: 'empujar hacia arriba',
+	PULL_H: 'tirar hacia ti',
+	PULL_V: 'tirar desde arriba',
+	SQUAT: 'sentadillas',
+	HINGE: 'cadera',
+	UNILATERAL: 'una pierna',
+	CORE: 'abdomen',
 };
 
 export function etiquetaPatron(patron: Patron): string {
@@ -47,8 +47,8 @@ const ETIQUETAS_OBJETIVO: Record<Objetivo, string> = {
 };
 
 const DESCRIPCIONES_OBJETIVO: Record<Objetivo, string> = {
-	fuerza: 'Levantar más peso',
-	hipertrofia: 'Aumentar el tamaño muscular',
+	fuerza: 'Ejercicios más difíciles, pocas repeticiones',
+	hipertrofia: 'Ganar músculo',
 	resistencia: 'Sostener más repeticiones',
 	perdida_peso: 'Gastar más calorías',
 };

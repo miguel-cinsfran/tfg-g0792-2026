@@ -13,8 +13,8 @@ import { AHORA } from '../../../tests/fixtures/ahora';
 function catalogo(): Ejercicio[] {
 	return [
 		ejercicioBase({ id: 'ej-push-h', patron: 'PUSH_H' }),
-		ejercicioBase({ id: 'ej-pull-h', patron: 'PULL_H' }),
-		ejercicioBase({ id: 'ej-pull-v', patron: 'PULL_V' }),
+		ejercicioBase({ id: 'ej-pull-h', patron: 'PULL_H', requiere_anclaje: true }),
+		ejercicioBase({ id: 'ej-pull-v', patron: 'PULL_V', requiere_anclaje: true }),
 		ejercicioBase({ id: 'ej-squat', patron: 'SQUAT' }),
 		ejercicioBase({ id: 'ej-push-v', patron: 'PUSH_V' }),
 		ejercicioBase({ id: 'ej-hinge', patron: 'HINGE' }),
@@ -46,6 +46,18 @@ describe('obtenerVistaPrevia (composicion)', () => {
 		);
 		expect(trasUpper.tipo).toBe('LOWER');
 		expect(trasUpper.patrones_sin_pool).toEqual([]);
+	});
+
+	it('propaga patrones_fuera_del_plan del generador (sin anclaje)', () => {
+		const perfil = perfilBase({
+			nivel_experiencia: 'intermedio',
+			dias_semana: 4,
+			tiene_anclaje: false,
+		});
+		const v = obtenerVistaPrevia(perfil, [], [], null, catalogo(), AHORA);
+		expect(v.tipo).toBe('UPPER');
+		expect(v.patrones_sin_pool).toEqual([]);
+		expect(v.patrones_fuera_del_plan).toEqual(['PULL_H', 'PULL_V']);
 	});
 
 	it('es determinista de punta a punta', () => {

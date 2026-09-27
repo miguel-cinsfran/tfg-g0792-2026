@@ -2,7 +2,8 @@
 	import { goto } from '$app/navigation';
 	import { enfocarPrincipal } from '$lib/a11y/foco';
 	import { anunciarAssertive } from '$lib/a11y/live-region';
-	import { obtener, actualizar, pasoPendiente, puedeVisitar } from '$lib/onboarding/estado';
+	import { M } from '$lib/mensajes/ui';
+	import { obtener, actualizar, pasoPendiente, puedeVisitar, pasoAnterior } from '$lib/onboarding/estado';
 	import Boton from '$lib/components/Boton.svelte';
 	import Cabecera from '$lib/components/Cabecera.svelte';
 	import GrupoSeleccion from '$lib/components/GrupoSeleccion.svelte';
@@ -51,12 +52,12 @@
 		let focoPrimerError: string | null = null;
 		let primerMensaje: string | null = null;
 		if (diasNumero === null) {
-			errorDias = 'Elige cuántos días por semana.';
+			errorDias = M.onboarding.disponibilidad.errorDias;
 			focoPrimerError = 'grupo-dias';
 			primerMensaje = primerMensaje ?? errorDias;
 		}
 		if (duracionNumero === null) {
-			errorDuracion = 'Elige cuánto dura la sesión.';
+			errorDuracion = M.onboarding.disponibilidad.errorDuracion;
 			focoPrimerError = focoPrimerError ?? 'grupo-duracion';
 			primerMensaje = primerMensaje ?? errorDuracion;
 		}
@@ -75,19 +76,19 @@
 
 	function atras() {
 		// eslint-disable-next-line svelte/no-navigation-without-resolve
-		goto('/onboarding/dolor-preexistente');
+		goto(pasoAnterior('/onboarding/disponibilidad') ?? '/onboarding/dolor-preexistente');
 	}
 </script>
 
-<svelte:head><title>Tu disponibilidad</title></svelte:head>
+<svelte:head><title>{M.onboarding.disponibilidad.titulo}</title></svelte:head>
 
 <Cabecera onclick={atras}>
-	<h1 tabindex="-1" bind:this={heading}>Tu disponibilidad</h1>
+	<h1 tabindex="-1" bind:this={heading}>{M.onboarding.disponibilidad.titulo}</h1>
 </Cabecera>
 
 <div class="space-y-6">
 	<GrupoSeleccion
-		leyenda="Días por semana"
+		leyenda={M.onboarding.disponibilidad.leyendaDias}
 		nombre="dias"
 		opciones={OPCIONES_DIAS}
 		bind:valor={valorDias}
@@ -96,7 +97,7 @@
 	/>
 
 	<GrupoSeleccion
-		leyenda="Duración de la sesión"
+		leyenda={M.onboarding.disponibilidad.leyendaDuracion}
 		nombre="duracion"
 		opciones={OPCIONES_DURACION}
 		bind:valor={valorDuracion}
@@ -107,6 +108,6 @@
 
 <BarraAccion>
 	{#snippet primaria()}
-		<Boton variante="primario" tamano="grande" onclick={continuar} avance>Continuar</Boton>
+		<Boton variante="primario" tamano="grande" onclick={continuar} avance>{M.onboarding.comun.continuar}</Boton>
 	{/snippet}
 </BarraAccion>

@@ -16,6 +16,9 @@ import { evaluarNivelInicial } from '$lib/motor/evaluacion';
 // Se importa al final del archivo porque finalizar.ts no existe aun (RED).
 // Descomentar cuando exista:
 import { finalizar } from './finalizar';
+import { establecerCatalogo } from '$lib/catalogo/estado';
+import { CatalogoSchema } from '$lib/catalogo/schema';
+import catalogoRaw from '$lib/../../static/data/catalogo.json' with { type: 'json' };
 
 beforeEach(async () => {
 	if (!db.isOpen()) {
@@ -165,5 +168,39 @@ describe('finalizar', () => {
 
 		expect(perfil.ajuste_desbalance_activo).not.toBeNull();
 		expect(perfil.ajuste_desbalance_activo!.patron).toBe('PULL');
+	});
+
+	it('prueba en 0 entra en grupos_desde_base; con reps no entra', async () => {
+		const cero = await finalizar(estadoOnboardingCompleto({ reps_legs: 0 }), AHORA);
+		expect(cero.grupos_desde_base).toContain('LEGS');
+		const cinco = await finalizar(estadoOnboardingCompleto({ reps_legs: 5 }), AHORA);
+		expect(cinco.grupos_desde_base ?? []).not.toContain('LEGS');
+	});
+
+	it('sin anclaje y pull sin probar: PULL no entra en grupos_desde_base', async () => {
+		const sinProbar = await finalizar(
+			estadoOnboardingCompleto({ tiene_anclaje: false, reps_pull: null }),
+			AHORA,
+		);
+		expect(sinProbar.grupos_desde_base ?? []).not.toContain('PULL');
+		const cero = await finalizar(
+			estadoOnboardingCompleto({ tiene_anclaje: true, reps_pull: 0 }),
+			AHORA,
+		);
+		expect(cero.grupos_desde_base).toContain('PULL');
+	});
+
+	it('prueba salteada por dolor: vale 0, no exige respuesta ni entra en base', async () => {
+		establecerCatalogo(CatalogoSchema.parse(catalogoRaw).ejercicios);
+		try {
+			const perfil = await finalizar(
+				estadoOnboardingCompleto({ zonas_dolor_preexistente: ['muñecas'], reps_push: null }),
+				AHORA,
+			);
+			expect(perfil.evaluacion_por_patron.PUSH).toBe('principiante');
+			expect(perfil.grupos_desde_base ?? []).not.toContain('PUSH');
+		} finally {
+			establecerCatalogo([]);
+		}
 	});
 });

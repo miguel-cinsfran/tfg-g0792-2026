@@ -1,13 +1,20 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+// @vitest-environment jsdom
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import {
 	obtener,
 	actualizar,
 	reiniciar,
 	pasoPendiente,
 	puedeVisitar,
-	progresoOnboarding
+	progresoOnboarding,
+	pasoAnterior
 } from './estado';
 import type { Objetivo, Zona } from '$lib/motor/schema';
+import { establecerCatalogo } from '$lib/catalogo/estado';
+import { CatalogoSchema } from '$lib/catalogo/schema';
+import catalogoRaw from '$lib/../../static/data/catalogo.json' with { type: 'json' };
+
+const CLAVE_PERSISTIDA = 'onboarding-estado';
 
 describe('estado de onboarding', () => {
 	beforeEach(() => {
@@ -249,5 +256,138 @@ describe('estado de onboarding', () => {
 			actualizar({ tiene_anclaje: false });
 			expect(progresoOnboarding('/onboarding/evaluacion/pull')).toBeNull();
 		});
+	});
+
+	describe('prueba salteada por dolor declarado', () => {
+		beforeEach(() => {
+			establecerCatalogo(CatalogoSchema.parse(catalogoRaw).ejercicios);
+		});
+
+		function altaHastaDisponibilidad(zonas: Zona[]) {
+			actualizar({
+				disclaimer_aceptado: true,
+				nombre: 'Ana',
+				anio_nacimiento: 1990,
+				peso_kg: 65,
+				objetivo: 'fuerza' as Objetivo,
+				tiene_anclaje: true,
+				zonas_dolor_preexistente: zonas,
+				dias_semana: 3,
+				duracion_sesion_min: 30
+			});
+		}
+
+		it('con muñecas la prueba de push sale del orden y pasoPendiente no la pide', () => {
+			altaHastaDisponibilidad(['muñecas']);
+			expect(puedeVisitar('/onboarding/evaluacion/push')).toBe(false);
+			expect(pasoPendiente()).toBe('/onboarding/evaluacion/pull');
+			expect(progresoOnboarding('/onboarding/evaluacion/push')).toBeNull();
+			expect(progresoOnboarding('/onboarding/datos')?.total).toBe(9);
+		});
+
+		it('con rodillas la prueba de push sigue en el orden', () => {
+			altaHastaDisponibilidad(['rodillas']);
+			expect(puedeVisitar('/onboarding/evaluacion/push')).toBe(true);
+			expect(pasoPendiente()).toBe('/onboarding/evaluacion/push');
+			expect(progresoOnboarding('/onboarding/datos')?.total).toBe(10);
+		});
+	});
+
+	describe('pasoAnterior', () => {
+		function altaCompleta(parche: Record<string, unknown> = {}) {
+			actualizar({
+				disclaimer_aceptado: true,
+				nombre: 'Ana',
+				anio_nacimiento: 1990,
+				peso_kg: 65,
+				objetivo: 'fuerza' as Objetivo,
+				tiene_anclaje: true,
+				zonas_dolor_preexistente: [] as Zona[],
+				dias_semana: 3,
+				duracion_sesion_min: 30,
+				...parche
+			});
+		}
+
+		it('desde resumen es core con y sin anclaje', () => {
+			altaCompleta();
+			expect(pasoAnterior('/onboarding/resumen')).toBe('/onboarding/evaluacion/core');
+			actualizar({ tiene_anclaje: false });
+			expect(pasoAnterior('/onboarding/resumen')).toBe('/onboarding/evaluacion/core');
+		});
+
+		it('desde legs es pull con anclaje y push sin el', () => {
+			altaCompleta();
+			expect(pasoAnterior('/onboarding/evaluacion/legs')).toBe('/onboarding/evaluacion/pull');
+			actualizar({ tiene_anclaje: false });
+			expect(pasoAnterior('/onboarding/evaluacion/legs')).toBe('/onboarding/evaluacion/push');
+		});
+
+		it('con push salteado por dolor vuelve a disponibilidad', () => {
+			establecerCatalogo(CatalogoSchema.parse(catalogoRaw).ejercicios);
+			altaCompleta({ zonas_dolor_preexistente: ['muñecas'] as Zona[] });
+			expect(pasoAnterior('/onboarding/evaluacion/pull')).toBe('/onboarding/disponibilidad');
+			actualizar({ tiene_anclaje: false });
+			expect(pasoAnterior('/onboarding/evaluacion/legs')).toBe('/onboarding/disponibilidad');
+			establecerCatalogo([]);
+		});
+	});
+});
+
+// El alta no puede reiniciarse al recargar: el sistema mata la WebView
+// en segundo plano. El estado debe sobrevivir
+// a la recreacion del modulo; `vi.resetModules()` + re-import simula la
+// recarga. Los pasos se prueban sobre la instancia fresca del modulo,
+// no sobre el import estatico de arriba.
+describe('persistencia del alta', () => {
+	beforeEach(() => {
+		localStorage.clear();
+		vi.resetModules();
+	});
+
+	it('avanzar unos pasos y recargar vuelve al paso donde quedo, no al disclaimer', async () => {
+		const primero = await import('./estado');
+		primero.actualizar({
+			disclaimer_aceptado: true,
+			nombre: 'Ana',
+			anio_nacimiento: 1990,
+			peso_kg: 65,
+			objetivo: 'fuerza' as Objetivo
+		});
+		expect(primero.pasoPendiente()).toBe('/onboarding/equipamiento');
+
+		vi.resetModules();
+		const segundo = await import('./estado');
+		expect(segundo.pasoPendiente()).toBe('/onboarding/equipamiento');
+		expect(segundo.obtener().nombre).toBe('Ana');
+	});
+
+	it('con basura en la clave, inicializar arranca del estado inicial sin lanzar', async () => {
+		// JSON invalido: el parse lanza y el modulo no rompe.
+		localStorage.setItem(CLAVE_PERSISTIDA, '{no-es-json');
+
+		vi.resetModules();
+		const modulo = await import('./estado');
+		expect(modulo.pasoPendiente()).toBe('/onboarding/disclaimer');
+		expect(modulo.obtener().nombre).toBeNull();
+
+		// JSON valido con forma equivocada: la validacion lo descarta.
+		localStorage.setItem(CLAVE_PERSISTIDA, JSON.stringify({ foo: 1 }));
+
+		vi.resetModules();
+		const modulo2 = await import('./estado');
+		expect(modulo2.pasoPendiente()).toBe('/onboarding/disclaimer');
+		expect(modulo2.obtener().nombre).toBeNull();
+	});
+
+	it('reiniciar borra lo persistido: la recarga siguiente arranca de cero', async () => {
+		const primero = await import('./estado');
+		primero.actualizar({ nombre: 'Ana' });
+		primero.reiniciar();
+		expect(localStorage.getItem(CLAVE_PERSISTIDA)).toBeNull();
+
+		vi.resetModules();
+		const segundo = await import('./estado');
+		expect(segundo.obtener().nombre).toBeNull();
 	});
 });
