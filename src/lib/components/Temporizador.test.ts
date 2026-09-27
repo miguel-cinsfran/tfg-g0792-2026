@@ -44,17 +44,17 @@ describe('Temporizador - hitos de voz', () => {
 		// Avanzar a restantes = 60 (90 - 30 = 60)
 		vi.advanceTimersByTime(30_000);
 		flushSync();
-		expect(anunciarPoliteMock).toHaveBeenCalledWith('Quedan 1 minuto');
+		expect(anunciarPoliteMock).toHaveBeenCalledWith('Faltan 1 minuto');
 
 		// Avanzar a restantes = 30 (60 - 30 = 30)
 		vi.advanceTimersByTime(30_000);
 		flushSync();
-		expect(anunciarPoliteMock).toHaveBeenCalledWith('Quedan 30 segundos');
+		expect(anunciarPoliteMock).toHaveBeenCalledWith('Faltan 30 segundos');
 
 		// Avanzar a restantes = 10 (30 - 20 = 10)
 		vi.advanceTimersByTime(20_000);
 		flushSync();
-		expect(anunciarPoliteMock).toHaveBeenCalledWith('Quedan 10 segundos');
+		expect(anunciarPoliteMock).toHaveBeenCalledWith('Faltan 10 segundos');
 
 		// Finalizar: alTerminar se dispara. Los ultimos 5s (5,4,3,2,1)
 		// SI se anuncian, pero NO se anuncia "0 segundos" ni "1 minuto"
@@ -65,7 +65,7 @@ describe('Temporizador - hitos de voz', () => {
 		flushSync();
 		expect(alTerminar).toHaveBeenCalledOnce();
 		const mensajes = anunciarPoliteMock.mock.calls.map((c) => c[0]);
-		expect(mensajes.some((m: string) => m === 'Quedan 0 segundos')).toBe(false);
+		expect(mensajes.some((m: string) => m === 'Faltan 0 segundos')).toBe(false);
 	});
 
 	it('descanso de 120s: anuncia hitos en 90, 60, 30 y 10', () => {
@@ -78,22 +78,22 @@ describe('Temporizador - hitos de voz', () => {
 		// restantes = 90 (120 - 30 = 90)
 		vi.advanceTimersByTime(30_000);
 		flushSync();
-		expect(anunciarPoliteMock).toHaveBeenCalledWith('Quedan 1 minuto 30 segundos');
+		expect(anunciarPoliteMock).toHaveBeenCalledWith('Faltan 1 minuto 30 segundos');
 
 		// restantes = 60 (90 - 30 = 60)
 		vi.advanceTimersByTime(30_000);
 		flushSync();
-		expect(anunciarPoliteMock).toHaveBeenCalledWith('Quedan 1 minuto');
+		expect(anunciarPoliteMock).toHaveBeenCalledWith('Faltan 1 minuto');
 
 		// restantes = 30 (60 - 30 = 30)
 		vi.advanceTimersByTime(30_000);
 		flushSync();
-		expect(anunciarPoliteMock).toHaveBeenCalledWith('Quedan 30 segundos');
+		expect(anunciarPoliteMock).toHaveBeenCalledWith('Faltan 30 segundos');
 
 		// restantes = 10 (30 - 20 = 10)
 		vi.advanceTimersByTime(20_000);
 		flushSync();
-		expect(anunciarPoliteMock).toHaveBeenCalledWith('Quedan 10 segundos');
+		expect(anunciarPoliteMock).toHaveBeenCalledWith('Faltan 10 segundos');
 	});
 
 	it('descanso de 30s (<= 60): solo anuncia en 10', () => {
@@ -111,7 +111,7 @@ describe('Temporizador - hitos de voz', () => {
 		// restantes = 10 (30 - 20 = 10)
 		vi.advanceTimersByTime(10_000);
 		flushSync();
-		expect(anunciarPoliteMock).toHaveBeenCalledWith('Quedan 10 segundos');
+		expect(anunciarPoliteMock).toHaveBeenCalledWith('Faltan 10 segundos');
 
 		// Finalizar: alTerminar se dispara, sin anuncio de voz en 0
 		anunciarPoliteMock.mockClear();
@@ -126,7 +126,7 @@ describe('Temporizador - hitos de voz', () => {
 		flushSync();
 		expect(alTerminar).toHaveBeenCalledOnce();
 		const mensajes = anunciarPoliteMock.mock.calls.map((c) => c[0]);
-		expect(mensajes.some((m: string) => m === 'Quedan 0 segundos')).toBe(false);
+		expect(mensajes.some((m: string) => m === 'Faltan 0 segundos')).toBe(false);
 	});
 
 	it('alAviso legacy se dispara en aviso_segundos', () => {
@@ -170,31 +170,31 @@ describe('Temporizador - ultimos 5 segundos anunciados de a uno', () => {
 
 		// Con segundos=10, el conteo arranca en 10; el primer tick
 		// decrementa a 9, y la regla del componente chequea hitos
-		// contra el nuevo valor. Por lo tanto "Quedan 10 segundos" no
+		// contra el nuevo valor. Por lo tanto "Faltan 10 segundos" no
 		// se anuncia (arrancamos en 10, no "quedan 10"). Lo que SI se
 		// anuncia es la cuenta final de a uno.
 		vi.advanceTimersByTime(5_000);
 		flushSync();
 		const cinco = anunciarPoliteMock.mock.calls.filter(
-			(c) => c[0] === 'Quedan 5 segundos',
+			(c) => c[0] === 'Faltan 5 segundos',
 		);
 		expect(cinco.length).toBe(1);
 
 		vi.advanceTimersByTime(1_000);
 		flushSync();
-		expect(anunciarPoliteMock).toHaveBeenCalledWith('Quedan 4 segundos');
+		expect(anunciarPoliteMock).toHaveBeenCalledWith('Faltan 4 segundos');
 
 		vi.advanceTimersByTime(1_000);
 		flushSync();
-		expect(anunciarPoliteMock).toHaveBeenCalledWith('Quedan 3 segundos');
+		expect(anunciarPoliteMock).toHaveBeenCalledWith('Faltan 3 segundos');
 
 		vi.advanceTimersByTime(1_000);
 		flushSync();
-		expect(anunciarPoliteMock).toHaveBeenCalledWith('Quedan 2 segundos');
+		expect(anunciarPoliteMock).toHaveBeenCalledWith('Faltan 2 segundos');
 
 		vi.advanceTimersByTime(1_000);
 		flushSync();
-		expect(anunciarPoliteMock).toHaveBeenCalledWith('Quedan 1 segundo');
+		expect(anunciarPoliteMock).toHaveBeenCalledWith('Faltan 1 segundo');
 	});
 
 	it('descanso de 30s: cada anuncio de los ultimos 5s aparece UNA sola vez (sin duplicar)', () => {
@@ -212,7 +212,7 @@ describe('Temporizador - ultimos 5 segundos anunciados de a uno', () => {
 
 		const llamadas = anunciarPoliteMock.mock.calls.map((c) => c[0]);
 		for (const n of [10, 5, 4, 3, 2, 1]) {
-			const texto = n === 1 ? 'Quedan 1 segundo' : `Quedan ${n} segundos`;
+			const texto = n === 1 ? 'Faltan 1 segundo' : `Faltan ${n} segundos`;
 			expect(llamadas.filter((m) => m === texto).length).toBe(1);
 		}
 	});
@@ -228,23 +228,23 @@ describe('Temporizador - ultimos 5 segundos anunciados de a uno', () => {
 
 		vi.advanceTimersByTime(1_000);
 		flushSync();
-		expect(anunciarPoliteMock).toHaveBeenCalledWith('Quedan 5 segundos');
+		expect(anunciarPoliteMock).toHaveBeenCalledWith('Faltan 5 segundos');
 
 		vi.advanceTimersByTime(1_000);
 		flushSync();
-		expect(anunciarPoliteMock).toHaveBeenCalledWith('Quedan 4 segundos');
+		expect(anunciarPoliteMock).toHaveBeenCalledWith('Faltan 4 segundos');
 
 		vi.advanceTimersByTime(1_000);
 		flushSync();
-		expect(anunciarPoliteMock).toHaveBeenCalledWith('Quedan 3 segundos');
+		expect(anunciarPoliteMock).toHaveBeenCalledWith('Faltan 3 segundos');
 
 		vi.advanceTimersByTime(1_000);
 		flushSync();
-		expect(anunciarPoliteMock).toHaveBeenCalledWith('Quedan 2 segundos');
+		expect(anunciarPoliteMock).toHaveBeenCalledWith('Faltan 2 segundos');
 
 		vi.advanceTimersByTime(1_000);
 		flushSync();
-		expect(anunciarPoliteMock).toHaveBeenCalledWith('Quedan 1 segundo');
+		expect(anunciarPoliteMock).toHaveBeenCalledWith('Faltan 1 segundo');
 	});
 });
 
@@ -301,12 +301,12 @@ describe('Temporizador - cadencia del reloj', () => {
 		flushSync();
 		anunciarPoliteMock.mockClear();
 
-		// Tras 1 segundo: anuncio de "Quedan 3 segundos" (decremento a 1Hz,
+		// Tras 1 segundo: anuncio de "Faltan 3 segundos" (decremento a 1Hz,
 		// no a 2Hz). El reloj emite 2 pulsos pero el conteo y los hitos
 		// son por segundo.
 		vi.advanceTimersByTime(1_000);
 		flushSync();
-		expect(anunciarPoliteMock).toHaveBeenCalledWith('Quedan 3 segundos');
+		expect(anunciarPoliteMock).toHaveBeenCalledWith('Faltan 3 segundos');
 	});
 
 	it('pulso se silencia al llegar a 0 (el silencio enmarca el fin)', () => {
@@ -355,5 +355,52 @@ describe('Temporizador - cadencia del reloj', () => {
 		vi.advanceTimersByTime(3_000);
 		flushSync();
 		expect(alTerminar).toHaveBeenCalledOnce();
+	});
+});
+
+describe('Temporizador - agregarSegundos', () => {
+	let instancia: { agregarSegundos: (n: number) => number } | undefined;
+
+	beforeEach(() => {
+		document.body.innerHTML = '';
+		vi.useFakeTimers();
+		anunciarPoliteMock.mockClear();
+		sonarMock.mockClear();
+	});
+
+	afterEach(() => {
+		instancia = undefined;
+		vi.useRealTimers();
+	});
+
+	it('suma exactamente 30 al restante visible', () => {
+		const montado = mount(Temporizador, {
+			target: document.body,
+			props: { segundos: 60, reloj: false },
+		});
+		instancia = montado as unknown as { agregarSegundos: (n: number) => number };
+		flushSync();
+
+		expect(instancia.agregarSegundos(30)).toBe(90);
+		flushSync();
+		expect(document.body.textContent).toContain('Descanso: 90 segundos');
+	});
+
+	it('dos llamadas acumulan sin tocar lo ya contado', () => {
+		const montado = mount(Temporizador, {
+			target: document.body,
+			props: { segundos: 60, reloj: false },
+		});
+		instancia = montado as unknown as { agregarSegundos: (n: number) => number };
+		flushSync();
+
+		vi.advanceTimersByTime(10_000);
+		flushSync();
+		expect(document.body.textContent).toContain('Descanso: 50 segundos');
+
+		expect(instancia.agregarSegundos(30)).toBe(80);
+		expect(instancia.agregarSegundos(30)).toBe(110);
+		flushSync();
+		expect(document.body.textContent).toContain('Descanso: 110 segundos');
 	});
 });

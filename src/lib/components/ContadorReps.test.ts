@@ -23,6 +23,12 @@ describe('ContadorReps', () => {
 		}
 	});
 
+	// Los signos van en spans decorativos: el valor es el hijo span
+	// directo del grupo.
+	function valorVisible(): string {
+		return document.body.querySelector('[role="group"] > span')?.textContent?.trim() ?? '';
+	}
+
 	it('incrementa de 0 a 1', () => {
 		instancia = mount(ContadorReps, {
 			target: document.body,
@@ -32,8 +38,7 @@ describe('ContadorReps', () => {
 		const botonAgregar = document.body.querySelector('[aria-label="Agregar una repetición"]') as HTMLButtonElement;
 		botonAgregar.click();
 		flushSync();
-		const span = document.body.querySelector('span');
-		expect(span?.textContent?.trim()).toBe('1');
+		expect(valorVisible()).toBe('1');
 	});
 
 	it('decrementa de 1 a 0', () => {
@@ -45,36 +50,57 @@ describe('ContadorReps', () => {
 		const botonQuitar = document.body.querySelector('[aria-label="Quitar una repetición"]') as HTMLButtonElement;
 		botonQuitar.click();
 		flushSync();
-		const span = document.body.querySelector('span');
-		expect(span?.textContent?.trim()).toBe('0');
+		expect(valorVisible()).toBe('0');
 	});
 
-	it('no decrementa debajo de min (valor 0)', () => {
+	it('en el mínimo, el menos lleva aria-disabled sin disabled y no baja', () => {
+		const onCambiar = vi.fn();
 		instancia = mount(ContadorReps, {
 			target: document.body,
-			props: { valor: 0, min: 0 },
+			props: { valor: 0, min: 0, onCambiar },
 		});
 		flushSync();
 		const botonQuitar = document.body.querySelector('[aria-label="Quitar una repetición"]') as HTMLButtonElement;
-		expect(botonQuitar.disabled).toBe(true);
+		const botonAgregar = document.body.querySelector('[aria-label="Agregar una repetición"]') as HTMLButtonElement;
+		expect(botonQuitar.getAttribute('aria-disabled')).toBe('true');
+		expect(botonQuitar.hasAttribute('disabled')).toBe(false);
+		expect(botonAgregar.hasAttribute('aria-disabled')).toBe(false);
 		botonQuitar.click();
 		flushSync();
-		const span = document.body.querySelector('span');
-		expect(span?.textContent?.trim()).toBe('0');
+		expect(valorVisible()).toBe('0');
+		expect(onCambiar).not.toHaveBeenCalled();
 	});
 
-	it('no incrementa encima de max (valor 99)', () => {
+	it('en el máximo, el más lleva aria-disabled sin disabled y no sube', () => {
+		const onCambiar = vi.fn();
 		instancia = mount(ContadorReps, {
 			target: document.body,
-			props: { valor: 99, max: 99 },
+			props: { valor: 99, max: 99, onCambiar },
 		});
 		flushSync();
 		const botonAgregar = document.body.querySelector('[aria-label="Agregar una repetición"]') as HTMLButtonElement;
-		expect(botonAgregar.disabled).toBe(true);
+		const botonQuitar = document.body.querySelector('[aria-label="Quitar una repetición"]') as HTMLButtonElement;
+		expect(botonAgregar.getAttribute('aria-disabled')).toBe('true');
+		expect(botonAgregar.hasAttribute('disabled')).toBe(false);
+		expect(botonQuitar.hasAttribute('aria-disabled')).toBe(false);
 		botonAgregar.click();
 		flushSync();
-		const span = document.body.querySelector('span');
-		expect(span?.textContent?.trim()).toBe('99');
+		expect(valorVisible()).toBe('99');
+		expect(onCambiar).not.toHaveBeenCalled();
+	});
+
+	it('en valor intermedio ningún botón lleva aria-disabled', () => {
+		instancia = mount(ContadorReps, {
+			target: document.body,
+			props: { valor: 50, min: 0, max: 99 },
+		});
+		flushSync();
+		const botonQuitar = document.body.querySelector('[aria-label="Quitar una repetición"]') as HTMLButtonElement;
+		const botonAgregar = document.body.querySelector('[aria-label="Agregar una repetición"]') as HTMLButtonElement;
+		expect(botonQuitar.hasAttribute('aria-disabled')).toBe(false);
+		expect(botonAgregar.hasAttribute('aria-disabled')).toBe(false);
+		expect(botonQuitar.hasAttribute('disabled')).toBe(false);
+		expect(botonAgregar.hasAttribute('disabled')).toBe(false);
 	});
 
 	it('aria-labels presentes y correctos', () => {
@@ -99,15 +125,15 @@ describe('ContadorReps', () => {
 			const mas = document.body.querySelector('[aria-label="Agregar una repetición"]') as HTMLButtonElement;
 			mas.click();
 			flushSync();
-			expect(document.body.querySelector('span')?.textContent?.trim()).toBe('55');
+			expect(valorVisible()).toBe('55');
 
 			const menos = document.body.querySelector('[aria-label="Quitar una repetición"]') as HTMLButtonElement;
 			menos.click();
 			flushSync();
-			expect(document.body.querySelector('span')?.textContent?.trim()).toBe('50');
+			expect(valorVisible()).toBe('50');
 			menos.click();
 			flushSync();
-			expect(document.body.querySelector('span')?.textContent?.trim()).toBe('45');
+			expect(valorVisible()).toBe('45');
 		});
 
 		it('default sigue siendo paso=1 (compatibilidad con usos de sesion)', () => {
@@ -119,7 +145,7 @@ describe('ContadorReps', () => {
 			const mas = document.body.querySelector('[aria-label="Agregar una repetición"]') as HTMLButtonElement;
 			mas.click();
 			flushSync();
-			expect(document.body.querySelector('span')?.textContent?.trim()).toBe('1');
+			expect(valorVisible()).toBe('1');
 		});
 	});
 
@@ -141,11 +167,10 @@ describe('ContadorReps', () => {
 			flushSync();
 			const grupo = document.body.querySelector('[role="group"]');
 			expect(grupo?.getAttribute('aria-label')).toBe('Volumen de efectos');
-			const span = document.body.querySelector('span');
-			expect(span?.textContent?.trim()).toBe('50%');
+			expect(valorVisible()).toBe('50%');
 		});
 
-		it('boton menos disabled en 0; boton mas disabled en 100', () => {
+		it('boton menos con aria-disabled en 0; boton mas con aria-disabled en 100', () => {
 			// valor=0: el menos no debe hacer nada.
 			instancia = mount(ContadorReps, {
 				target: document.body,
@@ -162,8 +187,9 @@ describe('ContadorReps', () => {
 			flushSync();
 			const menos0 = document.body.querySelector('[aria-label="Bajar volumen de efectos"]') as HTMLButtonElement;
 			const mas0 = document.body.querySelector('[aria-label="Subir volumen de efectos"]') as HTMLButtonElement;
-			expect(menos0.disabled).toBe(true);
-			expect(mas0.disabled).toBe(false);
+			expect(menos0.getAttribute('aria-disabled')).toBe('true');
+			expect(menos0.hasAttribute('disabled')).toBe(false);
+			expect(mas0.hasAttribute('aria-disabled')).toBe(false);
 			unmount(instancia);
 			instancia = undefined as unknown as ReturnType<typeof mount>;
 			document.body.innerHTML = '';
@@ -184,8 +210,9 @@ describe('ContadorReps', () => {
 			flushSync();
 			const menos100 = document.body.querySelector('[aria-label="Bajar volumen de efectos"]') as HTMLButtonElement;
 			const mas100 = document.body.querySelector('[aria-label="Subir volumen de efectos"]') as HTMLButtonElement;
-			expect(menos100.disabled).toBe(false);
-			expect(mas100.disabled).toBe(true);
+			expect(menos100.hasAttribute('aria-disabled')).toBe(false);
+			expect(mas100.getAttribute('aria-disabled')).toBe('true');
+			expect(mas100.hasAttribute('disabled')).toBe(false);
 		});
 
 		it('clampa arriba: 95 + paso 5 -> 100 (visible "100%")', () => {
@@ -205,7 +232,7 @@ describe('ContadorReps', () => {
 			const mas = document.body.querySelector('[aria-label="Subir volumen de efectos"]') as HTMLButtonElement;
 			mas.click();
 			flushSync();
-			expect(document.body.querySelector('span')?.textContent?.trim()).toBe('100%');
+			expect(valorVisible()).toBe('100%');
 		});
 
 		it('clampa abajo: 5 - paso 5 -> 0 (visible "0%")', () => {
@@ -225,7 +252,7 @@ describe('ContadorReps', () => {
 			const menos = document.body.querySelector('[aria-label="Bajar volumen de efectos"]') as HTMLButtonElement;
 			menos.click();
 			flushSync();
-			expect(document.body.querySelector('span')?.textContent?.trim()).toBe('0%');
+			expect(valorVisible()).toBe('0%');
 		});
 
 		it('onCambiar se invoca solo cuando el valor efectivo cambia', async () => {

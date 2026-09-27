@@ -91,7 +91,7 @@
 		if (!ejercicio) return;
 		try {
 			await marcarResuelto(ejercicio.id, Date.now());
-			anunciarPolite(`${ejercicio.nombre} habilitado de nuevo`);
+			anunciarPolite(M.biblioteca.anuncioReactivado(ejercicio.nombre));
 		} catch {
 			anunciarAssertive(mensajePara('ERR-DB-WRITE'));
 		}
@@ -113,28 +113,28 @@
 	}
 </script>
 
-<svelte:head><title>{ejercicio?.nombre ?? 'Ejercicio'}</title></svelte:head>
+<svelte:head><title>{ejercicio?.nombre ?? M.biblioteca.tituloRespaldo}</title></svelte:head>
 
 {#if ejercicio}
 	<Cabecera onclick={volver}>
 		<h1 bind:this={heading} tabindex="-1">{ejercicio.nombre}</h1>
 	</Cabecera>
-	<p class="text-text-secondary">{capitalizar(etiquetaPatron(ejercicio.patron))}, nivel {ejercicio.nivel_requerido}</p>
+	<p class="text-text-secondary">{M.biblioteca.lineaNivel(capitalizar(etiquetaPatron(ejercicio.patron)), ejercicio.nivel_requerido)}</p>
 
 	{#if bloqueo}
 		<p>
-			Este ejercicio está bloqueado por dolor{bloqueo.razon_bloqueo ? ` (${bloqueo.razon_bloqueo.toLowerCase()})` : ''}.
+			{M.biblioteca.bloqueadoPorDolor(bloqueo.razon_bloqueo)}
 			{#if bloqueo.fecha_revision !== null}
-				La app te va a preguntar si mejoró el {FORMATO_FECHA.format(bloqueo.fecha_revision)}.
+				{M.biblioteca.fraseRevision(FORMATO_FECHA.format(bloqueo.fecha_revision))}
 			{/if}
 		</p>
-		<Boton onclick={() => { confirmando = true; }}>Reactivar ahora</Boton>
+		<Boton onclick={() => { confirmando = true; }}>{M.biblioteca.botonReactivar}</Boton>
 		{#if confirmando}
-			<Modal abierto={confirmando} titulo="Reactivar ejercicio" alCerrar={() => { confirmando = false; }}>
-				<p>Vuelve a aparecer en tus sesiones. ¿Confirmas?</p>
+			<Modal abierto={confirmando} titulo={M.biblioteca.tituloReactivar} alCerrar={() => { confirmando = false; }}>
+				<p>{M.biblioteca.confirmarReactivar}</p>
 				{#snippet acciones()}
-					<Boton onclick={confirmarReactivacion}>Sí, rehabilitar</Boton>
-					<Boton variante="secundario" onclick={() => { confirmando = false; }}>Cancelar</Boton>
+					<Boton onclick={confirmarReactivacion}>{M.biblioteca.botonRehabilitar}</Boton>
+					<Boton variante="secundario" onclick={() => { confirmando = false; }}>{M.biblioteca.cancelar}</Boton>
 				{/snippet}
 			</Modal>
 		{/if}
@@ -159,15 +159,15 @@
 			<Modal abierto={true} titulo={M.biblioteca.tituloVariantes} alCerrar={() => { propuesta = null; }}>
 				<p>{M.biblioteca.confirmarCambio(destino.nombre)}</p>
 				{#snippet acciones()}
-					<Boton onclick={confirmarCambio} deshabilitado={guardandoCambio}>Confirmar el cambio</Boton>
-					<Boton variante="secundario" onclick={() => { propuesta = null; }} deshabilitado={guardandoCambio}>Cancelar</Boton>
+					<Boton onclick={confirmarCambio} deshabilitado={guardandoCambio}>{M.biblioteca.botonConfirmarCambio}</Boton>
+					<Boton variante="secundario" onclick={() => { propuesta = null; }} deshabilitado={guardandoCambio}>{M.biblioteca.cancelar}</Boton>
 				{/snippet}
 			</Modal>
 		{/if}
 	{/if}
 {:else}
 	<Cabecera onclick={volver}>
-		<h1 bind:this={heading} tabindex="-1">Ejercicio no encontrado</h1>
+		<h1 bind:this={heading} tabindex="-1">{M.biblioteca.tituloNoEncontrado}</h1>
 	</Cabecera>
-	<p>El ejercicio que pediste no está en el catálogo.</p>
+	<p>{M.biblioteca.textoNoEncontrado}</p>
 {/if}

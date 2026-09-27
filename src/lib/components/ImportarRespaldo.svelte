@@ -13,11 +13,12 @@
 	import { importarDatos } from '$lib/importar/importar';
 	import { mensajePara } from '$lib/errores/mensajes';
 	import { avisar } from '$lib/a11y/avisar.svelte';
+	import { M } from '$lib/mensajes/ui';
 	import Boton from '$lib/components/Boton.svelte';
 
 	let {
 		onImportado,
-		etiquetaBoton = 'Importar y reemplazar mis datos'
+		etiquetaBoton = M.componentes.importarRespaldo.etiquetaBoton
 	}: {
 		// Llamado tras exito. El host decide a donde ir.
 		onImportado: () => void;
@@ -35,7 +36,7 @@
 		// Validacion al pulsar, no al deshabilitar: un boton disabled no
 		// da feedback al toque (y TalkBack lo salta).
 		if (!f) {
-			avisar('Elige primero el archivo de exportación.', 'error');
+			avisar(M.componentes.importarRespaldo.eligeArchivo, 'error');
 			return;
 		}
 		guardando = true;
@@ -48,7 +49,7 @@
 				return;
 			}
 			await importarDatos(datos);
-			avisar('Datos importados', 'exito');
+			avisar(M.componentes.importarRespaldo.datosImportados, 'exito');
 			onImportado();
 		} catch (e) {
 			avisar(
@@ -61,7 +62,7 @@
 	}
 </script>
 
-<label class="block py-2" for={idInput}>Archivo de exportación (.json)</label>
+<label class="block py-2" for={idInput}>{M.componentes.importarRespaldo.etiquetaArchivo}</label>
 <!-- accept incluye octet-stream: el selector de Android esconde los
      .json que quedaron con MIME generico (descargas, apps de chat) si
      solo se pide application/json. El contenido se valida igual. -->

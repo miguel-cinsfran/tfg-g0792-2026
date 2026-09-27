@@ -84,7 +84,7 @@ describe('ImportarRespaldo', () => {
 
 		const boton = document.body.querySelector('button') as HTMLButtonElement;
 		expect(boton).not.toBeNull();
-		expect(boton.textContent?.trim()).toBe('Importar y reemplazar mis datos');
+		expect(boton.textContent?.trim()).toBe('Importar y reemplazar tus datos');
 		// Siempre pulsable: la validacion de archivo es al pulsar.
 		expect(boton.disabled).toBe(false);
 	});

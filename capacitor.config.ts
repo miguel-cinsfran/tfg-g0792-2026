@@ -5,13 +5,13 @@ const config: CapacitorConfig = {
   appName: 'Calistenia Accesible',
   webDir: 'build',
   // Fondo de ventana con el color de superficie: evita el fogonazo
-  // claro entre el splash y el primer pintado web.
-  backgroundColor: '#0f1413',
+  // oscuro entre el splash y el primer pintado web.
+  backgroundColor: '#F7F4EE',
   plugins: {
     StatusBar: {
       // Mismo color de superficie; el tinte en runtime (ver
       // +layout.svelte) cubre los dispositivos donde la config no aplica.
-      backgroundColor: '#0f1413'
+      backgroundColor: '#F7F4EE'
     },
     Keyboard: {
       // WebView completa redimensionada con el teclado: la barra fixed

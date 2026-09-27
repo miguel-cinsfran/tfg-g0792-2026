@@ -11,6 +11,9 @@ import { mount, unmount, flushSync } from 'svelte';
 import PaginaBiblioteca from './+page.svelte';
 import { popularCatalogo } from '$lib/catalogo/cargar';
 import catalogoRaw from '$lib/../../static/data/catalogo.json' with { type: 'json' };
+import { db } from '$lib/db/db';
+import { guardarPerfil } from '$lib/db/perfil';
+import { perfilBase } from '$lib/../../tests/fixtures/perfil-base';
 import {
 	registrarOrigenDetalle,
 	leerOrigenDetalle,
@@ -54,8 +57,9 @@ describe('Pagina de la biblioteca', () => {
 		};
 	});
 
-	afterEach(() => {
+	afterEach(async () => {
 		if (instancia) unmount(instancia);
+		await Promise.all(db.tables.map((t) => t.clear()));
 	});
 
 	it('cada boton de ejercicio lleva id="ej-{id}" estable y unico', () => {
@@ -112,5 +116,47 @@ describe('Pagina de la biblioteca', () => {
 
 		expect(document.activeElement).toBe(document.querySelector('h1'));
 		expect(scrollCalls).toEqual([]);
+	});
+});
+
+describe('Biblioteca - fuera del plan', () => {
+	let instancia: ReturnType<typeof mount>;
+
+	beforeEach(async () => {
+		document.body.innerHTML = '';
+		popularCatalogo(catalogoRaw);
+		await Promise.all(db.tables.map((t) => t.clear()));
+	});
+
+	afterEach(async () => {
+		if (instancia) unmount(instancia);
+		await Promise.all(db.tables.map((t) => t.clear()));
+	});
+
+	function botonesCon(texto: string): HTMLButtonElement[] {
+		return Array.from(document.body.querySelectorAll('button')).filter((b) =>
+			b.textContent?.includes(texto)
+		) as HTMLButtonElement[];
+	}
+
+	it('sin anclaje: los seis de tirar muestran necesita barra o anclaje', async () => {
+		await guardarPerfil(perfilBase({ tiene_anclaje: false }));
+		instancia = mount(PaginaBiblioteca, { target: document.body });
+		flushSync();
+
+		await vi.waitFor(() => {
+			expect(botonesCon('No entra en tu plan: necesita barra o anclaje').length).toBe(6);
+		});
+	});
+
+	it('con anclaje y munecas: ninguno por anclaje y al menos uno por dolor', async () => {
+		await guardarPerfil(perfilBase({ tiene_anclaje: true, zonas_dolor_preexistente: ['muñecas'] }));
+		instancia = mount(PaginaBiblioteca, { target: document.body });
+		flushSync();
+
+		await vi.waitFor(() => {
+			expect(botonesCon('No entra en tu plan: carga muñecas').length).toBeGreaterThan(0);
+		});
+		expect(botonesCon('No entra en tu plan: necesita barra o anclaje')).toHaveLength(0);
 	});
 });

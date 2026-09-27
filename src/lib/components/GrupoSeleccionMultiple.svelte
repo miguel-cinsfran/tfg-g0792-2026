@@ -18,7 +18,10 @@
 		opciones,
 		valores = $bindable<V[]>([]),
 		error = null,
-		id
+		id,
+		// Id de la explicacion que va ANTES del grupo: el lector la oye
+		// antes de elegir, no despues.
+		descripcionId
 	}: {
 		leyenda: string;
 		nombre: string;
@@ -26,11 +29,17 @@
 		valores: V[];
 		error?: string | null;
 		id?: string;
+		descripcionId?: string;
 	} = $props();
 
 	const fieldsetId = $derived(id ?? `grupo-${nombre}`);
 	const errorId = $derived(`${fieldsetId}-error`);
 	const tieneError = $derived(error !== null && error !== undefined);
+	// Descripcion externa primero, error despues: el orden de lectura.
+	const describedby = $derived(
+		[descripcionId, tieneError ? errorId : undefined].filter((x) => x !== undefined).join(' ') ||
+			undefined
+	);
 
 	function alternar(v: V): void {
 		if (valores.includes(v)) {
@@ -43,7 +52,7 @@
 
 <fieldset
 	id={fieldsetId}
-	aria-describedby={tieneError ? errorId : undefined}
+	aria-describedby={describedby}
 	class="m-0 border-0 p-0"
 >
 	<legend class="text-text-primary font-semibold mb-2">{leyenda}</legend>
@@ -74,7 +83,7 @@
 					{/if}
 				</div>
 				{#if elegida}
-					<CirculoCheque tamano={20} clase="shrink-0 text-acento" />
+					<CirculoCheque tamano="1.25em" clase="shrink-0 text-acento" />
 				{/if}
 			</label>
 		{/each}

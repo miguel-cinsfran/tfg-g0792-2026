@@ -1,15 +1,17 @@
 <!--
-  Icono "flame" de Lucide (https://lucide.dev).
-  Licencia ISC: Copyright (c) 2022 Lucide Contributors.
+  Icono "flame" de Phosphor (https://phosphoricons.com).
+  Licencia MIT: Copyright (c) 2023 Phosphor Icons.
   Path copiado inline; sin dependencia npm (la app es offline).
 -->
 <script lang="ts">
 	let {
-		tamano = 24,
+		tamano = '1.5em',
 		clase = '',
+		relleno = false,
 	}: {
-		tamano?: number;
+		tamano?: string;
 		clase?: string;
+		relleno?: boolean;
 	} = $props();
 </script>
 
@@ -17,14 +19,14 @@
 	xmlns="http://www.w3.org/2000/svg"
 	width={tamano}
 	height={tamano}
-	viewBox="0 0 24 24"
-	fill="none"
-	stroke="currentColor"
-	stroke-width="2"
-	stroke-linecap="round"
-	stroke-linejoin="round"
+	viewBox="0 0 256 256"
+	fill="currentColor"
 	aria-hidden="true"
 	class={clase}
 >
-	<path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z" />
+	{#if relleno}
+		<path d="M173.79,51.48a221.25,221.25,0,0,0-41.67-34.34,8,8,0,0,0-8.24,0A221.25,221.25,0,0,0,82.21,51.48C54.59,80.48,40,112.47,40,144a88,88,0,0,0,176,0C216,112.47,201.41,80.48,173.79,51.48ZM96,184c0-27.67,22.53-47.28,32-54.3,9.48,7,32,26.63,32,54.3a32,32,0,0,1-64,0Z"/>
+	{:else}
+		<path d="M176.69,48.72a225,225,0,0,0-42.52-35,12,12,0,0,0-12.34,0,225,225,0,0,0-42.52,35C51,78.47,36,111.42,36,144a92,92,0,0,0,184,0C220,111.42,205,78.47,176.69,48.72ZM100,184c0-13.33,5.53-26.26,16.45-38.45A93,93,0,0,1,128,134.72a93,93,0,0,1,11.55,10.83C150.47,157.74,156,170.67,156,184a28,28,0,0,1-56,0Zm79.84,3.94c.09-1.3.16-2.61.16-3.94,0-46.26-44-73.17-45.83-74.29a12,12,0,0,0-12.34,0C120,110.83,76,137.74,76,184c0,1.33.07,2.64.16,3.94A67.68,67.68,0,0,1,60,144c0-26.52,12.21-52.86,36.28-78.3A213.07,213.07,0,0,1,128,38.39C145.82,50.86,196,90.71,196,144A67.68,67.68,0,0,1,179.84,187.94Z"/>
+	{/if}
 </svg>

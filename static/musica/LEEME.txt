@@ -1,6 +1,21 @@
 Musica de fondo
 ===============
 
+ESTADO: no hay pistas en esta carpeta. Las dos que hubo hasta el 11 de
+agosto de 2026 se quitaron porque no se pudo documentar su origen ni su
+licencia: los archivos habian sido recodificados y no conservaban ninguna
+etiqueta. Eran provisionales y no eran las definitivas.
+
+Para PROBAR la pantalla de sonido a mano hacen falta archivos aqui: sin
+ellos no hay nada que sonar. Por eso `static/musica/*.mp3` esta en el
+.gitignore y no en la lista de borrados: pones las pistas que quieras en
+esta carpeta, funcionan en local, y git no las ve ni viajan a ninguna
+build que se comparta.
+
+Cuando se elijan las definitivas, la URL de origen, el autor y la licencia
+se anotan en ESTE archivo, en el mismo commit que las agrega. Solo entonces
+se quita la linea del .gitignore. Sin eso no entran.
+
 La app reproduce musica ambiente en loop si encuentra estos archivos
 (si faltan, no suena y no es un error):
 

@@ -1,16 +1,14 @@
 <!--
-  Icono "triangle-alert" de Lucide (https://lucide.dev).
-  Licencia ISC: Copyright (c) 2022 Lucide Contributors.
+  Icono "warning" de Phosphor (https://phosphoricons.com).
+  Licencia MIT: Copyright (c) 2023 Phosphor Icons.
   Path copiado inline; sin dependencia npm (la app es offline).
-  Source: https://raw.githubusercontent.com/lucide-icons/lucide/main/icons/triangle-alert.svg
-  Verificado en jun 2026.
 -->
 <script lang="ts">
 	let {
-		tamano = 24,
+		tamano = '1.5em',
 		clase = '',
 	}: {
-		tamano?: number;
+		tamano?: string;
 		clase?: string;
 	} = $props();
 </script>
@@ -19,16 +17,10 @@
 	xmlns="http://www.w3.org/2000/svg"
 	width={tamano}
 	height={tamano}
-	viewBox="0 0 24 24"
-	fill="none"
-	stroke="currentColor"
-	stroke-width="2"
-	stroke-linecap="round"
-	stroke-linejoin="round"
+	viewBox="0 0 256 256"
+	fill="currentColor"
 	aria-hidden="true"
 	class={clase}
 >
-	<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3" />
-	<path d="M12 9v4" />
-	<path d="M12 17h.01" />
+	<path d="M240.26,186.1,152.81,34.23h0a28.74,28.74,0,0,0-49.62,0L15.74,186.1a27.45,27.45,0,0,0,0,27.71A28.31,28.31,0,0,0,40.55,228h174.9a28.31,28.31,0,0,0,24.79-14.19A27.45,27.45,0,0,0,240.26,186.1Zm-20.8,15.7a4.46,4.46,0,0,1-4,2.2H40.55a4.46,4.46,0,0,1-4-2.2,3.56,3.56,0,0,1,0-3.73L124,46.2a4.77,4.77,0,0,1,8,0l87.44,151.87A3.56,3.56,0,0,1,219.46,201.8ZM116,136V104a12,12,0,0,1,24,0v32a12,12,0,0,1-24,0Zm28,40a16,16,0,1,1-16-16A16,16,0,0,1,144,176Z"/>
 </svg>

@@ -16,7 +16,10 @@
 		opciones,
 		valor = $bindable<V | null>(null),
 		error = null,
-		id
+		id,
+		// Id de la explicacion que va ANTES del grupo: el lector la oye
+		// antes de elegir, no despues.
+		descripcionId
 	}: {
 		leyenda: string;
 		nombre: string;
@@ -24,6 +27,7 @@
 		valor: V | null;
 		error?: string | null;
 		id?: string;
+		descripcionId?: string;
 	} = $props();
 
 	// El fieldsetId se usa para mover el foco desde la pagina cuando
@@ -31,12 +35,19 @@
 	const fieldsetId = $derived(id ?? `grupo-${nombre}`);
 	const errorId = $derived(`${fieldsetId}-error`);
 	const tieneError = $derived(error !== null && error !== undefined);
+	// Descripcion externa primero, error despues: el orden de lectura.
+	const describedby = $derived(
+		[descripcionId, tieneError ? errorId : undefined].filter((x) => x !== undefined).join(' ') ||
+			undefined
+	);
 </script>
 
+<!-- El grupo trae su propia separacion (arriba mayor que abajo) con
+     important: el space-y del padre la pisaria por especificidad. -->
 <fieldset
 	id={fieldsetId}
-	aria-describedby={tieneError ? errorId : undefined}
-	class="m-0 border-0 p-0"
+	aria-describedby={describedby}
+	class="border-0 p-0 mt-8! mb-4"
 >
 	<legend class="text-text-primary font-semibold mb-2">{leyenda}</legend>
 	<div class="flex flex-col gap-2">
@@ -71,7 +82,7 @@
 					{/if}
 				</div>
 				{#if elegida}
-					<CirculoCheque tamano={20} clase="shrink-0 text-acento" />
+					<CirculoCheque tamano="1.25em" clase="shrink-0 text-acento" />
 				{/if}
 			</label>
 		{/each}

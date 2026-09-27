@@ -5,6 +5,7 @@
 	import { obtenerPerfil } from '$lib/db/perfil';
 	import { obtenerEstadosTodos, marcarResuelto, reprogramarRevision, PREFIJO_RAZON_DOLOR } from '$lib/db/estado';
 	import { obtenerHistorial, obtenerUltimaSesion } from '$lib/db/sesiones';
+	import { obtenerSesionEnCurso } from '$lib/db/sesion-en-curso';
 	import { enfocarPrincipal } from '$lib/a11y/foco';
 	import { anunciarPolite } from '$lib/a11y/live-region';
 	import { sonar } from '$lib/sonido/reproducir';
@@ -40,6 +41,16 @@
 	let pospuestoLocal = $state<boolean>(false);
 	let recomendacionMedica = $state<boolean>(false);
 	let cargando = $state(false);
+	// Aviso de sesion sin terminar: se consulta UNA vez al entrar, como
+	// el respaldo de /sesion. La marca de tiempo es la misma Date.now()
+	// que usa el resto de la pantalla.
+	let sesionEnCurso = $state(false);
+	$effect(() => {
+		obtenerSesionEnCurso(Date.now()).then(
+			(r) => { sesionEnCurso = r !== null; },
+			() => { sesionEnCurso = false; },
+		);
+	});
 
 	$effect(() => {
 		const sub = liveQuery(() => obtenerPerfil()).subscribe({
@@ -175,7 +186,13 @@
 			</Card>
 		{/if}
 		<section class="flex flex-col gap-3">
-			<Boton variante="primario" tamano="grande" onclick={() => goto(resolve('/sesion'))}>{M.inicio.botonEmpezarEntrenamiento}</Boton>
+			<Boton variante="primario" tamano="grande" onclick={() => goto(resolve('/sesion'))}>
+				{#if sesionEnCurso}
+					{M.inicio.botonEmpezarEntrenamientoSesion}
+				{:else}
+					{M.inicio.botonEmpezarEntrenamiento}
+				{/if}
+			</Boton>
 			{#if vistaPrevia}
 				<Card titulo={M.inicio.proximaSesionTitulo}>
 					<p class="tabular-nums">{M.inicio.proximaSesionResumen(etiquetaTipoSesion(vistaPrevia.tipo), vistaPrevia.plan.length, perfil.duracion_sesion_min * 60)}</p>

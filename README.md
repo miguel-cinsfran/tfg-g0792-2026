@@ -22,11 +22,12 @@ Trabajo Final de Grado, Análisis de Sistemas Informáticos, UCA Asunción,
   datos. Todo funciona sin conexión: los datos viven en el teléfono.
 - Accesibilidad primero: pensada para TalkBack (y lectores de pantalla
   en general), con anuncios de voz, foco controlado, avisos visibles,
-  sonidos de interfaz y vibración.
+  sonidos de interfaz y vibración. Tres aspectos: el del teléfono (claro
+  u oscuro) y uno de alto contraste para baja visión.
 
 ## Cómo correrla
 
-Requiere Node 20+.
+Requiere Node 22 o superior.
 
     npm install
     npm run dev
@@ -51,7 +52,7 @@ Otros comandos:
 - `src/lib/`: base de datos local (Dexie/IndexedDB), accesibilidad,
   sonido, componentes de interfaz.
 - `src/routes/`: pantallas (onboarding, inicio, sesión, ejercicios,
-  racha, perfil).
+  progreso, perfil, configuración).
 - `static/data/`: catálogo de ejercicios, reglas y plantillas en JSON.
 - `tests/`: fixtures compartidas de los tests.
 

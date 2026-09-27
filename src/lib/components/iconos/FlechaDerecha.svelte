@@ -1,16 +1,14 @@
 <!--
-  Icono "arrow-right" de Lucide (https://lucide.dev).
-  Licencia ISC: Copyright (c) 2022 Lucide Contributors.
+  Icono "arrow-right" de Phosphor (https://phosphoricons.com).
+  Licencia MIT: Copyright (c) 2023 Phosphor Icons.
   Path copiado inline; sin dependencia npm (la app es offline).
-  Source: https://raw.githubusercontent.com/lucide-icons/lucide/main/icons/arrow-right.svg
-  Verificado en jun 2026.
 -->
 <script lang="ts">
 	let {
-		tamano = 24,
+		tamano = '1.5em',
 		clase = '',
 	}: {
-		tamano?: number;
+		tamano?: string;
 		clase?: string;
 	} = $props();
 </script>
@@ -19,15 +17,10 @@
 	xmlns="http://www.w3.org/2000/svg"
 	width={tamano}
 	height={tamano}
-	viewBox="0 0 24 24"
-	fill="none"
-	stroke="currentColor"
-	stroke-width="2"
-	stroke-linecap="round"
-	stroke-linejoin="round"
+	viewBox="0 0 256 256"
+	fill="currentColor"
 	aria-hidden="true"
 	class={clase}
 >
-	<path d="M5 12h14" />
-	<path d="m12 5 7 7-7 7" />
+	<path d="M224.49,136.49l-72,72a12,12,0,0,1-17-17L187,140H40a12,12,0,0,1,0-24H187L135.51,64.48a12,12,0,0,1,17-17l72,72A12,12,0,0,1,224.49,136.49Z"/>
 </svg>

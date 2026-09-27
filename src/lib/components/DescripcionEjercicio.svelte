@@ -9,6 +9,7 @@
  -->
 <script lang="ts">
 	import type { DescripcionPropioceptiva } from '$lib/motor/schema';
+	import { M } from '$lib/mensajes/ui';
 
 	let {
 		descripcion,
@@ -23,14 +24,14 @@
 	} = $props();
 </script>
 
-<svelte:element this={encabezado}>Posición inicial</svelte:element>
+<svelte:element this={encabezado}>{M.componentes.descripcionEjercicio.posicionInicial}</svelte:element>
 <ol>
 	{#each descripcion.posicion_inicial as paso, i (i)}
 		<li>{paso}</li>
 	{/each}
 </ol>
 
-<svelte:element this={encabezado}>Ejecución</svelte:element>
+<svelte:element this={encabezado}>{M.componentes.descripcionEjercicio.ejecucion}</svelte:element>
 <ol>
 	{#each descripcion.ejecucion as paso, i (i)}
 		<li>{paso}</li>
@@ -38,14 +39,14 @@
 </ol>
 
 {#snippet claves()}
-	<svelte:element this={encabezado}>Referencias propioceptivas</svelte:element>
+	<svelte:element this={encabezado}>{M.componentes.descripcionEjercicio.referenciasPropioceptivas}</svelte:element>
 	<ul>
 		{#each descripcion.referencias_propioceptivas as clave, i (i)}
 			<li>{clave}</li>
 		{/each}
 	</ul>
 
-	<svelte:element this={encabezado}>Errores comunes</svelte:element>
+	<svelte:element this={encabezado}>{M.componentes.descripcionEjercicio.erroresComunes}</svelte:element>
 	<ul>
 		{#each descripcion.errores_comunes as error, i (i)}
 			<li>{error}</li>
@@ -55,7 +56,7 @@
 
 {#if plegarClaves}
 	<details class="desplegable">
-		<summary>Claves de forma y errores comunes</summary>
+		<summary>{M.componentes.descripcionEjercicio.clavesForma}</summary>
 		{@render claves()}
 	</details>
 {:else}

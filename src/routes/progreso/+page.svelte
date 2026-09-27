@@ -18,7 +18,7 @@
 	import CirculoCheque from '$lib/components/iconos/CirculoCheque.svelte';
 	import Medalla from '$lib/components/iconos/Medalla.svelte';
 
-	const FORMATO_FECHA = new Intl.DateTimeFormat('es', { dateStyle: 'long' });
+	const FORMATO_FECHA = new Intl.DateTimeFormat('es', { day: '2-digit', month: '2-digit', year: 'numeric' });
 	// Valor de datos del evento de dolor; la etiqueta visible vive en M.
 	const ESTADO_EVENTO_BLOQUEADO = 'bloqueado';
 
@@ -122,13 +122,13 @@
 					<Boton variante="primario" tamano="grande" onclick={() => goto(resolve('/sesion'))}>{M.progreso.botonIniciarPrimeraSesion}</Boton>
 				</Card>
 			{:else}
-				<section class="border border-border bg-surface-alt rounded-lg p-4">
+				<section class="bg-surface-alt border-2 border-borde-bloque rounded-lg p-4">
 					<div class="space-y-2">
 						{#each historial as sesion (sesion.id)}
 							<details class="desplegable">
-								<summary class="tabular-nums">
-									<Calendario />
-									{M.progreso.resumenSesionHistorial(FORMATO_FECHA.format(sesion.fecha), etiquetaTipoSesion(sesion.tipo), sesion.duracion_minutos, sesion.cancelada_por_dolor)}
+								<summary class="tabular-nums flex items-start gap-2">
+									<Calendario clase="shrink-0" />
+									<span class="min-w-0">{M.progreso.resumenSesionHistorial(FORMATO_FECHA.format(sesion.fecha), etiquetaTipoSesion(sesion.tipo), sesion.duracion_minutos, sesion.cancelada_por_dolor)}</span>
 								</summary>
 								<ul>
 									{#each sesion.ejercicios as ejecutado (ejecutado.ejercicio_id)}
@@ -147,7 +147,7 @@
 			{#if eventosDolor.length === 0}
 				<p>{M.progreso.sinEventosDolor}</p>
 			{:else}
-				<section class="border border-border bg-surface-alt rounded-lg p-4">
+				<section class="bg-surface-alt border-2 border-borde-bloque rounded-lg p-4">
 					<div class="space-y-2">
 						{#each eventosDolor as evento (evento.id)}
 						<details class="desplegable">

@@ -1,14 +1,14 @@
 <!--
-  Icono "medal" de Lucide (https://lucide.dev/icons/medal).
-  Licencia ISC: Copyright (c) 2022 Lucide Contributors.
+  Icono "medal" de Phosphor (https://phosphoricons.com).
+  Licencia MIT: Copyright (c) 2023 Phosphor Icons.
   Path copiado inline; sin dependencia npm (la app es offline).
 -->
 <script lang="ts">
 	let {
-		tamano = 24,
+		tamano = '1.5em',
 		clase = '',
 	}: {
-		tamano?: number;
+		tamano?: string;
 		clase?: string;
 	} = $props();
 </script>
@@ -17,19 +17,10 @@
 	xmlns="http://www.w3.org/2000/svg"
 	width={tamano}
 	height={tamano}
-	viewBox="0 0 24 24"
-	fill="none"
-	stroke="currentColor"
-	stroke-width="2"
-	stroke-linecap="round"
-	stroke-linejoin="round"
+	viewBox="0 0 256 256"
+	fill="currentColor"
 	aria-hidden="true"
 	class={clase}
 >
-	<path d="M7.21 15 2.66 7.14a2 2 0 0 1 .13-2.2L4.4 2.8A2 2 0 0 1 6 2h12a2 2 0 0 1 1.6.8l1.6 2.14a2 2 0 0 1 .14 2.2L16.79 15" />
-	<path d="M11 12 5.12 2.2" />
-	<path d="m13 12 5.88-9.8" />
-	<path d="M8 7h8" />
-	<circle cx="12" cy="17" r="5" />
-	<path d="M12 18v-2h-.5" />
+	<path d="M220,96A92,92,0,1,0,68,165.69V240a12,12,0,0,0,17.37,10.73L128,229.42l42.64,21.31A12,12,0,0,0,188,240V165.69A91.86,91.86,0,0,0,220,96ZM60,96a68,68,0,1,1,68,68A68.07,68.07,0,0,1,60,96ZM164,220.59l-30.64-15.32a12,12,0,0,0-10.74,0L92,220.58V180.66a92,92,0,0,0,72,0ZM128,148A52,52,0,1,0,76,96,52.06,52.06,0,0,0,128,148Zm0-80a28,28,0,1,1-28,28A28,28,0,0,1,128,68Z"/>
 </svg>

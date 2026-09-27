@@ -18,7 +18,7 @@
 	} = $props();
 </script>
 
-<header class="cabecera flex items-center gap-3 mb-4">
+<header class="cabecera flex items-start gap-3 mb-4">
 	<BotonVolver {onclick} {etiqueta} />
 	{@render children()}
 </header>

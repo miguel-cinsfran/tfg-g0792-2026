@@ -1,16 +1,14 @@
 <!--
-  Icono "skip-forward" de Lucide (https://lucide.dev).
-  Licencia ISC: Copyright (c) 2022 Lucide Contributors.
+  Icono "skip-forward" de Phosphor (https://phosphoricons.com).
+  Licencia MIT: Copyright (c) 2023 Phosphor Icons.
   Path copiado inline; sin dependencia npm (la app es offline).
-  Source: https://raw.githubusercontent.com/lucide-icons/lucide/main/icons/skip-forward.svg
-  Verificado en jun 2026.
 -->
 <script lang="ts">
 	let {
-		tamano = 24,
+		tamano = '1.5em',
 		clase = '',
 	}: {
-		tamano?: number;
+		tamano?: string;
 		clase?: string;
 	} = $props();
 </script>
@@ -19,15 +17,10 @@
 	xmlns="http://www.w3.org/2000/svg"
 	width={tamano}
 	height={tamano}
-	viewBox="0 0 24 24"
-	fill="none"
-	stroke="currentColor"
-	stroke-width="2"
-	stroke-linecap="round"
-	stroke-linejoin="round"
+	viewBox="0 0 256 256"
+	fill="currentColor"
 	aria-hidden="true"
 	class={clase}
 >
-	<path d="M21 4v16" />
-	<path d="M6.029 4.285A2 2 0 0 0 3 6v12a2 2 0 0 0 3.029 1.715l9.997-5.998a2 2 0 0 0 .003-3.432z" />
+	<path d="M200,28a12,12,0,0,0-12,12v62l-113.45-71A20,20,0,0,0,44,47.88V208.12A20,20,0,0,0,74.55,225L188,154v62a12,12,0,0,0,24,0V40A12,12,0,0,0,200,28ZM68,200.73V55.27L184.3,128Z"/>
 </svg>

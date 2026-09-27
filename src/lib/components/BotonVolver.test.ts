@@ -2,12 +2,15 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { mount, unmount, flushSync } from 'svelte';
 import BotonVolver from './BotonVolver.svelte';
+import { obtenerVolver, reiniciarVolver } from '$lib/navegacion/atras-pantalla';
+import { consumirMarcaVolver } from '$lib/navegacion/transicion';
 
 describe('BotonVolver', () => {
 	let instancia: ReturnType<typeof mount>;
 
 	beforeEach(() => {
 		document.body.innerHTML = '';
+		reiniciarVolver();
 	});
 
 	afterEach(() => {
@@ -68,6 +71,18 @@ describe('BotonVolver', () => {
 		expect(fn).toHaveBeenCalledOnce();
 	});
 
+	it('el click marca la navegacion como volver para la transicion', () => {
+		consumirMarcaVolver();
+		instancia = mount(BotonVolver, {
+			target: document.body,
+			props: { onclick: () => {} },
+		});
+		flushSync();
+		const boton = document.body.querySelector('button') as HTMLButtonElement;
+		boton.click();
+		expect(consumirMarcaVolver()).toBe(true);
+	});
+
 	it('type="button" para no submitear forms vecinos', () => {
 		instancia = mount(BotonVolver, {
 			target: document.body,
@@ -86,5 +101,36 @@ describe('BotonVolver', () => {
 		flushSync();
 		const boton = document.body.querySelector('button') as HTMLButtonElement;
 		expect(boton.className).toMatch(/focus-visible:ring-acento/);
+	});
+
+	it('al montarse registra su manejador; al desmontarse lo quita', () => {
+		expect(obtenerVolver()).toBeNull();
+		instancia = mount(BotonVolver, {
+			target: document.body,
+			props: { onclick: () => {} },
+		});
+		flushSync();
+		expect(obtenerVolver()).not.toBeNull();
+		unmount(instancia);
+		expect(obtenerVolver()).toBeNull();
+	});
+
+	it('con dos montados manda el segundo; al quitarlo vuelve el primero', () => {
+		const primero = vi.fn();
+		const segundo = vi.fn();
+		const uno = mount(BotonVolver, { target: document.body, props: { onclick: primero } });
+		const contenedor = document.createElement('div');
+		document.body.appendChild(contenedor);
+		const dos = mount(BotonVolver, { target: contenedor, props: { onclick: segundo } });
+		flushSync();
+		obtenerVolver()?.();
+		expect(segundo).toHaveBeenCalledOnce();
+		expect(primero).not.toHaveBeenCalled();
+		unmount(dos);
+		contenedor.remove();
+		flushSync();
+		obtenerVolver()?.();
+		expect(primero).toHaveBeenCalledOnce();
+		unmount(uno);
 	});
 });

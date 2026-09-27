@@ -57,6 +57,57 @@ describe('Boton', () => {
 		expect(fn).not.toHaveBeenCalled();
 	});
 
+	it('deshabilitado sigue siendo enfocable', () => {
+		instancia = mount(Boton, {
+			target: document.body,
+			props: { children: snippetTexto('Enfocar'), deshabilitado: true },
+		});
+		flushSync();
+		const boton = document.body.querySelector('button') as HTMLButtonElement;
+		boton.focus();
+		expect(document.activeElement).toBe(boton);
+	});
+
+	it('deshabilitado expone aria-disabled="true"', () => {
+		instancia = mount(Boton, {
+			target: document.body,
+			props: { children: snippetTexto('Off'), deshabilitado: true },
+		});
+		flushSync();
+		const boton = document.body.querySelector('button') as HTMLButtonElement;
+		expect(boton.getAttribute('aria-disabled')).toBe('true');
+	});
+
+	it('deshabilitado no llama onclick ni suena al pulsar', () => {
+		const fn = vi.fn();
+		vi.clearAllMocks();
+		instancia = mount(Boton, {
+			target: document.body,
+			props: { children: snippetTexto('Off'), onclick: fn, deshabilitado: true },
+		});
+		flushSync();
+		const boton = document.body.querySelector('button') as HTMLButtonElement;
+		boton.click();
+		expect(fn).not.toHaveBeenCalled();
+		expect(sonar).not.toHaveBeenCalled();
+	});
+
+	it('deshabilitado type="submit" no envía el formulario', () => {
+		const onSubmit = vi.fn((e: Event) => e.preventDefault());
+		const form = document.createElement('form');
+		document.body.appendChild(form);
+		form.addEventListener('submit', onSubmit);
+		instancia = mount(Boton, {
+			target: form,
+			props: { children: snippetTexto('Guardar'), type: 'submit', deshabilitado: true },
+		});
+		flushSync();
+		const boton = form.querySelector('button') as HTMLButtonElement;
+		boton.click();
+		expect(onSubmit).not.toHaveBeenCalled();
+		form.remove();
+	});
+
 	it('type="button" por defecto', () => {
 		instancia = mount(Boton, {
 			target: document.body,

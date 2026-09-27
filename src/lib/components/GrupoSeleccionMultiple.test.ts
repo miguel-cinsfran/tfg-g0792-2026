@@ -116,4 +116,38 @@ describe('GrupoSeleccionMultiple', () => {
 		expect(mensaje?.textContent).toBe('Falta');
 		expect(mensaje?.hasAttribute('role')).toBe(false);
 	});
+
+	it('con descripcionId, el fieldset la referencia aunque no haya error', () => {
+		instancia = mount(GrupoSeleccionMultiple, {
+			target: document.body,
+			props: {
+				leyenda: 'Marca',
+				nombre: 'g',
+				opciones: OPCIONES,
+				valores: [],
+				descripcionId: 'explicacion'
+			}
+		});
+		flushSync();
+		const fieldset = document.body.querySelector('fieldset');
+		expect(fieldset?.getAttribute('aria-describedby')).toBe('explicacion');
+	});
+
+	it('con descripcionId y error, referencia ambas con la explicacion primero', () => {
+		instancia = mount(GrupoSeleccionMultiple, {
+			target: document.body,
+			props: {
+				leyenda: 'Marca',
+				nombre: 'g',
+				opciones: OPCIONES,
+				valores: [],
+				error: 'Falta',
+				id: 'grupo-y',
+				descripcionId: 'explicacion'
+			}
+		});
+		flushSync();
+		const fieldset = document.body.querySelector('fieldset');
+		expect(fieldset?.getAttribute('aria-describedby')).toBe('explicacion grupo-y-error');
+	});
 });

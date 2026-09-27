@@ -157,6 +157,66 @@ describe('BarraAccion (estructural: pantalla baja por altura)', () => {
 	});
 });
 
+describe('BarraAccion (sombra por contenido debajo)', () => {
+	let instancia: ReturnType<typeof mount>;
+
+	function region(): HTMLElement {
+		return document.body.querySelector('[role="region"]') as HTMLElement;
+	}
+
+	function fijarVentana(altoDocumento: number, altoVisible: number, scroll: number): void {
+		Object.defineProperty(document.documentElement, 'scrollHeight', {
+			value: altoDocumento,
+			configurable: true,
+		});
+		Object.defineProperty(window, 'innerHeight', { value: altoVisible, configurable: true });
+		Object.defineProperty(window, 'scrollY', { value: scroll, configurable: true });
+	}
+
+	beforeEach(() => {
+		document.body.innerHTML = '';
+	});
+
+	afterEach(() => {
+		if (instancia) unmount(instancia);
+		// @ts-expect-error jsdom no expone estos setters: se borra lo fijado.
+		delete document.documentElement.scrollHeight;
+		// @ts-expect-error jsdom no expone estos setters: se borra lo fijado.
+		delete window.innerHeight;
+		// @ts-expect-error jsdom no expone estos setters: se borra lo fijado.
+		delete window.scrollY;
+	});
+
+	it('con contenido por debajo muestra la sombra', () => {
+		fijarVentana(2000, 500, 0);
+		instancia = mount(BarraAccion, {
+			target: document.body,
+			props: { primaria: snippetBoton('Continuar') },
+		});
+		flushSync();
+		window.dispatchEvent(new Event('scroll'));
+		flushSync();
+		expect(region().classList.contains('sombra-barra')).toBe(true);
+	});
+
+	it('al llegar al final la sombra desaparece', () => {
+		fijarVentana(2000, 500, 0);
+		instancia = mount(BarraAccion, {
+			target: document.body,
+			props: { primaria: snippetBoton('Continuar') },
+		});
+		flushSync();
+		window.dispatchEvent(new Event('scroll'));
+		flushSync();
+		expect(region().classList.contains('sombra-barra')).toBe(true);
+
+		fijarVentana(2000, 500, 1500);
+		window.dispatchEvent(new Event('scroll'));
+		flushSync();
+		expect(region().classList.contains('sombra-barra')).toBe(false);
+	});
+});
+
 describe('BarraAccion (estructural: jerarquia de las acciones)', () => {
 	// La primaria flex-1 crece con el espacio sobrante; si la secundaria
 	// no puede comprimirse (flex-shrink-0), se queda ancha y la primaria

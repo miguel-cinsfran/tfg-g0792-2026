@@ -98,4 +98,38 @@ describe('GrupoSeleccion', () => {
 		const fieldset = document.body.querySelector('fieldset');
 		expect(fieldset?.hasAttribute('aria-describedby')).toBe(false);
 	});
+
+	it('con descripcionId, el fieldset la referencia aunque no haya error', () => {
+		instancia = mount(GrupoSeleccion, {
+			target: document.body,
+			props: {
+				leyenda: 'Elige',
+				nombre: 'g',
+				opciones: OPCIONES,
+				valor: null,
+				descripcionId: 'explicacion'
+			}
+		});
+		flushSync();
+		const fieldset = document.body.querySelector('fieldset');
+		expect(fieldset?.getAttribute('aria-describedby')).toBe('explicacion');
+	});
+
+	it('con descripcionId y error, referencia ambas con la explicacion primero', () => {
+		instancia = mount(GrupoSeleccion, {
+			target: document.body,
+			props: {
+				leyenda: 'Elige',
+				nombre: 'g',
+				opciones: OPCIONES,
+				valor: null,
+				error: 'Falta elegir',
+				id: 'grupo-x',
+				descripcionId: 'explicacion'
+			}
+		});
+		flushSync();
+		const fieldset = document.body.querySelector('fieldset');
+		expect(fieldset?.getAttribute('aria-describedby')).toBe('explicacion grupo-x-error');
+	});
 });

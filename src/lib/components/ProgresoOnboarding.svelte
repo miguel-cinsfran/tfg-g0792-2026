@@ -1,10 +1,12 @@
 <script lang="ts">
+	import { M } from '$lib/mensajes/ui';
+
 	let { paso, total }: { paso: number; total: number } = $props();
 	const porcentaje = $derived(total > 0 ? Math.min(100, (paso / total) * 100) : 0);
 </script>
 
 <p class="mb-3 text-sm text-text-secondary">
-	Paso {paso} de {total}
+	{M.componentes.progresoOnboarding.pasoDe(paso, total)}
 </p>
 
 <div

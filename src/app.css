@@ -1,46 +1,142 @@
 @import "tailwindcss";
 
-/* Los docs de openspec llevan fragmentos de clase en codigo (variantes
-   arbitrarias) que Tailwind escanea y compila: una clase rota tira el
-   build. Los docs no son fuente de la app. */
-@source not "../openspec";
-
-/* Tema oscuro unico de alto contraste. Cada par fondo/texto esta
-   verificado por calculo WCAG en el test de contraste: NO cambiar un
-   valor sin correr ese test. */
+/* Tema claro: crema cálida con bloques blancos. Cada par fondo/texto
+   esta verificado por calculo WCAG en el test de contraste: NO cambiar
+   un valor sin correr ese test. */
 @theme {
-	/* Superficies oscuras con tinte verde; elevacion por aclarado */
-	--color-surface: #0f1413;
-	--color-surface-alt: #1a211f;
-	--color-surface-raised: #232c29;
+	/* Superficies cálidas; elevacion por blanco sobre crema */
+	--color-surface: #f7f4ee;
+	--color-surface-alt: #ffffff;
+	--color-surface-raised: #e9e1d3;
 
-	/* Texto: blanco-niebla con tinte frio, nunca blanco puro */
-	--color-text-primary: #e9efec;
-	--color-text-secondary: #a8b6b0;
+	/* Texto: tinta cálida, nunca negro puro */
+	--color-text-primary: #333333;
+	--color-text-secondary: #57524c;
 
-	/* Acento principal: verde menta desaturado. Sirve como texto sobre
-	   las superficies y como fondo de boton primario con texto oscuro. */
-	--color-acento: #58cfa6;
-	--color-acento-hover: #7cdcb9;
+	/* Acento: salvia oscura (texto destacado, pestaña activa, anillo
+	   de foco). Ya no rellena el boton primario; eso es accion. */
+	--color-acento: #3f5b3a;
 
-	/* Acento naranja, para momentos de logro (racha, sesion completada,
-	   progreso). Distinto del warning (oro). */
-	--color-naranja: #f2a65a;
+	/* Accion principal: salvia pálida con texto oscuro. El relleno roza
+	   el fondo (1,36:1), así que el borde oscuro es lo que delimita el
+	   boton: NO tocar accion-borde sin correr el test de contraste. */
+	--color-accion: #cad7c5;
+	--color-accion-hover: #bccbb6;
+	--color-sobre-accion: #333333;
+	--color-accion-borde: #3f5b3a;
 
-	/* Bordes: border decorativo (tarjetas, divisores); border-strong para
-	   limites de componentes interactivos (>= 3:1, WCAG 1.4.11) */
-	--color-border: #2b3531;
-	--color-border-strong: #6c7f77;
+	/* Terracota, para momentos de logro (racha, sesion completada,
+	   progreso). Distinto del warning (ocre). */
+	--color-naranja: #9a4a2e;
 
-	/* Semanticos desaturados: legibles sin brillo neon */
+	/* Bordes: border decorativo (divisores); border-strong para limites
+	   de componentes interactivos (>= 3:1, WCAG 1.4.11) */
+	--color-border: #e3dccf;
+	--color-border-strong: #7a7268;
+
+	/* Semanticos para fondo claro: legibles sin brillo neon */
+	--color-error: #b3261e;
+	--color-success: #3f5b3a;
+	--color-warning: #7a5700;
+
+	/* Delimita bloques solo en alto contraste: en claro y oscuro es
+	   invisible y los bloques se ven igual que sin borde. */
+	--color-borde-bloque: transparent;
+
+	--radius-lg: 0.375rem;
+
+	--font-sans: 'Atkinson Hyperlegible Next', system-ui, sans-serif;
+
+	/* Mono igual que sans: los numeros tabulares (reps, minutos, racha)
+	   los da tabular-nums por clase en los contadores, no la familia. */
+	--font-mono: 'Atkinson Hyperlegible Next', system-ui, sans-serif;
+}
+
+/* Widgets nativos (scrollbars, date pickers, autofill) en claro por
+   defecto; oscuro y contraste lo pisan con dark en su bloque. */
+:root {
+	color-scheme: light;
+}
+
+/* Tema oscuro: los mismos tokens del claro con valores para fondo
+   cálido oscuro. El data-tema vive en <html> y los componentes no cambian de
+   clase por tema: todo va por tokens. */
+:root[data-tema="oscuro"] {
+	--color-surface: #1c1917;
+	--color-surface-alt: #292524;
+	--color-surface-raised: #33302c;
+
+	--color-text-primary: #e7e5e4;
+	--color-text-secondary: #b5afaa;
+
+	--color-acento: #cad7c5;
+
+	--color-accion: #cad7c5;
+	--color-accion-hover: #b9c9b3;
+	--color-sobre-accion: #1c1917;
+	--color-accion-borde: #cad7c5;
+
+	--color-naranja: #e3a277;
+
+	--color-border: #44403c;
+	--color-border-strong: #8a837d;
+
 	--color-error: #ff9b85;
-	--color-success: #92d3a2;
-	--color-warning: #e3c462;
+	--color-success: #a9c9a0;
+	--color-warning: #e0ae4e;
 
-	--font-sans: system-ui, sans-serif;
+	--color-borde-bloque: transparent;
 
-	/* Monospace: para numeros tabulares (reps, minutos, racha). */
-	--font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+	color-scheme: dark;
+}
+
+/* Alto contraste: negro, blanco y amarillo para baja vision severa.
+   El blanco del texto no es puro: el puro sobre negro puro produce
+   halo en personas con astigmatismo. */
+:root[data-tema="contraste"] {
+	--color-surface: #000000;
+	--color-surface-alt: #000000;
+	--color-surface-raised: #1a1a1a;
+
+	--color-text-primary: #f2f2f2;
+	--color-text-secondary: #e8e8e8;
+
+	--color-acento: #ffd60a;
+
+	--color-accion: #ffd60a;
+	--color-accion-hover: #ffe45c;
+	--color-sobre-accion: #000000;
+	--color-accion-borde: #ffd60a;
+
+	--color-naranja: #ffd60a;
+
+	--color-border: #ffffff;
+	--color-border-strong: #ffffff;
+
+	--color-error: #ff9e94;
+	--color-success: #7ee38f;
+	--color-warning: #ffd60a;
+
+	--color-borde-bloque: #ffffff;
+
+	color-scheme: dark;
+}
+
+/* Solo en alto contraste: letra mas grande y botones en negrita. */
+:root[data-tema="contraste"] body {
+	font-size: 1.125rem;
+}
+:root[data-tema="contraste"] button {
+	font-weight: 700;
+}
+
+/* Atkinson Hyperlegible Next: variable 400 a 800, subconjunto latino.
+   La PWA ya precachea *.woff2, asi que funciona sin conexion. */
+@font-face {
+	font-family: 'Atkinson Hyperlegible Next';
+	src: url('/fuentes/atkinson-hyperlegible-next-latin.woff2') format('woff2');
+	font-weight: 400 800;
+	font-display: swap;
 }
 
 @layer base {
@@ -66,16 +162,20 @@
 		-webkit-tap-highlight-color: transparent;
 		overscroll-behavior-y: none;
 		/* El control enfocado no debe quedar tapado por la barra fija
-		   al hacer scrollIntoView (W3C Technique C43). */
-		scroll-padding-bottom: calc(6rem + env(safe-area-inset-bottom));
+		   al hacer scrollIntoView (W3C Technique C43). La variable la
+		   pone el layout con la altura medida de la barra; sin barra
+		   vale lo mismo que antes. */
+		scroll-padding-bottom: calc(var(--espacio-barra-pestanas, 6rem) + env(safe-area-inset-bottom));
 	}
 
 	body {
 		background-color: var(--color-surface);
 		color: var(--color-text-primary);
 		font-family: var(--font-sans);
-		/* Widgets nativos (scrollbars, date pickers, autofill) en oscuro */
-		color-scheme: dark;
+		font-size: 1.0625rem;
+		/* Los digitos tabulares viven solo en los contadores que cambian
+		   en vivo (ya llevan tabular-nums por clase): en el texto corrido
+		   separaban las cifras. */
 	}
 
 	/* Los controles no son texto de documento: que mantener apretado no
@@ -109,22 +209,34 @@
 		outline-offset: 2px;
 	}
 
+	/* Los encabezados enfocados por codigo (tabindex="-1") no son
+	   controles: el anillo en un titulo se lee como defecto. */
+	[tabindex='-1']:focus {
+		outline: none;
+	}
+
 	/* Escala tipografica base: las paginas no necesitan clases para tener
 	   jerarquia; un utility la pisa cuando hace falta. overflow-wrap solo
-	   parte palabras cuando desbordan (texto agrandado): a 1x no corta. */
+	   parte palabras cuando desbordan (texto agrandado): a 1x no corta.
+	   hyphens parte con guion gracias al lang="es" del html (MDN:
+	   hyphens auto exige atributo de idioma); overflow-wrap queda como
+	   ultimo recurso cuando no hay punto de corte. */
 	h1 {
-		font-size: 1.5rem;
-		line-height: 2rem;
-		font-weight: 700;
-		letter-spacing: -0.015em;
+		font-size: 2rem;
+		line-height: 2.3rem;
+		font-weight: 800;
+		letter-spacing: -0.01em;
 		margin-block-end: 0.75rem;
+		hyphens: auto;
 		overflow-wrap: break-word;
+		text-wrap: balance;
 	}
 	h2 {
 		font-size: 1.25rem;
 		line-height: 1.75rem;
-		font-weight: 600;
+		font-weight: 700;
 		margin-block: 1rem 0.5rem;
+		hyphens: auto;
 		overflow-wrap: break-word;
 	}
 	h3 {
@@ -132,6 +244,7 @@
 		line-height: 1.5rem;
 		font-weight: 600;
 		margin-block: 0.75rem 0.5rem;
+		hyphens: auto;
 		overflow-wrap: break-word;
 	}
 	p {
@@ -174,25 +287,52 @@
 
 /* Navegacion entre rutas con desplazamiento lateral: sin estas reglas,
    startViewTransition produce el fundido por defecto que se lee como
-   web. Solo visual: el foco y los anuncios no esperan la animacion. */
-::view-transition-old(root) {
-	animation: salida-ruta 0.2s ease-out both;
+   web. Solo visual: el foco y los anuncios no esperan la animacion. El
+   sentido lo marca onNavigate en <html>; volver desliza al reves. */
+html[data-sentido-transicion='adelante']::view-transition-old(root) {
+	animation: salida-adelante 0.2s ease-out both;
 }
-::view-transition-new(root) {
-	animation: entrada-ruta 0.2s ease-out both;
+html[data-sentido-transicion='adelante']::view-transition-new(root) {
+	animation: entrada-adelante 0.2s ease-out both;
 }
-@keyframes salida-ruta {
+html[data-sentido-transicion='atras']::view-transition-old(root) {
+	animation: salida-atras 0.2s ease-out both;
+}
+html[data-sentido-transicion='atras']::view-transition-new(root) {
+	animation: entrada-atras 0.2s ease-out both;
+}
+@keyframes salida-adelante {
 	to {
 		transform: translateX(-25%);
 	}
 }
-@keyframes entrada-ruta {
+@keyframes entrada-adelante {
 	from {
 		transform: translateX(100%);
 	}
 	to {
 		transform: translateX(0);
 	}
+}
+@keyframes salida-atras {
+	to {
+		transform: translateX(25%);
+	}
+}
+@keyframes entrada-atras {
+	from {
+		transform: translateX(-100%);
+	}
+	to {
+		transform: translateX(0);
+	}
+}
+/* La barra de pestanas y las franjas no viajan con la pagina:
+   nombre propio y grupo quieto. */
+::view-transition-group(barra-pestanas),
+::view-transition-group(franja-arriba),
+::view-transition-group(franja-abajo) {
+	animation: none;
 }
 /* Movimiento reducido: la transicion se corta y el cambio es directo */
 @media (prefers-reduced-motion: reduce) {
@@ -290,6 +430,40 @@ details.desplegable[open] > summary::after {
    se marca con aria-disabled. Misma opacidad que Boton (0.5). */
 .fila-configuracion[aria-disabled="true"] {
 	opacity: 0.5;
+}
+
+/* Desplegable con aspecto de fila: mismo alto, sangria, borde y fondo
+   que .fila-configuracion, con semantica details/summary nativa. Se usa
+   junto a .desplegable (aporta el chevron); el padding derecho reserva
+   su lugar. El h2 del summary iguala al texto de la fila. */
+details.desplegable-fila {
+	background-color: var(--color-surface-alt);
+	border: 1px solid var(--color-border-strong);
+	border-radius: 0.5rem;
+}
+details.desplegable-fila > summary {
+	display: flex;
+	align-items: center;
+	min-height: 3rem;
+	padding: 0.75rem 2.25rem 0.75rem 1rem;
+	list-style: none;
+	font-weight: 500;
+	color: var(--color-text-primary);
+	cursor: pointer;
+	touch-action: manipulation;
+}
+details.desplegable-fila > summary h2 {
+	margin: 0;
+	font-size: 1em;
+	font-weight: 500;
+}
+details.desplegable-fila > p {
+	padding: 0 1rem 0.75rem 1rem;
+	margin: 0;
+	color: var(--color-text-primary);
+}
+details.desplegable-fila > div {
+	padding: 0 1rem 0.75rem 1rem;
 }
 
 /* Evitar delay de 300ms y zoom accidental en interactivos */

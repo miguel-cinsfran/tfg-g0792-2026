@@ -5,6 +5,7 @@
 // encabezados a la vez). Los textos salen de M.ayuda: la ruta no
 // duplica ni reformula nada.
 
+import { readFileSync } from 'node:fs';
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { mount, unmount, flushSync } from 'svelte';
 import PaginaAyuda from './+page.svelte';
@@ -32,7 +33,7 @@ vi.mock('$lib/sonido/reproducir', () => ({
 	sonar: (...args: unknown[]) => estadoMock.sonarMock(...args),
 }));
 
-const CAMPOS = ['vibracion', 'chequeo', 'racha', 'sonidos', 'reanudar'] as const;
+const CAMPOS = ['vibracion', 'chequeo', 'racha', 'sonidos', 'reanudar', 'nivel'] as const;
 
 describe('Pagina de ayuda', () => {
 	let instancia: ReturnType<typeof mount>;
@@ -45,12 +46,12 @@ describe('Pagina de ayuda', () => {
 		if (instancia) unmount(instancia);
 	});
 
-	it('cinco <details> en el orden de los temas, con h2 de M.ayuda dentro de cada summary', () => {
+	it('seis <details> en el orden de los temas, con h2 de M.ayuda dentro de cada summary', () => {
 		instancia = mount(PaginaAyuda, { target: document.body });
 		flushSync();
 
 		const detalles = document.body.querySelectorAll('details');
-		expect(detalles.length).toBe(5);
+		expect(detalles.length).toBe(6);
 
 		CAMPOS.forEach((campo, i) => {
 			const summary = detalles[i].querySelector('summary');
@@ -86,13 +87,39 @@ describe('Pagina de ayuda', () => {
 		expect(conElTitulo.length).toBe(1);
 	});
 
-	it('navegacion por encabezados: exactamente un h1 y cinco h2', () => {
+	it('navegacion por encabezados: exactamente un h1 y seis h2', () => {
 		instancia = mount(PaginaAyuda, { target: document.body });
 		flushSync();
 
 		const h1s = document.body.querySelectorAll('h1');
 		const h2s = document.body.querySelectorAll('h2');
 		expect(h1s.length).toBe(1);
-		expect(h2s.length).toBe(5);
+		expect(h2s.length).toBe(6);
+	});
+
+	it('el ultimo tema explica el nivel en generico', () => {
+		instancia = mount(PaginaAyuda, { target: document.body });
+		flushSync();
+
+		const detalles = document.body.querySelectorAll('details');
+		const ultimo = detalles[detalles.length - 1];
+		expect(ultimo.querySelector('summary h2')?.textContent).toBe('Qué significa tu nivel');
+		expect(ultimo.querySelector('p')?.textContent).toBe(
+			'Tu nivel sale de tus pruebas: es el que más se repitió entre ellas. El grupo más débil tiene prioridad en tus entrenamientos.'
+		);
+	});
+});
+
+describe('retorno de Ayuda', () => {
+	it('con ?de=config vuelve a /config', () => {
+		const src = readFileSync('src/routes/ayuda/+page.svelte', 'utf-8');
+		expect(src, 'Ayuda con ?de=config debe ir a /config').toMatch(/searchParams\.get\('de'\)\s*===\s*'config'/);
+		expect(src, 'destino esperado /config').toMatch(/goto\(resolve\('\/config'\)\)/);
+		expect(src, 'no debe volver a /perfil').not.toMatch(/goto\(resolve\('\/perfil'\)\)/);
+	});
+
+	it('sin parametro usa history.back()', () => {
+		const src = readFileSync('src/routes/ayuda/+page.svelte', 'utf-8');
+		expect(src, 'Ayuda sin origen debe usar history.back()').toMatch(/history\.back\(\)/);
 	});
 });

@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { M } from '$lib/mensajes/ui';
 
-// Recorrido estructural de las 22 pantallas con cabecera: lee cada
+// Recorrido estructural de las 23 pantallas con cabecera: lee cada
 // archivo de ruta como texto (patron de contraste-tokens.test.ts) y
 // fija el contrato de la cabecera unificada. El orden real del DOM lo
 // cubre Cabecera.test.ts; aca se fija que la pantalla usa el componente
@@ -23,23 +23,23 @@ type Pantalla = {
 };
 
 const PANTALLAS: Pantalla[] = [
-	{ ruta: 'onboarding/objetivo', titulos: ['Tu objetivo'] },
-	{ ruta: 'onboarding/dolor-preexistente', titulos: ['Zonas con dolor previo'] },
-	{ ruta: 'onboarding/datos', titulos: ['Tus datos'] },
-	{ ruta: 'onboarding/disponibilidad', titulos: ['Tu disponibilidad'] },
-	{ ruta: 'onboarding/equipamiento', titulos: ['Equipamiento disponible'] },
-	{ ruta: 'onboarding/evaluacion/pull', titulos: ['Evaluación: remo en suspensión'] },
-	{ ruta: 'onboarding/evaluacion/legs', titulos: ['Evaluación: sentadillas'] },
-	{ ruta: 'onboarding/evaluacion/push', titulos: ['Evaluación: flexiones'] },
-	{ ruta: 'onboarding/evaluacion/core', titulos: ['Evaluación: plancha'] },
+	{ ruta: 'onboarding/objetivo', titulos: ['{M.onboarding.objetivo.titulo}'] },
+	{ ruta: 'onboarding/dolor-preexistente', titulos: ['{M.onboarding.dolor.titulo}'] },
+	{ ruta: 'onboarding/datos', titulos: ['{M.onboarding.datos.titulo}'] },
+	{ ruta: 'onboarding/disponibilidad', titulos: ['{M.onboarding.disponibilidad.titulo}'] },
+	{ ruta: 'onboarding/equipamiento', titulos: ['{M.onboarding.equipamiento.titulo}'] },
+	{ ruta: 'onboarding/evaluacion/pull', titulos: ['{M.onboarding.evaluacion.pull.titulo}'] },
+	{ ruta: 'onboarding/evaluacion/legs', titulos: ['{M.onboarding.evaluacion.legs.titulo}'] },
+	{ ruta: 'onboarding/evaluacion/push', titulos: ['{M.onboarding.evaluacion.push.titulo}'] },
+	{ ruta: 'onboarding/evaluacion/core', titulos: ['{M.onboarding.evaluacion.core.titulo}'] },
 	{ ruta: 'ayuda', titulos: ['{M.ayuda.titulo}'] },
 	{
 		ruta: 'biblioteca/[id]',
-		titulos: ['{ejercicio.nombre}', 'Ejercicio no encontrado'],
+		titulos: ['{ejercicio.nombre}', '{M.biblioteca.tituloNoEncontrado}'],
 	},
 	{
 		ruta: 'sesion',
-		titulos: ['{M.sesion.titulo}', '{M.sesion.titulo}'],
+		titulos: ['{tituloFase}', '{M.sesion.titulo}'],
 		sinBinding: true,
 		soloPrimeraRamaConCabecera: true,
 	},
@@ -73,14 +73,22 @@ const PANTALLAS: Pantalla[] = [
 		titulos: ['{M.configuracion.borrarConfirmar.titulo}'],
 	},
 	{ ruta: 'config/audio', titulos: ['{M.configuracion.audio.titulo}'] },
+	{ ruta: 'config/acerca', titulos: ['{M.configuracion.acerca.titulo}'] },
 	{
-		ruta: 'config/disponibilidad',
+		ruta: 'config/equipamiento',
 		titulos: [
-			'{M.configuracion.disponibilidad.titulo}',
-			'{M.configuracion.disponibilidad.titulo}',
-			'{M.configuracion.disponibilidad.titulo}',
+			'{M.onboarding.equipamiento.titulo}',
+			'{M.onboarding.equipamiento.titulo}',
+			'{M.onboarding.equipamiento.titulo}',
 		],
 	},
+	{ ruta: 'config', titulos: [
+		'{M.configuracion.indice.titulo}',
+		'{M.configuracion.indice.titulo}',
+		'{M.configuracion.indice.titulo}',
+		'{M.configuracion.indice.titulo}',
+	] },
+	{ ruta: 'config/aspecto', titulos: ['{M.configuracion.aspecto.titulo}'] },
 	{ ruta: 'config/importar', titulos: ['{M.configuracion.importar.titulo}'] },
 	{ ruta: 'config/rehacer', titulos: ['{M.configuracion.rehacer.titulo}'] },
 	{
@@ -108,6 +116,27 @@ function resolverM(referencia: string): string {
 	}
 	return actual;
 }
+
+type Retorno = { ruta: string; destino: string; condicional?: boolean };
+
+const RETORNOS: Retorno[] = [
+	{ ruta: 'ayuda', destino: '/config', condicional: true },
+	{ ruta: 'biblioteca/[id]', destino: '/biblioteca' },
+	{ ruta: 'sesion', destino: '/' },
+	{ ruta: 'config/audio', destino: '/config' },
+	{ ruta: 'config/acerca', destino: '/config' },
+	{ ruta: 'config', destino: '/perfil' },
+	{ ruta: 'config/aspecto', destino: '/config' },
+	{ ruta: 'config/borrar', destino: '/config' },
+	{ ruta: 'config/borrar/confirmar', destino: '/config/borrar' },
+	{ ruta: 'config/datos', destino: '/config' },
+	{ ruta: 'config/dolor', destino: '/config' },
+	{ ruta: 'config/equipamiento', destino: '/config' },
+	{ ruta: 'config/importar', destino: '/config' },
+	{ ruta: 'config/objetivo', destino: '/config' },
+	{ ruta: 'config/rehacer', destino: '/config' },
+	{ ruta: 'config/rehacer/confirmar', destino: '/config/rehacer' },
+];
 
 describe('cabecera unificada en las pantallas con cabecera', () => {
 	for (const pantalla of PANTALLAS) {
@@ -156,6 +185,26 @@ describe('cabecera unificada en las pantallas con cabecera', () => {
 			// El foco a la pantalla sigue vivo aunque el h1 no se bindee.
 			if (pantalla.sinBinding) {
 				expect(archivo).toMatch(/bind:this=\{refCierre\}/);
+			}
+		});
+	}
+});
+
+describe('destino de retorno declarado por pantalla', () => {
+	for (const retorno of RETORNOS) {
+		it(`${retorno.ruta} vuelve a ${retorno.destino}`, () => {
+			const archivo = readFileSync(`src/routes/${retorno.ruta}/+page.svelte`, 'utf-8');
+			if (retorno.condicional) {
+				// Caso Ayuda: ?de=config -> /config, resto history.back()
+				expect(archivo, `${retorno.ruta} debe distinguir ?de=config`).toMatch(/searchParams\.get\('de'\)\s*===\s*'config'/);
+				expect(archivo, `${retorno.ruta} debe ir a ${retorno.destino}`).toMatch(new RegExp(`goto\\(resolve\\('${retorno.destino}'\\)\\)`));
+				expect(archivo, `${retorno.ruta} debe usar history.back()`).toMatch(/history\.back\(\)/);
+			} else if (retorno.destino === '/biblioteca') {
+				// Detalle usa history.back() con origen o goto a la lista
+				expect(archivo, `${retorno.ruta} debe usar history.back()`).toMatch(/history\.back\(\)/);
+				expect(archivo, `${retorno.ruta} debe poder ir a ${retorno.destino}`).toMatch(new RegExp(`goto\\(resolve\\('${retorno.destino}'\\)\\)`));
+			} else {
+				expect(archivo, `${retorno.ruta} debe volver a ${retorno.destino}`).toMatch(new RegExp(`goto\\(resolve\\('${retorno.destino}'\\)\\)`));
 			}
 		});
 	}

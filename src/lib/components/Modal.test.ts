@@ -2,6 +2,7 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { mount, unmount, flushSync, createRawSnippet } from 'svelte';
 import EnvolturaModalTest from './EnvolturaModalTest.svelte';
+import EnvolturaModalCondicionalTest from './EnvolturaModalCondicionalTest.svelte';
 import { M } from '$lib/mensajes/ui';
 
 const contenidoSnippet = createRawSnippet(() => ({
@@ -204,5 +205,62 @@ describe('Modal', () => {
 		flushSync();
 
 		expect(document.body.querySelector('[role="dialog"]')).toBeNull();
+	});
+});
+
+describe('Modal montado dentro de un {#if} (como en produccion)', () => {
+	let instancia: ReturnType<typeof mount>;
+
+	beforeEach(() => {
+		document.body.innerHTML = '';
+	});
+
+	afterEach(() => {
+		if (instancia) {
+			unmount(instancia);
+		}
+	});
+
+	it('al cerrar, restaura el foco al boton que lo abrio', () => {
+		instancia = mount(EnvolturaModalCondicionalTest, {
+			target: document.body,
+			props: { children: contenidoSnippet },
+		});
+		flushSync();
+
+		const btnAbrir = document.getElementById('btn-abrir-condicional') as HTMLButtonElement;
+		btnAbrir.focus();
+		flushSync();
+		btnAbrir.click();
+		flushSync();
+		expect(document.body.querySelector('[role="dialog"]')).not.toBeNull();
+
+		// Cerrar con Escape: el {#if} destruye el Modal, no le alcanza
+		// la transicion de abierto = false.
+		window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+		flushSync();
+
+		expect(document.activeElement).toBe(btnAbrir);
+	});
+
+	it('con el boton fuera del documento, al cerrar no mueve el foco a ese huerfano', () => {
+		instancia = mount(EnvolturaModalCondicionalTest, {
+			target: document.body,
+			props: { children: contenidoSnippet },
+		});
+		flushSync();
+
+		const btnAbrir = document.getElementById('btn-abrir-condicional') as HTMLButtonElement;
+		btnAbrir.focus();
+		flushSync();
+		btnAbrir.click();
+		flushSync();
+
+		btnAbrir.remove();
+		window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+		flushSync();
+
+		expect(btnAbrir.isConnected).toBe(false);
+		expect(document.activeElement).not.toBe(btnAbrir);
 	});
 });

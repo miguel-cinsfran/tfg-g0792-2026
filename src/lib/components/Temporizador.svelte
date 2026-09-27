@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { anunciarPolite } from '$lib/a11y/live-region';
 	import { sonar } from '$lib/sonido/reproducir';
-	import { formatearTiempo } from '$lib/mensajes/ui';
+	import { M, formatearTiempo } from '$lib/mensajes/ui';
 	import { SvelteSet } from 'svelte/reactivity';
 
 	function alternarTicTac(n: number): 'tic' | 'tac' {
@@ -11,7 +11,7 @@
 	let {
 		segundos,
 		alTerminar,
-		etiqueta = 'Descanso',
+		etiqueta = M.componentes.temporizador.descanso,
 		alAviso,
 		aviso_segundos = 3,
 		reloj = true,
@@ -32,6 +32,14 @@
 	// remonta el componente (p.ej. con {#key} en el consumidor).
 	// svelte-ignore state_referenced_locally
 	let restantes = $state(segundos);
+
+	// Suma segundos al descanso en curso (boton "+30 segundos" de la
+	// sesion). Devuelve el restante nuevo para anunciarlo. No recalcula
+	// hitos: los ya pasados no se repiten.
+	export function agregarSegundos(n: number): number {
+		restantes += n;
+		return restantes;
+	}
 	let avisoDisparado = $state(false);
 	// Conteo y pulso son dos setInterval independientes. Comparten este
 	// flag para que el pulso se silencie en cuanto el conteo llega a 0
@@ -68,7 +76,7 @@
 			}
 			if (hitosPendientes.has(restantes) && restantes > 0) {
 				hitosPendientes.delete(restantes);
-				anunciarPolite(`Quedan ${formatearTiempo(restantes)}`);
+				anunciarPolite(M.componentes.temporizador.faltan(formatearTiempo(restantes)));
 			}
 			if (restantes <= 0) {
 				clearInterval(id);
@@ -93,5 +101,5 @@
 </script>
 
 <p class="text-2xl font-bold tabular-nums font-mono text-text-primary">
-	{etiqueta}: {restantes} segundos
+	{M.componentes.temporizador.contador(etiqueta, restantes)}
 </p>

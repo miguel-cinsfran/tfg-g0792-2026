@@ -1,5 +1,7 @@
 <script lang="ts">
 	import { anunciarPolite } from '$lib/a11y/live-region';
+	import Boton from './Boton.svelte';
+	import { M } from '$lib/mensajes/ui';
 
 	let {
 		valor = $bindable(0),
@@ -34,12 +36,28 @@
 
 	const etiquetas = $derived(
 		etiquetaMenos !== undefined && etiquetaMas !== undefined
-			? { grupo: etiquetaGrupo ?? 'Repeticiones', menos: etiquetaMenos, mas: etiquetaMas }
+			? {
+					grupo: etiquetaGrupo ?? M.componentes.contadorReps.grupoRepeticiones,
+					menos: etiquetaMenos,
+					mas: etiquetaMas
+				}
 			: unidad === 'segundos'
-				? { grupo: 'Segundos', menos: 'Restar un segundo', mas: 'Sumar un segundo' }
+				? {
+						grupo: M.componentes.contadorReps.grupoSegundos,
+						menos: M.componentes.contadorReps.restarSegundo,
+						mas: M.componentes.contadorReps.sumarSegundo
+					}
 				: unidad === 'porcentaje'
-					? { grupo: etiquetaGrupo ?? 'Porcentaje', menos: 'Restar cinco por ciento', mas: 'Sumar cinco por ciento' }
-					: { grupo: 'Repeticiones', menos: 'Quitar una repetición', mas: 'Agregar una repetición' }
+					? {
+							grupo: etiquetaGrupo ?? M.componentes.contadorReps.grupoPorcentaje,
+							menos: M.componentes.contadorReps.restarCincoPorCiento,
+							mas: M.componentes.contadorReps.sumarCincoPorCiento
+						}
+					: {
+							grupo: M.componentes.contadorReps.grupoRepeticiones,
+							menos: M.componentes.contadorReps.quitarRepeticion,
+							mas: M.componentes.contadorReps.agregarRepeticion
+						}
 	);
 
 	// Para repeticiones/segundos, el numero crudo. Para porcentaje, "N%".
@@ -50,9 +68,9 @@
 	function anunciar(): void {
 		if (unidad === 'porcentaje') {
 			const n = Math.round(Math.min(100, Math.max(0, valor)));
-			anunciarPolite(`${n} por ciento`);
+			anunciarPolite(M.componentes.contadorReps.anuncioPorCiento(n));
 		} else {
-			anunciarPolite(`${valor} ${unidad}`);
+			anunciarPolite(M.componentes.contadorReps.anuncioCantidad(valor, unidad));
 		}
 	}
 
@@ -66,27 +84,34 @@
 	}
 </script>
 
-<div class="flex items-center gap-4" role="group" aria-label={etiquetas.grupo}>
-	<button
+<!-- Ambos extremos con el mismo Boton secundario en linea: mismo estilo,
+     signos grandes y conjunto centrado. En los limites, aria-disabled en
+     vez de disabled para que el lector siga encontrando el control. -->
+<div class="flex items-center justify-center gap-4" role="group" aria-label={etiquetas.grupo}>
+	<Boton
+		variante="secundario"
+		enLinea
+		silencioso
+		deshabilitado={valor <= min}
 		onclick={() => cambiar(-paso)}
-		disabled={valor <= min}
-		aria-label={etiquetas.menos}
-		class="min-h-12 min-w-12 rounded-lg transition-colors active:brightness-90 bg-surface-alt border border-border-strong text-text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-acento focus-visible:ring-offset-2 focus-visible:ring-offset-surface touch-manipulation"
+		etiqueta={etiquetas.menos}
 	>
-		−
-	</button>
+		<span class="text-3xl leading-none" aria-hidden="true">−</span>
+	</Boton>
 	<!-- Sin aria-live aca: el anuncio sale por la region global via anunciarPolite.
 	     Ancho minimo por unidad para el peor caso ("100%", "600"): si el ancho
 	     siguiera al numero, los botones +/- se moverian al cambiar los digitos. -->
 	<span class="text-3xl font-bold tabular-nums font-mono text-text-primary {unidad === 'porcentaje' ? 'min-w-20' : 'min-w-16'} text-center">
 		{visible}
 	</span>
-	<button
+	<Boton
+		variante="secundario"
+		enLinea
+		silencioso
+		deshabilitado={valor >= max}
 		onclick={() => cambiar(paso)}
-		disabled={valor >= max}
-		aria-label={etiquetas.mas}
-		class="min-h-12 min-w-12 rounded-lg transition-colors active:brightness-90 bg-acento hover:bg-acento-hover text-surface focus:outline-none focus-visible:ring-2 focus-visible:ring-acento focus-visible:ring-offset-2 focus-visible:ring-offset-surface touch-manipulation"
+		etiqueta={etiquetas.mas}
 	>
-		+
-	</button>
+		<span class="text-3xl leading-none" aria-hidden="true">+</span>
+	</Boton>
 </div>

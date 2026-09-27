@@ -9,9 +9,10 @@
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import { PATRONES } from '$lib/motor/schema';
-	import type { Patron, EstadoEjercicio } from '$lib/motor/schema';
+	import type { Patron, EstadoEjercicio, Perfil } from '$lib/motor/schema';
 	import { obtenerCatalogo } from '$lib/catalogo/estado';
 	import { obtenerEstadosBloqueados } from '$lib/db/estado';
+	import { obtenerPerfil } from '$lib/db/perfil';
 	import { anunciarAssertive } from '$lib/a11y/live-region';
 	import { mensajePara, CODIGO_LECTURA_FALLIDA } from '$lib/errores/mensajes';
 	import { enfocarPrincipal } from '$lib/a11y/foco';
@@ -21,13 +22,12 @@
 		limpiarOrigenDetalle,
 	} from '$lib/a11y/origen-detalle.svelte';
 	import { M } from '$lib/mensajes/ui';
-	import { etiquetaPatron } from '$lib/catalogo/etiquetas';
+	import { etiquetaPatron, etiquetaZona } from '$lib/catalogo/etiquetas';
 	import { capitalizar } from '$lib/ui/texto';
 	import type { EjercicioValidado } from '$lib/catalogo/schema';
 	import Haltera from '$lib/components/iconos/Haltera.svelte';
 	import ChevronDerecha from '$lib/components/iconos/ChevronDerecha.svelte';
 	import Candado from '$lib/components/iconos/Candado.svelte';
-	import Punto from '$lib/components/iconos/Punto.svelte';
 
 	let heading = $state<HTMLElement>();
 	// El origen se lee sin seguimiento: limpiarlo tras restaurar el foco
@@ -57,6 +57,39 @@
 		return () => sub.unsubscribe();
 	});
 
+	// null = sin perfil o lectura fallida: sin marcas de fuera del plan.
+	let perfil = $state<Perfil | null | undefined>(undefined);
+	$effect(() => {
+		const sub = liveQuery(() => obtenerPerfil()).subscribe({
+			next: (v) => { perfil = v ?? null; },
+			error: () => { perfil = null; },
+		});
+		return () => sub.unsubscribe();
+	});
+
+	// Segunda linea de la fila: si el perfil deja el ejercicio fuera se
+	// muestra la causa; si no, el nivel como siempre. El bloqueo por
+	// dolor de la sesion manda sobre ambas: es temporal y se revisa.
+	function segundaLinea(ej: EjercicioValidado, bloqueado: boolean): string {
+		// Local para el narrowing: `perfil` es state mutable y TS no lo
+		// angosta dentro del callback del filter.
+		const p = perfil;
+		if (!bloqueado && p !== null && p !== undefined) {
+			if (ej.requiere_anclaje && !p.tiene_anclaje) {
+				return M.biblioteca.fueraPorAnclaje;
+			}
+			const zonas = ej.zonas_involucradas.filter((z) =>
+				p.zonas_dolor_preexistente.includes(z),
+			);
+			if (zonas.length > 0) {
+				return M.biblioteca.fueraPorDolor(
+					zonas.map((z) => etiquetaZona(z).toLowerCase()).join(', '),
+				);
+			}
+		}
+		return M.biblioteca.nivelDeEjercicio(ej.nivel_requerido, bloqueado);
+	}
+
 	const grupos = PATRONES
 		.map((patron: Patron) => ({
 			patron,
@@ -75,40 +108,42 @@
 
 {#each grupos as grupo (grupo.patron)}
 	<section aria-labelledby="patron-{grupo.patron}">
-		<div class="flex items-baseline gap-2 mt-6">
-			<h2 id="patron-{grupo.patron}" class="flex items-baseline gap-2">
-				<Punto tamano={12} clase="text-text-secondary shrink-0" />
+		<div class="mt-6">
+			<h2 id="patron-{grupo.patron}">
 				{capitalizar(etiquetaPatron(grupo.patron))}
 			</h2>
 			{#if grupo.ejercicios.length > 1}
-				<span class="text-sm font-normal text-text-secondary">
-					, {grupo.ejercicios.length} ejercicios
-				</span>
+				<p class="m-0 text-sm font-normal text-text-secondary">
+					{grupo.ejercicios.length} ejercicios
+				</p>
 			{/if}
 		</div>
-		<ul class="list-none m-0 p-0 mt-2 space-y-2">
+		<!-- Un bloque por grupo: las filas se separan con divide, sin fondo
+		     ni borde propios. El anillo de foco va hacia adentro para que
+		     el recorte de las esquinas no lo oculte. -->
+		<ul class="list-none m-0 p-0 mt-2 bg-surface-alt border-2 border-borde-bloque rounded-lg divide-y divide-border overflow-hidden">
 			{#each grupo.ejercicios as ej (ej.id)}
 				<li>
 					<button
 						type="button"
 						id="ej-{ej.id}"
-						class="w-full min-h-12 flex items-center gap-3 text-left bg-surface-alt border border-border-strong rounded-lg px-4 py-3 transition-colors hover:border-acento active:border-acento focus-visible:outline-2 focus-visible:outline-acento group"
+						class="w-full min-h-12 flex items-center gap-3 text-left px-4 py-3 transition-colors hover:bg-surface-raised active:bg-surface-raised focus-visible:outline-2 focus-visible:outline-acento focus-visible:-outline-offset-2 group"
 						onclick={() => abrir(ej)}
 					>
 						{#if bloqueos.has(ej.id)}
-							<Candado tamano={20} clase="text-text-secondary shrink-0" />
+							<Candado tamano="1.25em" clase="text-text-secondary shrink-0" />
 						{:else}
-							<Haltera tamano={20} clase="text-text-secondary shrink-0" />
+							<Haltera tamano="1.25em" clase="text-text-secondary shrink-0" />
 						{/if}
 						<div class="flex-1 min-w-0">
 							<span class="block font-semibold text-text-primary">
 								{ej.nombre}
 							</span>
-							<span class="block text-sm text-text-secondary">
-								{M.biblioteca.nivelDeEjercicio(ej.nivel_requerido, bloqueos.has(ej.id))}
-							</span>
+						<span class="block text-sm text-text-secondary">
+							{segundaLinea(ej, bloqueos.has(ej.id))}
+						</span>
 						</div>
-						<ChevronDerecha tamano={20}
+						<ChevronDerecha tamano="1.25em"
 							clase="text-text-secondary shrink-0 transition-transform group-hover:translate-x-0.5" />
 					</button>
 				</li>
