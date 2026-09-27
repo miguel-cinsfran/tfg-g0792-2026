@@ -6,7 +6,8 @@ export type AccionAtras =
 	| { tipo: 'armar-doble-atras' }
 	| { tipo: 'minimizar' }
 	| { tipo: 'atras-lineal' }
-	| { tipo: 'minimizar-lineal' };
+	| { tipo: 'minimizar-lineal' }
+	| { tipo: 'volver-pantalla' };
 
 export type EstadoDobleAtras = 'desarmado' | 'armado';
 
@@ -15,6 +16,7 @@ export function decidirAccionAtras(
 	armado: EstadoDobleAtras,
 	esPestana: boolean,
 	esInicio: boolean,
+	hayManejador = false,
 ): AccionAtras {
 	if (esPestana) {
 		if (esInicio) {
@@ -22,6 +24,9 @@ export function decidirAccionAtras(
 		}
 		return { tipo: 'ir-a-inicio' };
 	}
+	// Con boton visible registrado, el telefono ejecuta su manejador
+	// (mismo destino que el toque); sin el, lo de siempre.
+	if (hayManejador) return { tipo: 'volver-pantalla' };
 	// history.back vs minimize lo decide el caller segun canGoBack.
 	return { tipo: 'atras-lineal' };
 }

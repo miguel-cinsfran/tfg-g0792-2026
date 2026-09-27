@@ -64,4 +64,44 @@ describe('decidirAccionAtras', () => {
 			});
 		});
 	});
+
+	describe('con pestaña el manejador no cambia nada', () => {
+		it('/perfil con manejador sigue yendo a Inicio', () => {
+			expect(decidirAccionAtras('/perfil', 'desarmado', true, false, true)).toEqual({
+				tipo: 'ir-a-inicio',
+			});
+		});
+
+		it('/ con manejador sigue armando el doble atras', () => {
+			expect(decidirAccionAtras('/', 'desarmado', true, true, true)).toEqual({
+				tipo: 'armar-doble-atras',
+			});
+			expect(decidirAccionAtras('/', 'armado', true, true, true)).toEqual({
+				tipo: 'minimizar',
+			});
+		});
+	});
+
+	describe('sin pestaña con manejador registrado', () => {
+		it('/config -> volver-pantalla (el telefono ejecuta el boton visible)', () => {
+			expect(decidirAccionAtras('/config', 'desarmado', false, false, true)).toEqual({
+				tipo: 'volver-pantalla',
+			});
+		});
+
+		it('/config/aspecto -> volver-pantalla', () => {
+			expect(decidirAccionAtras('/config/aspecto', 'desarmado', false, false, true)).toEqual({
+				tipo: 'volver-pantalla',
+			});
+		});
+
+		it('/config sin manejador -> atras-lineal, como hoy', () => {
+			expect(decidirAccionAtras('/config', 'desarmado', false, false, false)).toEqual({
+				tipo: 'atras-lineal',
+			});
+			expect(decidirAccionAtras('/config', 'desarmado', false, false)).toEqual({
+				tipo: 'atras-lineal',
+			});
+		});
+	});
 });

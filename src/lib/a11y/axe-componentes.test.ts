@@ -61,7 +61,7 @@ describe('axe-core sobre componentes montados', () => {
 		],
 		['Card con titulo', Card as Component, { titulo: 'Proxima sesion', children: snippetTexto('Contenido') }],
 		['ContadorReps', ContadorReps as Component, { valor: 8 }],
-		['Temporizador', Temporizador as Component, { segundos: 60 }],
+		['Temporizador', Temporizador as unknown as Component, { segundos: 60 }],
 		[
 			'Modal abierto',
 			Modal as Component,

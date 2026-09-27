@@ -2,17 +2,19 @@
 	import { tick } from 'svelte';
 	import { afterNavigate } from '$app/navigation';
 	import { anunciarPolite } from './live-region';
-	import { consumirSupresionAnuncioDeRuta } from './foco';
+	import { consumirSupresionAnuncioDeRuta, reaplicarFocoPendiente } from './foco';
 
-	// afterNavigate + tick: el anuncio sale despues de que la pagina nueva
-	// monto y aplico su <svelte:head><title>. Con $effect sobre pathname
-	// (version anterior) el efecto corria antes del titulo nuevo.
-	// El fallback con la ruta cubre paginas sin titulo.
-	// Si enfocarPrincipal ya movio el foco al h1, TalkBack leyo el titulo:
-	// suprimir el anuncio duplicado.
 	afterNavigate(async (nav) => {
+		// Tras el tick la pagina nueva ya aplico su <title>.
 		await tick();
-		if (consumirSupresionAnuncioDeRuta()) return;
+		// El anunciador propio de SvelteKit no se apaga por configuracion y
+		// duplicaria el anuncio en modo assertive: se lo oculta al lector.
+		document.getElementById('svelte-announcer')?.setAttribute('aria-hidden', 'true');
+		// En carga en frio SvelteKit resetea el foco despues del $effect de
+		// la pagina; aca ya termino, asi que se reaplica el foco al h1.
+		const focoQuedo = reaplicarFocoPendiente();
+		// Si el foco quedo en el h1, el lector ya leyo el titulo.
+		if (consumirSupresionAnuncioDeRuta() && focoQuedo) return;
 		const ruta = nav.to?.url.pathname ?? '';
 		const titulo = document.title || `Navegado a ${ruta}`;
 		anunciarPolite(titulo);

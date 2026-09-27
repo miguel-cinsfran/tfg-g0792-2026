@@ -12,7 +12,7 @@
 	// 'error' espera un poco mas para que un usuario de baja vision
 	// alcance a leerlo. Cualquier aviso nuevo reinicia el contador: el
 	// `id` del aviso es la clave de reactividad de este $effect.
-	const DURACION_EXITO_MS = 5_000;
+	const DURACION_EXITO_MS = 4_000;
 	const DURACION_ERROR_MS = 8_000;
 
 	$effect(() => {
@@ -33,16 +33,17 @@
 	     y aria duplicaria el anuncio. -->
 	<div
 		aria-hidden="true"
-		class="aviso-visible fixed left-1/2 -translate-x-1/2 top-[calc(1rem+env(safe-area-inset-top))] z-20 w-[calc(100%-2rem)] max-w-lg rounded-lg border px-4 py-3 shadow-none backdrop-blur-0"
+		style="bottom: calc(max(var(--alto-barra-pestanas, 0px), var(--alto-barra-accion, 0px), env(safe-area-inset-bottom)) + 0.75rem)"
+		class="aviso-visible fixed left-1/2 -translate-x-1/2 z-20 w-[calc(100%-2rem)] max-w-lg rounded-lg border px-4 py-3 shadow-none backdrop-blur-0"
 		class:aviso-visible--exito={aviso.tipo === 'exito'}
 		class:aviso-visible--error={aviso.tipo === 'error'}
 	>
 		<div class="flex items-start gap-3">
 			<div class="shrink-0 mt-0.5">
 				{#if aviso.tipo === 'exito'}
-					<CirculoCheque tamano={22} clase="text-success" />
+					<CirculoCheque tamano="1.375em" clase="text-success" />
 				{:else}
-					<Alerta tamano={22} clase="text-error" />
+					<Alerta tamano="1.375em" clase="text-error" />
 				{/if}
 			</div>
 			<p class="m-0 flex-1 text-text-primary">{aviso.mensaje}</p>
@@ -57,6 +58,9 @@
 	.aviso-visible {
 		background-color: var(--color-surface-alt);
 		border-color: var(--color-border-strong);
+		/* El aviso flota sobre la barra fija: que el toque lo atraviese
+		   y llegue al control de abajo. */
+		pointer-events: none;
 	}
 	.aviso-visible--exito {
 		border-left-width: 4px;

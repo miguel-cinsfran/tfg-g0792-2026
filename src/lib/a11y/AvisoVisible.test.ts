@@ -68,8 +68,8 @@ describe('AvisoVisible', () => {
 		const aviso = document.body.querySelector('.aviso-visible');
 		expect(aviso?.classList.contains('aviso-visible--exito')).toBe(true);
 		expect(aviso?.classList.contains('aviso-visible--error')).toBe(false);
-		// CirculoCheque de Lucide trae <circle> y <path>
-		expect(aviso?.querySelectorAll('svg circle').length).toBeGreaterThan(0);
+		// CirculoCheque de Phosphor: un solo <path> macizo
+		expect(aviso?.querySelectorAll('svg path').length).toBe(1);
 	});
 
 	it('aplica clase de error y muestra el icono de alerta', () => {
@@ -80,18 +80,22 @@ describe('AvisoVisible', () => {
 		const aviso = document.body.querySelector('.aviso-visible');
 		expect(aviso?.classList.contains('aviso-visible--error')).toBe(true);
 		expect(aviso?.classList.contains('aviso-visible--exito')).toBe(false);
-		// Alerta (triangle-alert) de Lucide: tres <path>
-		expect(aviso?.querySelectorAll('svg path').length).toBeGreaterThanOrEqual(3);
+		// Alerta (warning) de Phosphor: un solo <path>
+		expect(aviso?.querySelectorAll('svg path').length).toBe(1);
 	});
 
-	it('se vacia al expirar el temporizador de exito (5s)', () => {
+	it('se vacia al expirar el temporizador de exito (4s)', () => {
 		instancia = mount(AvisoVisible, { target: document.body });
 		flushSync();
 		avisar('Listo', 'exito');
 		flushSync();
 		expect(document.body.querySelector('.aviso-visible')).not.toBeNull();
 
-		vi.advanceTimersByTime(5_000);
+		vi.advanceTimersByTime(3_999);
+		flushSync();
+		expect(document.body.querySelector('.aviso-visible')).not.toBeNull();
+
+		vi.advanceTimersByTime(1);
 		flushSync();
 		expect(document.body.querySelector('.aviso-visible')).toBeNull();
 	});
@@ -119,8 +123,8 @@ describe('AvisoVisible', () => {
 		avisar('Primero', 'exito');
 		flushSync();
 
-		// Pasaron 3s del primer aviso; el segundo debe reiniciar a 5s.
-		vi.advanceTimersByTime(3_000);
+		// Pasaron 2s del primer aviso; el segundo debe reiniciar a 4s.
+		vi.advanceTimersByTime(2_000);
 		avisar('Segundo', 'exito');
 		flushSync();
 
@@ -128,13 +132,13 @@ describe('AvisoVisible', () => {
 		expect(aviso?.textContent).toContain('Segundo');
 
 		// A los 2s del segundo aviso, el primero ya estaria cerrado
-		// (van 5s), pero el nuevo debe seguir.
+		// (van 4s), pero el nuevo debe seguir.
 		vi.advanceTimersByTime(2_000);
 		flushSync();
 		expect(document.body.querySelector('.aviso-visible')).not.toBeNull();
 
-		// Y al cerrar el ciclo de 5s del segundo, se vacia.
-		vi.advanceTimersByTime(3_000);
+		// Y al cerrar el ciclo de 4s del segundo, se vacia.
+		vi.advanceTimersByTime(2_000);
 		flushSync();
 		expect(document.body.querySelector('.aviso-visible')).toBeNull();
 	});
@@ -149,5 +153,15 @@ describe('AvisoVisible', () => {
 		limpiarAvisoVisible();
 		flushSync();
 		expect(document.body.querySelector('.aviso-visible')).toBeNull();
+	});
+
+	it('flota abajo sobre la barra que haya, sin fijarse arriba', () => {
+		instancia = mount(AvisoVisible, { target: document.body });
+		flushSync();
+		avisar('Algo', 'exito');
+		flushSync();
+		const aviso = document.body.querySelector('.aviso-visible') as HTMLElement;
+		expect(aviso.className).not.toMatch(/top-\[/);
+		expect(aviso.getAttribute('style') ?? '').toContain('bottom');
 	});
 });

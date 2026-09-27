@@ -16,8 +16,8 @@ import { SUBVISTAS } from '$lib/sesion/fases';
 const RAIZ_PROYECTO = fileURLToPath(new URL('../../..', import.meta.url));
 const RAIZ_RUTAS = join(RAIZ_PROYECTO, 'src', 'routes');
 
-// Sin exclusiones activas: la sesión ya cumple los invariantes desde el
-// encargo de foco; el filtro se conserva para una futura ruta pendiente.
+// Sin exclusiones activas: todas las rutas cumplen los invariantes. El
+// filtro se conserva para excluir a mano una ruta, si hiciera falta.
 const EXCLUIDOS: ReadonlySet<string> = new Set<string>();
 
 function buscarPaginas(dir: string): string[] {

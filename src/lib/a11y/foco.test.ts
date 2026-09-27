@@ -5,6 +5,7 @@ import {
 	obtenerSupresionAnuncioDeRuta,
 	consumirSupresionAnuncioDeRuta,
 	resetearSupresionAnuncioDeRuta,
+	reaplicarFocoPendiente,
 } from './foco';
 
 describe('enfocarPrincipal', () => {
@@ -70,5 +71,56 @@ describe('consumirSupresionAnuncioDeRuta', () => {
 
 		expect(consumirSupresionAnuncioDeRuta()).toBe(true);
 		expect(consumirSupresionAnuncioDeRuta()).toBe(false);
+	});
+});
+
+describe('reaplicarFocoPendiente', () => {
+	beforeEach(() => {
+		resetearSupresionAnuncioDeRuta();
+		document.body.innerHTML = '';
+		// Drena el pendiente que un test anterior pudo dejar sin consumir:
+		// sin pendiente reaplicar es inofensivo y devuelve true.
+		reaplicarFocoPendiente();
+	});
+
+	function h1EnElDocumento(): HTMLHeadingElement {
+		const h1 = document.createElement('h1');
+		h1.tabIndex = -1;
+		document.body.appendChild(h1);
+		return h1;
+	}
+
+	it('si el robo dejo el foco en el body, lo devuelve al h1 y retorna true', () => {
+		const h1 = h1EnElDocumento();
+		enfocarPrincipal(h1);
+		// reset_focus de SvelteKit deja el foco en el body. En jsdom un
+		// body.focus() no le gana a un elemento ya enfocado; blur llega al
+		// mismo estado: activeElement === body.
+		h1.blur();
+		expect(document.activeElement).toBe(document.body);
+
+		expect(reaplicarFocoPendiente()).toBe(true);
+		expect(document.activeElement).toBe(h1);
+	});
+
+	it('si el h1 ya no esta en el documento, no mueve el foco y retorna false', () => {
+		const h1 = h1EnElDocumento();
+		enfocarPrincipal(h1);
+		h1.blur();
+		h1.remove();
+
+		expect(reaplicarFocoPendiente()).toBe(false);
+		expect(document.activeElement).toBe(document.body);
+	});
+
+	it('si la persona movio el foco a otro control, lo respeta y retorna true', () => {
+		const h1 = h1EnElDocumento();
+		const boton = document.createElement('button');
+		document.body.appendChild(boton);
+		enfocarPrincipal(h1);
+		boton.focus();
+
+		expect(reaplicarFocoPendiente()).toBe(true);
+		expect(document.activeElement).toBe(boton);
 	});
 });

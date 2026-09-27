@@ -4,7 +4,7 @@
 // +layout.svelte. El HTML y el orden de la lista los
 // cubre el lector al barrer; lo que se fija aca es el NOMBRE ACCESIBLE y
 // la PALABRA DE ROL, que son los unicos canales que TalkBack honra en
-// WebView (justificacion en ui/flujos.md, "Estructura de navegacion").
+// WebView.
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { mount, unmount, flushSync } from 'svelte';
@@ -25,7 +25,9 @@ const estadoMock = vi.hoisted(() => ({
 	reanudarMusicaMock: vi.fn(),
 	esPlataformaNativa: false,
 	registerSWMock: vi.fn(),
-	statusBarMock: vi.fn()
+	statusBarMock: vi.fn(),
+	statusBarStyleMock: vi.fn(),
+	listenerAtras: null as null | ((ev: { canGoBack: boolean }) => void)
 }));
 
 vi.mock('$app/state', () => ({
@@ -75,7 +77,8 @@ vi.mock('$lib/sonido/reproducir', () => ({
 
 vi.mock('$lib/sonido/musica', () => ({
 	reproducirFondo: (...args: unknown[]) => estadoMock.musicaFondoMock(...args),
-	reproducirSesion: (...args: unknown[]) => estadoMock.musicaSesionMock(...args),
+	reproducirSesion: (...args: unknown[]) =>
+		estadoMock.musicaSesionMock(...args),
 	pausar: (...args: unknown[]) => estadoMock.pausarMusicaMock(...args),
 	reanudar: (...args: unknown[]) => estadoMock.reanudarMusicaMock(...args)
 }));
@@ -92,12 +95,20 @@ vi.mock('@capacitor/core', () => ({
 // bloque nativo: sin estos mocks, el modulo real intentaria el bridge
 // nativo de la WebView y fallaria en jsdom.
 vi.mock('@capacitor/status-bar', () => ({
-	StatusBar: { setBackgroundColor: (...args: unknown[]) => estadoMock.statusBarMock(...args) }
+	StatusBar: {
+		setBackgroundColor: (...args: unknown[]) =>
+			estadoMock.statusBarMock(...args),
+		setStyle: (...args: unknown[]) => estadoMock.statusBarStyleMock(...args)
+	},
+	Style: { Light: 'LIGHT', Dark: 'DARK' }
 }));
 
 vi.mock('@capacitor/app', () => ({
 	App: {
-		addListener: () => Promise.resolve({ remove: () => Promise.resolve() }),
+		addListener: (evento: string, fn: (ev: { canGoBack: boolean }) => void) => {
+			if (evento === 'backButton') estadoMock.listenerAtras = fn;
+			return Promise.resolve({ remove: () => Promise.resolve() });
+		},
 		minimizeApp: () => Promise.resolve()
 	}
 }));
@@ -109,13 +120,33 @@ vi.mock('virtual:pwa-register', () => ({
 	registerSW: (...args: unknown[]) => estadoMock.registerSWMock(...args)
 }));
 
+// jsdom no trae ResizeObserver (el layout mide la barra con
+// bind:clientHeight); stub inerte, mismo que en sesion/page.test.ts.
+class ResizeObserverStub {
+	observe() {}
+	unobserve() {}
+	disconnect() {}
+}
+globalThis.ResizeObserver =
+	ResizeObserverStub as unknown as typeof ResizeObserver;
+
 import Layout from './+layout.svelte';
+import { guardarAspecto } from '$lib/aspecto/aspecto';
+import {
+	marcarProximaComoVolver,
+	consumirMarcaVolver
+} from '$lib/navegacion/transicion';
+import {
+	registrarVolver,
+	reiniciarVolver
+} from '$lib/navegacion/atras-pantalla';
 
 // Perfil valido cualquiera: el $effect del layout redirige a /onboarding
-// solo cuando no hay perfil; con perfil presente ninguna ruta redirige
-// (los deep links llegan a su destino). El shape minimo es lo unico que
-// el layout mira (testea `data?.perfil`); el contenido real se valida
-// en bootstrap.test.ts.
+// cuando no hay perfil; con perfil conserva la URL (los deep links llegan
+// a su destino) salvo en las rutas de /onboarding, que con perfil ya no
+// tienen alta que terminar y se devuelven al inicio. El shape minimo es
+// lo unico que el layout mira (testea `data?.perfil`); el contenido real
+// se valida en bootstrap.test.ts.
 const perfilMinimo = {
 	id: 1 as const,
 	nombre: 'Test',
@@ -142,7 +173,15 @@ const perfilMinimo = {
 };
 
 function montar(
-	pathname: '/' | '/biblioteca' | '/progreso' | '/perfil',
+	pathname:
+		| '/'
+		| '/biblioteca'
+		| `/biblioteca/${string}`
+		| '/progreso'
+		| '/perfil'
+		| '/config'
+		| `/config/${string}`
+		| `/onboarding/${string}`,
 	perfil: typeof perfilMinimo | null = perfilMinimo
 ) {
 	// Mutar pathname antes del mount: el layout hace
@@ -154,7 +193,9 @@ function montar(
 
 	// children es un Snippet obligatorio en el layout (renderea el slot).
 	// Pasamos un noop: solo nos interesa la barra de pestanas.
-	const children = (() => {}) as unknown as ComponentProps<typeof Layout>['children'];
+	const children = (() => {}) as unknown as ComponentProps<
+		typeof Layout
+	>['children'];
 
 	const instancia = mount(Layout, {
 		target: document.body,
@@ -175,6 +216,7 @@ describe('Barra de pestanas (+layout.svelte)', () => {
 		estadoMock.gotoMock.mockReset();
 		estadoMock.sonarMock.mockReset();
 		estadoMock.statusBarMock.mockReset();
+		estadoMock.statusBarStyleMock.mockReset();
 		estadoMock.esPlataformaNativa = false;
 	});
 
@@ -185,7 +227,9 @@ describe('Barra de pestanas (+layout.svelte)', () => {
 
 	it('los cuatro botones llevan aria-roledescription="pestaña" (reemplaza "boton")', () => {
 		instancia = montar('/');
-		const botones = document.body.querySelectorAll('nav[aria-label="Navegación principal"] button');
+		const botones = document.body.querySelectorAll(
+			'nav[aria-label="Navegación principal"] button'
+		);
 		expect(botones.length).toBe(4);
 		botones.forEach((b) => {
 			expect(b.getAttribute('aria-roledescription')).toBe('pestaña');
@@ -199,8 +243,12 @@ describe('Barra de pestanas (+layout.svelte)', () => {
 				'nav[aria-label="Navegación principal"] button'
 			)
 		);
-		const activos = botones.filter((b) => b.getAttribute('aria-label')?.endsWith(' seleccionada'));
-		const inactivos = botones.filter((b) => !b.getAttribute('aria-label')?.endsWith(' seleccionada'));
+		const activos = botones.filter((b) =>
+			b.getAttribute('aria-label')?.endsWith(' seleccionada')
+		);
+		const inactivos = botones.filter(
+			(b) => !b.getAttribute('aria-label')?.endsWith(' seleccionada')
+		);
 		expect(activos.length).toBe(1);
 		expect(inactivos.length).toBe(3);
 		// El activo corresponde a Inicio (pathname '/')
@@ -223,7 +271,9 @@ describe('Barra de pestanas (+layout.svelte)', () => {
 			)
 		).filter((b) => b.getAttribute('aria-label')?.endsWith(' seleccionada'));
 		expect(activos.length).toBe(1);
-		expect(activos[0].getAttribute('aria-label')).toBe('Ejercicios seleccionada');
+		expect(activos[0].getAttribute('aria-label')).toBe(
+			'Ejercicios seleccionada'
+		);
 	});
 
 	it('en /perfil la cuarta pestaña lleva "Perfil seleccionada"', () => {
@@ -237,6 +287,59 @@ describe('Barra de pestanas (+layout.svelte)', () => {
 		expect(activos[0].getAttribute('aria-label')).toBe('Perfil seleccionada');
 	});
 
+	it('en /biblioteca/<id> Ejercicios lleva " seleccionada" e Inicio no', () => {
+		instancia = montar('/biblioteca/ej-001');
+		const botones = Array.from(
+			document.body.querySelectorAll<HTMLButtonElement>(
+				'nav[aria-label="Navegación principal"] button'
+			)
+		);
+		const porEtiqueta = (prefijo: string) =>
+			botones.find((b) =>
+				(b.getAttribute('aria-label') ?? '').startsWith(prefijo)
+			);
+		expect(porEtiqueta('Ejercicios')?.getAttribute('aria-label')).toBe(
+			'Ejercicios seleccionada'
+		);
+		expect(porEtiqueta('Inicio')?.getAttribute('aria-label')).toBe('Inicio');
+	});
+
+	it('en /biblioteca/<id> tocar Ejercicios navega a /biblioteca con sonido', () => {
+		instancia = montar('/biblioteca/ej-001');
+		estadoMock.gotoMock.mockClear();
+		estadoMock.sonarMock.mockClear();
+		const boton = Array.from(
+			document.body.querySelectorAll<HTMLButtonElement>(
+				'nav[aria-label="Navegación principal"] button'
+			)
+		).find((b) =>
+			(b.getAttribute('aria-label') ?? '').startsWith('Ejercicios')
+		);
+		expect(boton).toBeDefined();
+		boton?.click();
+		flushSync();
+		expect(estadoMock.gotoMock).toHaveBeenCalledWith('/biblioteca');
+		expect(estadoMock.sonarMock).toHaveBeenCalledWith('cambio-pestania');
+	});
+
+	it('en /biblioteca exacto tocar Ejercicios no navega ni suena', () => {
+		instancia = montar('/biblioteca');
+		estadoMock.gotoMock.mockClear();
+		estadoMock.sonarMock.mockClear();
+		const boton = Array.from(
+			document.body.querySelectorAll<HTMLButtonElement>(
+				'nav[aria-label="Navegación principal"] button'
+			)
+		).find((b) =>
+			(b.getAttribute('aria-label') ?? '').startsWith('Ejercicios')
+		);
+		expect(boton).toBeDefined();
+		boton?.click();
+		flushSync();
+		expect(estadoMock.gotoMock).not.toHaveBeenCalled();
+		expect(estadoMock.sonarMock).not.toHaveBeenCalled();
+	});
+
 	it('con perfil en /perfil no redirige (los deep links llegan a su destino)', () => {
 		instancia = montar('/perfil');
 		expect(estadoMock.gotoMock).not.toHaveBeenCalled();
@@ -244,7 +347,25 @@ describe('Barra de pestanas (+layout.svelte)', () => {
 
 	it('sin perfil redirige a /onboarding con replaceState', () => {
 		instancia = montar('/perfil', null);
-		expect(estadoMock.gotoMock).toHaveBeenCalledWith('/onboarding', { replaceState: true });
+		expect(estadoMock.gotoMock).toHaveBeenCalledWith('/onboarding', {
+			replaceState: true
+		});
+	});
+
+	it('con perfil en una ruta de onboarding redirige a / con replaceState', () => {
+		instancia = montar('/onboarding/objetivo');
+		expect(estadoMock.gotoMock).toHaveBeenCalledWith('/', {
+			replaceState: true
+		});
+	});
+
+	it('con perfil en una ruta normal no redirige', () => {
+		// Afirma sobre gotoMock a propósito: lo que la persona percibe ES
+		// el cambio de pantalla, y en este entorno la navegación no ocurre
+		// de verdad. Este caso impide que la guarda pase por accidente con
+		// una condición que redirija siempre.
+		instancia = montar('/biblioteca');
+		expect(estadoMock.gotoMock).not.toHaveBeenCalled();
 	});
 
 	it('el aria-label nunca lleva la palabra "pestaña" (para no duplicarse con el roledescription)', () => {
@@ -272,6 +393,86 @@ describe('Barra de pestanas (+layout.svelte)', () => {
 		expect(region?.getAttribute('role')).toBe('alert');
 		expect(region?.getAttribute('aria-live')).toBe('assertive');
 	});
+
+	it('sin barra de pestanas hay franja inferior aria-hidden; con barra no', () => {
+		instancia = montar('/config');
+		const franja = document.body.querySelector(
+			'div.fixed.bottom-0[aria-hidden="true"]'
+		);
+		expect(franja).not.toBeNull();
+		expect(franja?.getAttribute('style')).toContain('franja-abajo');
+		unmount(instancia);
+		document.body.innerHTML = '';
+		instancia = montar('/');
+		expect(
+			document.body.querySelector('div.fixed.bottom-0[aria-hidden="true"]')
+		).toBeNull();
+	});
+});
+
+describe('Icono relleno de la pestaña activa (+layout.svelte)', () => {
+	let instancia: ReturnType<typeof mount> | null = null;
+
+	// Inicios distintivos de los dibujos Phosphor: "bold" (contorno) y
+	// "fill" (macizo). La pestaña activa se dibuja maciza.
+	const CASA_BOLD = 'M222.14,105.85';
+	const CASA_FILL = 'M224,120v96a8,8,0,0,1-8,8H160';
+	const HALTERA_BOLD = 'M244,116V88a20,20,0,0,0-20-20H208';
+	const HALTERA_FILL = 'M200,64V192a16,16,0,0,1-16,16H168';
+	const BARRAS = 'M224,200h-8V40';
+	const BARRAS_FILL = 'M232,208a8,8,0,0,1-8,8H32';
+
+	beforeEach(() => {
+		document.body.innerHTML = '';
+		estadoMock.gotoMock.mockReset();
+		estadoMock.sonarMock.mockReset();
+		estadoMock.statusBarMock.mockReset();
+		estadoMock.statusBarStyleMock.mockReset();
+		estadoMock.esPlataformaNativa = false;
+	});
+
+	afterEach(() => {
+		if (instancia) unmount(instancia);
+		instancia = null;
+	});
+
+	function iconoDe(prefijoEtiqueta: string): string {
+		const boton = Array.from(
+			document.body.querySelectorAll<HTMLButtonElement>(
+				'nav[aria-label="Navegación principal"] button'
+			)
+		).find((b) =>
+			(b.getAttribute('aria-label') ?? '').startsWith(prefijoEtiqueta)
+		);
+		return boton?.querySelector('svg')?.innerHTML ?? '';
+	}
+
+	it('en /biblioteca el icono de Ejercicios es el relleno y el de Inicio no', () => {
+		instancia = montar('/biblioteca');
+		expect(iconoDe('Ejercicios')).toContain(HALTERA_FILL);
+		expect(iconoDe('Ejercicios')).not.toContain(HALTERA_BOLD);
+		expect(iconoDe('Inicio')).toContain(CASA_BOLD);
+		expect(iconoDe('Inicio')).not.toContain(CASA_FILL);
+	});
+
+	it('en / el icono de Inicio es el relleno y el de Ejercicios no', () => {
+		instancia = montar('/');
+		expect(iconoDe('Inicio')).toContain(CASA_FILL);
+		expect(iconoDe('Inicio')).not.toContain(CASA_BOLD);
+		expect(iconoDe('Ejercicios')).toContain(HALTERA_BOLD);
+		expect(iconoDe('Ejercicios')).not.toContain(HALTERA_FILL);
+	});
+
+	it('en /progreso el icono de Progreso es el relleno (barras) y en / no', () => {
+		instancia = montar('/progreso');
+		expect(iconoDe('Progreso')).toContain(BARRAS_FILL);
+		expect(iconoDe('Progreso')).not.toContain(BARRAS);
+		unmount(instancia);
+		document.body.innerHTML = '';
+		instancia = montar('/');
+		expect(iconoDe('Progreso')).toContain(BARRAS);
+		expect(iconoDe('Progreso')).not.toContain(BARRAS_FILL);
+	});
 });
 
 describe('Tinte de la barra de estado (+layout.svelte)', () => {
@@ -280,6 +481,7 @@ describe('Tinte de la barra de estado (+layout.svelte)', () => {
 	beforeEach(() => {
 		document.body.innerHTML = '';
 		estadoMock.statusBarMock.mockReset();
+		estadoMock.statusBarStyleMock.mockReset();
 		estadoMock.esPlataformaNativa = false;
 	});
 
@@ -294,7 +496,9 @@ describe('Tinte de la barra de estado (+layout.svelte)', () => {
 		// onMount es async: el import dinamico del plugin resuelve en un
 		// tick posterior al flushSync, por eso se espera el mock.
 		await vi.waitFor(() => {
-			expect(estadoMock.statusBarMock).toHaveBeenCalledWith({ color: '#0f1413' });
+			expect(estadoMock.statusBarMock).toHaveBeenCalledWith({
+				color: '#F7F4EE'
+			});
 		});
 	});
 
@@ -350,7 +554,9 @@ describe('Guardia de view transitions (+layout.svelte)', () => {
 		const stub = vi.fn();
 		(document as { startViewTransition?: unknown }).startViewTransition = stub;
 		conMatchMedia(true);
-		expect(ultimoCallbackOnNavigate()({ complete: Promise.resolve() })).toBeUndefined();
+		expect(
+			ultimoCallbackOnNavigate()({ complete: Promise.resolve() })
+		).toBeUndefined();
 		expect(stub).not.toHaveBeenCalled();
 	});
 
@@ -359,8 +565,262 @@ describe('Guardia de view transitions (+layout.svelte)', () => {
 		const stub = vi.fn();
 		(document as { startViewTransition?: unknown }).startViewTransition = stub;
 		conMatchMedia(false);
-		const resultado = ultimoCallbackOnNavigate()({ complete: Promise.resolve() });
+		const resultado = ultimoCallbackOnNavigate()({
+			complete: Promise.resolve()
+		});
 		expect(resultado).toBeInstanceOf(Promise);
 		expect(stub).toHaveBeenCalledOnce();
+	});
+
+	function navegacionEntre(origen: string, destino: string, tipo = 'goto') {
+		return {
+			from: { url: { pathname: origen } },
+			to: { url: { pathname: destino } },
+			type: tipo,
+			complete: Promise.resolve()
+		};
+	}
+
+	it('entre pestanas no inicia transicion ni marca sentido', () => {
+		instancia = montar('/');
+		const stub = vi.fn();
+		(document as { startViewTransition?: unknown }).startViewTransition = stub;
+		conMatchMedia(false);
+		document.documentElement.removeAttribute('data-sentido-transicion');
+		const resultado = ultimoCallbackOnNavigate()(
+			navegacionEntre('/', '/biblioteca')
+		);
+		expect(resultado).toBeUndefined();
+		expect(stub).not.toHaveBeenCalled();
+		expect(
+			document.documentElement.hasAttribute('data-sentido-transicion')
+		).toBe(false);
+	});
+
+	it('hacia una subruta marca adelante en <html> e inicia la transicion', () => {
+		instancia = montar('/perfil');
+		const stub = vi.fn();
+		(document as { startViewTransition?: unknown }).startViewTransition = stub;
+		conMatchMedia(false);
+		consumirMarcaVolver();
+		ultimoCallbackOnNavigate()(navegacionEntre('/perfil', '/config'));
+		expect(document.documentElement.dataset.sentidoTransicion).toBe('adelante');
+		expect(stub).toHaveBeenCalledOnce();
+	});
+
+	it('con la marca de volver desliza atras', () => {
+		instancia = montar('/config');
+		const stub = vi.fn();
+		(document as { startViewTransition?: unknown }).startViewTransition = stub;
+		conMatchMedia(false);
+		marcarProximaComoVolver();
+		ultimoCallbackOnNavigate()(navegacionEntre('/config', '/perfil'));
+		expect(document.documentElement.dataset.sentidoTransicion).toBe('atras');
+		expect(stub).toHaveBeenCalledOnce();
+	});
+});
+
+describe('Escucha del sistema (+layout.svelte)', () => {
+	let instancia: ReturnType<typeof mount> | null = null;
+
+	const matchMediaOriginal = window.matchMedia;
+
+	type OyenteCambio = (evento: { matches: boolean }) => void;
+
+	let sistemaEnOscuro = false;
+	let oyentes: OyenteCambio[] = [];
+
+	// matchMedia controlable: matches sigue a sistemaEnOscuro y el
+	// change se dispara a mano llamando a cambiarSistema.
+	function instalarMatchMedia(): void {
+		oyentes = [];
+		window.matchMedia = ((consulta: string) =>
+			({
+				matches: consulta.includes('prefers-color-scheme')
+					? sistemaEnOscuro
+					: false,
+				media: consulta,
+				onchange: null,
+				addListener: () => {},
+				removeListener: () => {},
+				addEventListener: (_tipo: string, fn: OyenteCambio) => {
+					oyentes.push(fn);
+				},
+				removeEventListener: (_tipo: string, fn: OyenteCambio) => {
+					oyentes = oyentes.filter((o) => o !== fn);
+				},
+				dispatchEvent: () => false
+			}) as unknown as MediaQueryList) as typeof window.matchMedia;
+	}
+
+	function cambiarSistema(aOscuro: boolean): void {
+		sistemaEnOscuro = aOscuro;
+		for (const fn of [...oyentes]) fn({ matches: aOscuro });
+	}
+
+	beforeEach(() => {
+		document.body.innerHTML = '';
+		document.documentElement.removeAttribute('data-tema');
+		localStorage.clear();
+		sistemaEnOscuro = false;
+		instalarMatchMedia();
+	});
+
+	afterEach(() => {
+		if (instancia) unmount(instancia);
+		instancia = null;
+		window.matchMedia = matchMediaOriginal;
+	});
+
+	it('con preferencia en sistema, el cambio del telefono a oscuro re-aplica el tema', async () => {
+		guardarAspecto('sistema');
+		instancia = montar('/');
+		await vi.waitFor(() => {
+			expect(document.documentElement.getAttribute('data-tema')).toBe('claro');
+		});
+
+		cambiarSistema(true);
+
+		await vi.waitFor(() => {
+			expect(document.documentElement.getAttribute('data-tema')).toBe('oscuro');
+		});
+	});
+
+	it('con preferencia en claro, el cambio del telefono no toca el tema', async () => {
+		guardarAspecto('claro');
+		instancia = montar('/');
+		await vi.waitFor(() => {
+			expect(document.documentElement.getAttribute('data-tema')).toBe('claro');
+		});
+
+		cambiarSistema(true);
+		await new Promise((r) => setTimeout(r, 20));
+
+		expect(document.documentElement.getAttribute('data-tema')).toBe('claro');
+	});
+});
+
+describe('Service worker solo en web (+layout.svelte)', () => {
+	let instancia: ReturnType<typeof mount> | null = null;
+
+	const desregistrarMock = vi.fn();
+	const borrarCacheMock = vi.fn();
+
+	function instalarMocksNativos() {
+		Object.defineProperty(navigator, 'serviceWorker', {
+			value: {
+				getRegistrations: () =>
+					Promise.resolve([{ unregister: desregistrarMock }])
+			},
+			configurable: true
+		});
+		Object.defineProperty(globalThis, 'caches', {
+			value: {
+				keys: () => Promise.resolve(['workbox-precache']),
+				delete: borrarCacheMock
+			},
+			configurable: true
+		});
+	}
+
+	beforeEach(() => {
+		document.body.innerHTML = '';
+		estadoMock.registerSWMock.mockReset();
+		desregistrarMock.mockReset();
+		borrarCacheMock.mockReset();
+	});
+
+	afterEach(() => {
+		if (instancia) unmount(instancia);
+		instancia = null;
+		estadoMock.esPlataformaNativa = false;
+		// @ts-expect-error solo en tests: se vuelve al jsdom sin SW ni caches
+		delete navigator.serviceWorker;
+		// @ts-expect-error solo en tests: se vuelve al jsdom sin SW ni caches
+		delete globalThis.caches;
+	});
+
+	it('en nativo no registra el SW y desregistra los existentes', async () => {
+		estadoMock.esPlataformaNativa = true;
+		instalarMocksNativos();
+		instancia = montar('/');
+		await vi.waitFor(() => {
+			expect(desregistrarMock).toHaveBeenCalledOnce();
+		});
+		expect(estadoMock.registerSWMock).not.toHaveBeenCalled();
+	});
+
+	it('en nativo borra las caches de workbox que hayan quedado', async () => {
+		estadoMock.esPlataformaNativa = true;
+		instalarMocksNativos();
+		instancia = montar('/');
+		await vi.waitFor(() => {
+			expect(borrarCacheMock).toHaveBeenCalledWith('workbox-precache');
+		});
+	});
+
+	it('en web registra el SW una vez', async () => {
+		estadoMock.esPlataformaNativa = false;
+		instancia = montar('/');
+		await vi.waitFor(() => {
+			expect(estadoMock.registerSWMock).toHaveBeenCalledOnce();
+		});
+	});
+});
+
+// Fuera de las pestañas, este listener ejecuta el Atrás de la pantalla,
+// no retrocede por historial: si no, Configuración > Aspecto > Atrás de
+// pantalla > atrás del sistema vuelve a Aspecto y el usuario queda en un
+// bucle.
+describe('Atrás del teléfono (+layout.svelte)', () => {
+	let instancia: ReturnType<typeof mount> | null = null;
+	let back: ReturnType<typeof vi.spyOn>;
+
+	beforeEach(() => {
+		document.body.innerHTML = '';
+		estadoMock.esPlataformaNativa = true;
+		estadoMock.listenerAtras = null;
+		estadoMock.gotoMock.mockReset();
+		reiniciarVolver();
+		back = vi.spyOn(history, 'back').mockImplementation(() => {});
+	});
+
+	afterEach(() => {
+		if (instancia) unmount(instancia);
+		instancia = null;
+		estadoMock.esPlataformaNativa = false;
+		reiniciarVolver();
+		back.mockRestore();
+	});
+
+	async function listener() {
+		await vi.waitFor(() =>
+			expect(estadoMock.listenerAtras).toBeTypeOf('function')
+		);
+		return estadoMock.listenerAtras as (ev: { canGoBack: boolean }) => void;
+	}
+
+	it('sin pestañas ejecuta el Atrás de la pantalla y no el historial', async () => {
+		instancia = montar('/config/aspecto');
+		const volver = vi.fn();
+		registrarVolver(volver);
+		(await listener())({ canGoBack: true });
+		expect(volver).toHaveBeenCalledOnce();
+		expect(back).not.toHaveBeenCalled();
+	});
+
+	it('sin pestañas y sin Atrás registrado retrocede por historial', async () => {
+		instancia = montar('/config');
+		(await listener())({ canGoBack: true });
+		expect(back).toHaveBeenCalledOnce();
+	});
+
+	it('en una pestaña va a Inicio aunque haya un Atrás registrado', async () => {
+		instancia = montar('/perfil');
+		const volver = vi.fn();
+		registrarVolver(volver);
+		(await listener())({ canGoBack: true });
+		expect(volver).not.toHaveBeenCalled();
+		expect(estadoMock.gotoMock).toHaveBeenCalledWith('/');
 	});
 });

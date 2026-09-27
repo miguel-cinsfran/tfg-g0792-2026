@@ -3,7 +3,7 @@
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import { obtenerPerfil } from '$lib/db/perfil';
-	import { obtenerEstadosTodos, bloquearEjercicio } from '$lib/db/estado';
+	import { obtenerEstadosTodos, bloquearEjercicio, ampliarBloqueo } from '$lib/db/estado';
 	import { obtenerHistorial, obtenerUltimaSesion } from '$lib/db/sesiones';
 	import { enfocarPrincipal } from '$lib/a11y/foco';
 	import { anunciarPolite, anunciarAssertive } from '$lib/a11y/live-region';
@@ -36,8 +36,10 @@
 		corregirUltimaSerie,
 		siguienteEjercicio,
 		registrarDolor,
+		corregirDolor,
 		sustituir,
 		cancelar,
+		descartar,
 		cerrar,
 	} from '$lib/stores/sesion.svelte';
 	import { obtenerSesionEnCurso, borrarSesionEnCurso } from '$lib/db/sesion-en-curso';
@@ -53,14 +55,14 @@
 	import Temporizador from '$lib/components/Temporizador.svelte';
 	import BarraAccion from '$lib/components/BarraAccion.svelte';
 	import CirculoCheque from '$lib/components/iconos/CirculoCheque.svelte';
+	import Bandera from '$lib/components/iconos/Bandera.svelte';
 	import Informacion from '$lib/components/iconos/Informacion.svelte';
 	import Alerta from '$lib/components/iconos/Alerta.svelte';
 	import Saltar from '$lib/components/iconos/Saltar.svelte';
 	import Medalla from '$lib/components/iconos/Medalla.svelte';
-	import Reloj from '$lib/components/iconos/Reloj.svelte';
 	import Cronometro from '$lib/components/iconos/Cronometro.svelte';
 	import { ZONAS } from '$lib/motor/schema';
-	import type { SesionCompletada, Ejercicio, EstadoEjercicio, EjercicioPlanificado, Zona } from '$lib/motor/schema';
+	import type { SesionCompletada, SesionEnCurso, Ejercicio, EstadoEjercicio, EjercicioPlanificado, Zona } from '$lib/motor/schema';
 	import {
 		siguienteSubvista,
 		armarEventoCerrarSerie,
@@ -70,8 +72,11 @@
 		type OrigenDolor,
 	} from '$lib/sesion/fases';
 
-	// Foco al nombre del ejercicio (no al h1 generico, que no dice cual sigue).
-	let refEjercicio = $state<HTMLElement>();
+	// El h1 dice donde estas: en ejercicio, el nombre del ejercicio;
+	// en descanso, Descanso; al reportar dolor, Reportar dolor; al
+	// corregir, Corregir cantidad. Una ref para ese h1: el foco cae ahi
+	// al cambiar de fase, como antes caia en el h2.
+	let refFase = $state<HTMLElement>();
 	// Foco al h1 de la pantalla cuando la generacion de sesion falla: ese
 	// bloque no tiene fase propia, asi que no lo cubre el efecto de abajo.
 	let refTitulo = $state<HTMLElement>();
@@ -79,11 +84,9 @@
 	// maquina): este h2 solo-lector nombra lo que empieza al pulsar
 	// "Empezar", sin duplicar el texto visible del Temporizador.
 	let refSosten = $state<HTMLElement>();
-	// Una ref por fase: el foco aterriza en el h2 que nombra la subvista.
+	// Una ref por fase: el foco aterriza en el h1/h2 que nombra la subvista.
 	let refReanudar = $state<HTMLElement>();
 	let refPostSerieTitulo = $state<HTMLElement>();
-	let refDescanso = $state<HTMLElement>();
-	let refDolorZonas = $state<HTMLElement>();
 	let refDolorSustituto = $state<HTMLElement>();
 	let refDolorPool = $state<HTMLElement>();
 	let refCierre = $state<HTMLElement>();
@@ -95,6 +98,7 @@
 	// En DESCANSO, reemplaza el Temporizador por un Contador para corregir
 	// la ultima serie. Al confirmar, vuelve al descanso.
 	let modoAjusteDescanso = $state(false);
+	let refTemporizador = $state<{ agregarSegundos: (n: number) => number } | null>(null);
 	let rirSeleccionado: string | null = $state(null);
 	let errorEsfuerzo: string | null = $state(null);
 	let errorGeneracion = $state<string | null>(null);
@@ -118,8 +122,9 @@
 	let aplicandoSugerencia = $state(false);
 	let errorSugerencia = $state<string | null>(null);
 	let refTituloSugerencia = $state<HTMLElement>();
-	// El bloqueo persistente sale UNA vez por reporte.
-	let dolorYaBloqueado = false;
+	// El bloqueo persistente sale UNA vez por reporte; al revisar las
+	// zonas y confirmar de nuevo, se amplia en vez de duplicar.
+	let zonasYaBloqueadas = $state<Zona[]>([]);
 	// Desde donde se abrio el reporte de dolor: cancelar vuelve ahi;
 	// null fuera del flujo (invariante que mantiene transicionar). Si
 	// fue el descanso, el temporizador rearranca completo (no hay
@@ -221,7 +226,12 @@
 		const s = respaldo.sesion;
 		restaurar(s);
 		respaldo = null;
-		anunciarPolite(M.sesion.anuncioReanudada);
+		const slot = s.plan[s.indice_ejercicio];
+		// Serie completada en el ejercicio actual con series pendientes:
+		// la app se cerro durante el descanso, que ya concluyo. Polite,
+		// como el de omitir: el foco lee el ejercicio y este llega despues.
+		const enDescanso = slot !== undefined && s.indice_serie > 0 && s.indice_serie < slot.series;
+		anunciarPolite(enDescanso ? M.sesion.tiempoDescansoConcluido : M.sesion.anuncioReanudada);
 		vibrar('inicio');
 		sonar('inicio-serie');
 		transicionar({ tipo: 'reanudar' });
@@ -248,7 +258,7 @@
 		if (errorGeneracion !== null) return;
 		if (!perfil || estados === undefined || historial === undefined || ultimaSesion === undefined) return;
 		if (perfil === null) {
-			errorGeneracion = 'No hay perfil. Completa el registro para empezar.';
+			errorGeneracion = M.sesion.errorSinPerfil;
 			return;
 		}
 
@@ -268,7 +278,7 @@
 		comenzar(generacion.plan, tipo, Date.now());
 
 		if (generacion.patrones_sin_pool.length > 0) {
-			anunciarPolite('Hoy no hay ejercicios para algunos patrones');
+			anunciarPolite(M.sesion.anuncioPatronesSinPool);
 		} else if (esSesionDeChequeo(historial, Date.now())) {
 			anunciarPolite(M.sesion.avisoChequeo);
 		}
@@ -280,7 +290,7 @@
 		if (errorGeneracion !== null) enfocarPrincipal(refTitulo);
 	});
 
-	// Foco al h2 que nombra cada subvista. La lectura de slot?.ejercicio_id
+	// Foco al h1/h2 que nombra cada subvista. La lectura de slot?.ejercicio_id
 	// y de completada fuerza la reejecucion al cambiar de ejercicio y al
 	// llegar el resultado del cierre.
 	$effect(() => {
@@ -292,10 +302,10 @@
 		// que el argumento de enfocarPrincipal sea un identificador ligado
 		// por bind:this a un h1/h2, no una variable intermedia.
 		if (subvista === 'REANUDAR') enfocarPrincipal(refReanudar);
-		else if (subvista === 'EJERCICIO') enfocarPrincipal(refEjercicio);
+		else if (subvista === 'EJERCICIO') enfocarPrincipal(refFase);
 		else if (subvista === 'POST_SERIE') enfocarPrincipal(refPostSerieTitulo);
-		else if (subvista === 'DESCANSO') enfocarPrincipal(refDescanso);
-		else if (subvista === 'DOLOR_ZONAS') enfocarPrincipal(refDolorZonas);
+		else if (subvista === 'DESCANSO') enfocarPrincipal(refFase);
+		else if (subvista === 'DOLOR_ZONAS') enfocarPrincipal(refFase);
 		else if (subvista === 'DOLOR_SUSTITUTO') enfocarPrincipal(refDolorSustituto);
 		else if (subvista === 'DOLOR_POOL') enfocarPrincipal(refDolorPool);
 		else if (subvista === 'CIERRE') enfocarPrincipal(refCierre);
@@ -339,6 +349,41 @@
 	});
 
 	let sesion = $derived(obtenerSesion());
+
+	// El h1 dice donde estas: el nombre del ejercicio, Descanso,
+	// Reportar dolor o Corregir cantidad. Las demas fases conservan el
+	// titulo generico con su h2 propio.
+	let tituloFase = $derived.by(() => {
+		const s = sesion;
+		if (s === null) return M.sesion.titulo;
+		if (subvista === 'EJERCICIO') {
+			const slot = s.plan[s.indice_ejercicio];
+			if (!slot) return M.sesion.titulo;
+			return obtenerEjercicio(slot.ejercicio_id)?.nombre ?? slot.ejercicio_id;
+		}
+		if (subvista === 'DESCANSO') {
+			return modoAjusteDescanso ? M.sesion.corregirTitulo : M.sesion.descansoTitulo;
+		}
+		if (subvista === 'DOLOR_ZONAS') return M.sesion.botonReportarDolor;
+		return M.sesion.titulo;
+	});
+
+	// Lo que viene tras el descanso en curso: la serie siguiente del
+	// mismo ejercicio, o el final si era la ultima serie de la sesion
+	// (no pasa en el flujo normal, pero el texto lo contempla).
+	let lineaDespuesTexto = $derived.by(() => {
+		const s = sesion;
+		if (s === null) return '';
+		const slot = s.plan[s.indice_ejercicio];
+		if (!slot) return '';
+		const esUltimoEjercicio = s.indice_ejercicio >= s.plan.length - 1;
+		const esUltimaSerie = s.indice_serie + 1 >= slot.series;
+		if (esUltimoEjercicio && esUltimaSerie) {
+			return M.sesion.lineaDespues(null, 0, 0);
+		}
+		const nombre = obtenerEjercicio(slot.ejercicio_id)?.nombre ?? slot.ejercicio_id;
+		return M.sesion.lineaDespues(nombre, s.indice_serie + 1, slot.series);
+	});
 
 	// La pregunta de esfuerzo sale solo en la sesion de chequeo y solo en
 	// la ultima serie de cada ejercicio.
@@ -511,8 +556,7 @@
 		}
 	}
 
-	function manejarFinDescanso() {
-		vibrar('descanso-fin');
+	function manejarFinDescanso() {		vibrar('descanso-fin');
 		sonar('fin-descanso');
 		const slot = sesion?.plan[sesion.indice_ejercicio];
 		const nombre = slot ? (obtenerEjercicio(slot.ejercicio_id)?.nombre ?? slot.ejercicio_id) : '';
@@ -527,6 +571,14 @@
 		vibrar('descanso-aviso');
 	}
 
+	function manejarSumarDescanso() {
+		const nuevo = refTemporizador?.agregarSegundos(30);
+		if (nuevo !== null && nuevo !== undefined) {
+			// El Boton ya suena 'seleccion'; el anuncio dice el restante.
+			anunciarPolite(M.sesion.anuncioDescansoExtendido(nuevo));
+		}
+	}
+
 	function confirmarCorreccionDescanso() {
 		const slot = sesion?.plan[sesion.indice_ejercicio];
 		const unidad = obtenerEjercicio(slot?.ejercicio_id ?? '')?.medido_en ?? 'repeticiones';
@@ -538,11 +590,17 @@
 	function abrirReporteDolor() {
 		zonasDolor = [];
 		errorDolor = null;
-		dolorYaBloqueado = false;
+		zonasYaBloqueadas = [];
 		transicionar({
 			tipo: 'abrirDolor',
 			desde: subvista === 'DESCANSO' ? 'DESCANSO' : 'EJERCICIO',
 		});
+	}
+
+	// Compara conjuntos de zonas sin importar el orden de marcado.
+	function mismasZonas(a: Zona[], b: Zona[]): boolean {
+		if (a.length !== b.length) return false;
+		return a.every((z) => b.includes(z));
 	}
 
 	// registrar -> bloquear -> buscar sustituto, en ese orden. El bloqueo
@@ -553,7 +611,7 @@
 		// Validacion al pulsar, no al deshabilitar: el boton queda pulsable
 		// aunque no haya zonas marcadas.
 		if (zonasDolor.length === 0) {
-			errorDolor = 'Marca al menos una zona donde sientes dolor para continuar.';
+			errorDolor = M.sesion.errorSinZonasDolor;
 			anunciarAssertive(errorDolor);
 			(document.querySelector('#grupo-zonas-dolor input') as HTMLElement | null)?.focus();
 			return;
@@ -566,12 +624,22 @@
 		reportandoDolor = true;
 		errorDolor = null;
 		try {
-			if (!dolorYaBloqueado) {
+			if (zonasYaBloqueadas.length === 0) {
 				registrarDolor([...zonasDolor], Date.now());
 				await bloquearEjercicio(slot.ejercicio_id, [...zonasDolor], Date.now());
-				dolorYaBloqueado = true;
-				anunciarAssertive('Ejercicio bloqueado por dolor');
+				zonasYaBloqueadas = [...zonasDolor];
+				anunciarAssertive(M.sesion.anuncioBloqueadoPorDolor);
 				sonar('dolor-registrado');
+			} else if (!mismasZonas(zonasYaBloqueadas, zonasDolor)) {
+				// Segunda confirmacion tras "Revisar mis zonas": la guarda
+				// anti-duplicado no puede saltarse el registro, tiene que
+				// corregirlo. corregirDolor quita las zonas que el reporte
+				// ya no confirma y agrega las nuevas; no toca las de
+				// reportes anteriores.
+				await ampliarBloqueo(slot.ejercicio_id, [...zonasDolor], Date.now());
+				corregirDolor(zonasYaBloqueadas, [...zonasDolor], Date.now());
+				zonasYaBloqueadas = [...zonasDolor];
+				anunciarAssertive(M.sesion.anuncioBloqueadoPorDolor);
 			}
 			estadosParaSustituir = await obtenerEstadosTodos();
 			const sustituto = buscarSustituto(
@@ -598,7 +666,7 @@
 	function manejarContinuarSustituto() {
 		if (!sustitutoPropuesto || !estadosParaSustituir) return;
 		sustituir(sustitutoPropuesto, estadosParaSustituir, Date.now());
-		anunciarPolite(`Continuamos con ${sustitutoPropuesto.nombre}`);
+		anunciarPolite(M.sesion.anuncioContinuarSustituto(sustitutoPropuesto.nombre));
 		sustitutoPropuesto = null;
 		vibrar('inicio');
 		sonar('inicio-serie');
@@ -610,6 +678,9 @@
 		const despues = obtenerSesion();
 		const esFinDeSesion = despues !== null && despues.indice_ejercicio >= despues.plan.length;
 		transicionar({ tipo: 'omitirPatron', esFinDeSesion });
+		// Polite: el foco cae en el ejercicio siguiente y lo lee primero;
+		// assertive interrumpiria esa lectura, que es lo que mas importa.
+		anunciarPolite(M.sesion.patronOmitido);
 		if (esFinDeSesion) {
 			void manejarCerrar();
 		}
@@ -620,6 +691,56 @@
 		cancelar(Date.now());
 		transicionar({ tipo: 'interrumpirPorDolor' });
 		void manejarCerrar();
+	}
+
+	// Terminar la sesión antes de su final. Tocar el botón no termina
+	// nada: abre el diálogo de confirmación (patrón de biblioteca/[id];
+	// en línea desorientaba con TalkBack).
+	let confirmandoTerminar = $state(false);
+
+	// Misma fuente que el resumen de cierre: los ejecutados, que al
+	// cerrar se vuelcan al historial.
+	function seriesCompletadas(s: SesionEnCurso): number {
+		return s.ejecutados.reduce((acc, e) => acc + e.series_completadas, 0);
+	}
+
+	// Desde REANUDAR la sesión aún no está en el store: se cuenta el respaldo.
+	let tieneSeriesParaTerminar = $derived.by(() => {
+		if (sesion !== null) return seriesCompletadas(sesion) > 0;
+		if (respaldo !== null && respaldo !== undefined) return seriesCompletadas(respaldo.sesion) > 0;
+		return false;
+	});
+
+	async function manejarConfirmarTerminar(): Promise<void> {
+		const actual = obtenerSesion();
+		if (actual !== null) {
+			if (seriesCompletadas(actual) > 0) {
+				confirmandoTerminar = false;
+				transicionar({ tipo: 'salir' });
+				await manejarCerrar();
+			} else {
+				descartar();
+				confirmandoTerminar = false;
+				anunciarPolite(M.sesion.anuncioSesionDescartada);
+				goto(resolve('/'));
+			}
+			return;
+		}
+		const guardada = respaldo;
+		if (!guardada) return;
+		if (seriesCompletadas(guardada.sesion) > 0) {
+			restaurar(guardada.sesion);
+			respaldo = null;
+			confirmandoTerminar = false;
+			transicionar({ tipo: 'salir' });
+			await manejarCerrar();
+		} else {
+			respaldo = null;
+			await borrarSesionEnCurso();
+			confirmandoTerminar = false;
+			anunciarPolite(M.sesion.anuncioSesionDescartada);
+			goto(resolve('/'));
+		}
 	}
 
 	async function manejarCerrar(): Promise<void> {
@@ -693,7 +814,9 @@
 		try {
 			const resultado = progresar(actual.ejercicio, [...obtenerCatalogo()], perfil.objetivo);
 			if (resultado.tipo !== 'cambio') {
-				errorSugerencia = M.sesion.sugerenciaProgresionError;
+				const msg = M.sesion.sugerenciaProgresionError;
+				errorSugerencia = msg;
+				anunciarAssertive(msg);
 				return;
 			}
 			await guardarEstado(resultado.estado_nuevo);
@@ -753,8 +876,8 @@
 		if (subvista === 'POST_SERIE') {
 			rirSeleccionado = null;
 			ajustando = false;
-			// con el atras nuevo (tarea 5) la fase se puede abandonar y
-			// re-entrar; limpiamos para no arrastrar error stale.
+			// La fase se puede abandonar con Atras y volver a entrar: se
+			// limpia para no arrastrar un error viejo.
 			errorEsfuerzo = null;
 		}
 	});
@@ -802,7 +925,7 @@
      destino, y el h1 queda fuera de la barra sin boton de salida. -->
 {#if subvista !== 'CIERRE'}
 	<Cabecera onclick={volverAlInicio} etiqueta={M.sesion.botonVolverInicio}>
-		<h1 tabindex="-1" bind:this={refTitulo}>{M.sesion.titulo}</h1>
+		<h1 tabindex="-1" bind:this={refFase}>{tituloFase}</h1>
 	</Cabecera>
 {:else}
 	<h1 tabindex="-1" bind:this={refTitulo}>{M.sesion.titulo}</h1>
@@ -838,7 +961,7 @@
 				</h2>
 				{#if completadaLograda}
 					<!-- El color naranja es solo para logro; cancelada por dolor no aplica. -->
-					<Medalla tamano={28} clase="text-naranja shrink-0" />
+					<Medalla tamano="1.75em" clase="text-naranja shrink-0" />
 				{/if}
 			</div>
 
@@ -889,7 +1012,7 @@
 					{M.sesion.sugerenciaProgresionPregunta(sug.ejercicio.nombre)}
 				</p>
 				{#if errorSugerencia !== null}
-					<p class="text-error mt-2" role="alert">{errorSugerencia}</p>
+					<p class="text-error mt-2">{errorSugerencia}</p>
 				{/if}
 			</Card>
 			<BarraAccion>
@@ -920,6 +1043,14 @@
 		<h2 tabindex="-1" bind:this={refReanudar}>{M.sesion.tituloReanudar}</h2>
 		<p class="text-text-secondary">{M.sesion.textoReanudar}</p>
 	</Card>
+	<div class="mt-6">
+		<Boton variante="secundario" onclick={() => confirmandoTerminar = true}>
+			<span class="inline-flex items-center gap-2">
+				<Bandera tamano="1.25em" />
+				{M.sesion.botonTerminarSesion}
+			</span>
+		</Boton>
+	</div>
 	<BarraAccion>
 		{#snippet primaria()}
 			<Boton variante="primario" tamano="grande" onclick={manejarReanudar} silencioso>{M.sesion.botonReanudar}</Boton>
@@ -935,9 +1066,10 @@
 	{@const ejercicio = obtenerEjercicio(slot.ejercicio_id)}
 	{@const unidad = ejercicio?.medido_en ?? 'repeticiones'}
 	{#key `${sesion.indice_ejercicio}-${sesion.indice_serie}`}
-		<h2 tabindex="-1" bind:this={refEjercicio}>{ejercicio?.nombre ?? slot.ejercicio_id}</h2>
+		<!-- El nombre del ejercicio es el h1 de la pantalla; aca queda el
+		     progreso con el objetivo. -->
 		<Card>
-			<p class="m-0">
+			<p class="m-0 text-xl font-bold">
 				{M.sesion.progresoEjercicio(sesion.indice_ejercicio + 1, sesion.plan.length)},
 				{M.sesion.progresoSerie(sesion.indice_serie + 1, slot.series)}.
 			</p>
@@ -949,15 +1081,25 @@
 			{#if ejercicio}
 				<Boton variante="secundario" onclick={() => modalAbierto = true}>
 					<span class="inline-flex items-center gap-2">
-						<Informacion tamano={20} />
+						<Informacion tamano="1.25em" />
 						{M.sesion.botonComoHacer}
 					</span>
 				</Boton>
 			{/if}
 			<Boton variante="secundario" onclick={abrirReporteDolor}>
 				<span class="inline-flex items-center gap-2">
-					<Alerta tamano={20} />
+					<Alerta tamano="1.25em" />
 					{M.sesion.botonReportarDolor}
+				</span>
+			</Boton>
+		</div>
+		<!-- Terminar cierra el flujo: al final y separado de las
+		     herramientas, con icono propio. -->
+		<div class="mt-6">
+			<Boton variante="secundario" onclick={() => confirmandoTerminar = true}>
+				<span class="inline-flex items-center gap-2">
+					<Bandera tamano="1.25em" />
+					{M.sesion.botonTerminarSesion}
 				</span>
 			</Boton>
 		</div>
@@ -976,7 +1118,7 @@
 						<!-- Solo-lector: nombra el arranque del sosten sin duplicar
 						     el texto visible del Temporizador (que ya lo anuncia). -->
 						<h2 tabindex="-1" bind:this={refSosten} class="sr-only">{M.sesion.sostenerEtiqueta}: {slot.reps_objetivo} segundos</h2>
-						<Cronometro tamano={28} />
+						<Cronometro tamano="1.75em" />
 						{#key `${sesion.indice_ejercicio}-${sesion.indice_serie}`}
 							<Temporizador
 								segundos={slot.reps_objetivo}
@@ -994,7 +1136,7 @@
 			{:else}
 				<Boton variante="primario" tamano="grande" onclick={manejarSerieTerminada} silencioso>
 					<span class="inline-flex items-center gap-2">
-						<CirculoCheque tamano={20} />
+						<CirculoCheque tamano="1.25em" />
 						{M.sesion.botonSerieTerminada}
 					</span>
 				</Boton>
@@ -1007,7 +1149,7 @@
 	{@const unidad = ejercicio?.medido_en ?? 'repeticiones'}
 	<!-- El h2 vive en la página (no en Card): la regla de invariantes exige
 	     que el destino de foco esté ligado por bind:this en la ruta. -->
-	<section class="bg-surface-alt border border-border rounded-lg p-4">
+	<section class="bg-surface-alt border-2 border-borde-bloque rounded-lg p-4">
 		<h2 tabindex="-1" bind:this={refPostSerieTitulo} class="text-lg font-semibold text-text-primary mb-2">
 			{M.sesion.tituloPostSerie(sesion.indice_serie + 1, slot.series)}
 		</h2>
@@ -1059,7 +1201,6 @@
 	{@const slot = sesion.plan[sesion.indice_ejercicio]}
 	{@const ejercicio = obtenerEjercicio(slot.ejercicio_id)}
 	{@const unidad = ejercicio?.medido_en ?? 'repeticiones'}
-	<h2 tabindex="-1" bind:this={refDescanso} class="flex items-center gap-2"><Reloj /><span>{M.sesion.descansoTitulo}</span></h2>
 	{#if modoAjusteDescanso}
 		<p>{M.sesion.confirmacionPostSerie(repsReales, unidad)}</p>
 		<ContadorReps bind:valor={repsReales} min={0} max={unidad === 'segundos' ? 600 : 99} {unidad} />
@@ -1078,6 +1219,7 @@
 			<div class="text-center my-4">
 				{#key sesion.indice_ejercicio + '-' + sesion.indice_serie + '-' + (modoAjusteDescanso ? 'a' : 'b')}
 					<Temporizador
+						bind:this={refTemporizador}
 						segundos={slot.descanso_segundos}
 						alTerminar={manejarFinDescanso}
 						alAviso={manejarAvisoDescanso}
@@ -1085,13 +1227,15 @@
 					/>
 				{/key}
 			</div>
+			<p class="m-0 mt-2 text-center text-text-secondary">{lineaDespuesTexto}</p>
 		</Card>
-		<!-- Herramientas: corregir cantidad, reportar dolor. Viven en el contenido. -->
+		<!-- Herramientas: sumar descanso, corregir cantidad, reportar dolor. Viven en el contenido. -->
 		<div class="mt-4 flex flex-col gap-2">
+			<Boton variante="secundario" onclick={manejarSumarDescanso}>{M.sesion.botonSumarDescanso}</Boton>
 			<Boton variante="secundario" onclick={() => modoAjusteDescanso = true}>{M.sesion.botonAjustarReps}</Boton>
 			<Boton variante="secundario" onclick={abrirReporteDolor}>
 				<span class="inline-flex items-center gap-2">
-					<Alerta tamano={20} />
+					<Alerta tamano="1.25em" />
 					{M.sesion.botonReportarDolor}
 				</span>
 			</Boton>
@@ -1103,7 +1247,7 @@
 			     de copia no se alcanzaba a ver y confundia. -->
 				<Boton variante="primario" tamano="grande" onclick={manejarFinDescanso} silencioso>
 					<span class="inline-flex items-center gap-2">
-						<Saltar tamano={20} />
+						<Saltar tamano="1.25em" />
 						{M.sesion.botonSaltarDescanso}
 					</span>
 				</Boton>
@@ -1112,7 +1256,7 @@
 	{/if}
 {:else if subvista === 'DOLOR_ZONAS'}
 	<Card>
-		<h2 tabindex="-1" bind:this={refDolorZonas}>{M.sesion.dolorZonasTitulo}</h2>
+		<!-- El titulo es el h1 de la pantalla ("Reportar dolor"). -->
 		<GrupoSeleccionMultiple
 			id="grupo-zonas-dolor"
 			leyenda={M.sesion.dolorZonasLeyenda}
@@ -1143,7 +1287,7 @@
 		{#snippet primaria()}
 			<Boton variante="primario" tamano="grande" onclick={manejarContinuarSustituto} silencioso>
 				<span class="inline-flex items-center gap-2">
-					<CirculoCheque tamano={20} />
+					<CirculoCheque tamano="1.25em" />
 					{M.sesion.botonContinuarCambio}
 				</span>
 			</Boton>
@@ -1170,4 +1314,17 @@
 			</div>
 		{/snippet}
 	</BarraAccion>
+{/if}
+
+<!-- Confirmación de terminar la sesión: diálogo modal, no controles en
+     línea (en línea desorientaba con TalkBack). El Modal lleva el foco a
+     su título al abrir y lo devuelve al cerrar. -->
+{#if confirmandoTerminar}
+	<Modal abierto={true} titulo={M.sesion.tituloTerminarSesion} alCerrar={() => confirmandoTerminar = false}>
+		<p>{tieneSeriesParaTerminar ? M.sesion.textoTerminarConSeries : M.sesion.textoTerminarSinSeries}</p>
+		{#snippet acciones()}
+			<Boton onclick={manejarConfirmarTerminar}>{M.sesion.botonConfirmarTerminar}</Boton>
+			<Boton variante="secundario" onclick={() => confirmandoTerminar = false}>{M.sesion.botonSeguirEntrenando}</Boton>
+		{/snippet}
+	</Modal>
 {/if}
