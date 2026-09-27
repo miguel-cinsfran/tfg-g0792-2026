@@ -26,7 +26,7 @@ beforeEach(() => {
 // (cache interno vacio). Como `audio` es module-scoped, la primera
 // vez que cualquier consumidor llame `audioLazy()` se crea. Los
 // tests con spy activan la musica antes (`establecerMusicaActivada(true)`):
-// el default quedo apagado y `reproducirFondo()` sola ya no crea el
+// por defecto esta apagada y `reproducirFondo()` sola no crea el
 // Audio. Reinstalamos el mock antes de cada uno.
 
 describe('ajuste de musica', () => {

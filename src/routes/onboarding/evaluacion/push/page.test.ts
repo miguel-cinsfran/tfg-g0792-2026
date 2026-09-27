@@ -115,7 +115,7 @@ describe('Pagina de evaluacion push', () => {
 		expect(estadoMock.anunciarAssertiveMock).toHaveBeenCalledWith(
 			'Escribe cuántas repeticiones hiciste, o usa «No puedo hacer ninguna».'
 		);
-		// El cambio de canal: el error ya no interrumpe por polite.
+		// El error va por assertive, no por polite.
 		expect(estadoMock.anunciarPoliteMock).not.toHaveBeenCalled();
 
 		flushSync();

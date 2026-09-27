@@ -208,7 +208,7 @@ describe('ImportarRespaldo', () => {
 		expect(importarDatosMock).not.toHaveBeenCalled();
 		expect(onImportado).not.toHaveBeenCalled();
 		const errorEsperado = mensajePara('ERR-IMPORT-INVALID');
-		// El error ya NO se renderiza inline: el aviso visible es el
+		// El error no se renderiza inline: el aviso visible es el
 		// canal unico. Verificamos que `avisar` lo recibio con tipo
 		// 'error'.
 		expect(avisarMock).toHaveBeenCalledWith(errorEsperado, 'error');

@@ -283,7 +283,7 @@ describe('validarAlturaCm (alta en centimetros enteros)', () => {
 		expect(validarAlturaCm('')).toBe(true);
 	});
 
-	it('"1,75" es invalido: ya no se aceptan metros', () => {
+	it('"1,75" es invalido: la altura va en centimetros, no en metros', () => {
 		expect(validarAlturaCm('1,75')).toBe(false);
 		expect(alturaCmDesdeTexto('1,75')).toBeNull();
 	});

@@ -404,8 +404,8 @@ describe('marcarResuelto', () => {
 		await marcarResuelto('ej-001', 20000);
 		const estado = await obtenerEstado('ej-001');
 		expect(estado?.reintroduccion_sesiones_restantes).toBe(2);
-		// fecha_bloqueo tambien se limpia (antes no se hacia): al
-		// desbloquear no tiene sentido conservar cuando empezo el bloqueo.
+		// fecha_bloqueo tambien se limpia: al desbloquear no tiene
+		// sentido conservar cuando empezo el bloqueo.
 		expect(estado?.fecha_bloqueo).toBeNull();
 	});
 

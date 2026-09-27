@@ -665,7 +665,7 @@ describe('Reanudar sesion guardada', () => {
 
 // Sugerencia de progresion: canal assertive para errores.
 // La rama sin cambio (motor responde extremo) y la del catch deben anunciar
-// por la region global; el parrafo ya no lleva role propio.
+// por la region global; el parrafo no lleva role propio.
 describe('Sugerencia de progresion: anuncio de error', () => {
 	let instancia: ReturnType<typeof mount>;
 
