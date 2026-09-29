@@ -54,6 +54,10 @@
 		{M.onboarding.disclaimer.avisoCuerpo}
 	</p>
 
+	<p>
+		{M.onboarding.disclaimer.tecnicaCuerpo}
+	</p>
+
 	<p class="font-semibold mt-4">{M.onboarding.disclaimer.noEntrenesTitulo}</p>
 	<ul>
 		{#each M.onboarding.disclaimer.noEntrenesItems as item (item)}

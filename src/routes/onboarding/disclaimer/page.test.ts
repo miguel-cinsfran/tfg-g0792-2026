@@ -11,6 +11,7 @@
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { mount, unmount, flushSync } from 'svelte';
+import { M } from '$lib/mensajes/ui';
 import PaginaDisclaimer from './+page.svelte';
 
 // jsdom no trae ResizeObserver, que Svelte usa para bind:clientHeight
@@ -123,5 +124,49 @@ describe('Pagina de disclaimer', () => {
 		const parrafo = document.body.querySelector('#error-disclaimer');
 		expect(parrafo?.textContent).toBe('Marca la casilla para continuar.');
 		expect(document.getElementById('cb-disclaimer')).toBe(document.activeElement);
+	});
+
+	it('muestra el aviso de técnica dentro de la tarjeta del aviso, entre avisoCuerpo y noEntrenesTitulo', () => {
+		instancia = mount(PaginaDisclaimer, { target: document.body });
+		flushSync();
+
+		const TECNICA =
+			'La aplicación no ve cómo haces cada ejercicio: no usa la cámara ni sensores de movimiento. Cuidar la técnica, y decidir si cambias de variante o vuelves a activar un ejercicio en pausa, depende de ti.';
+		expect(M.onboarding.disclaimer.tecnicaCuerpo).toBe(TECNICA);
+
+		const tarjeta = Array.from(document.body.querySelectorAll('section')).find((s) =>
+			s.querySelector('h2')?.textContent?.trim().includes(M.onboarding.disclaimer.avisoTitulo)
+		);
+		expect(tarjeta).toBeDefined();
+
+		const parrafos = Array.from(tarjeta?.querySelectorAll('p') ?? []);
+		const nodoAviso = parrafos.find(
+			(p) => p.textContent?.trim() === M.onboarding.disclaimer.avisoCuerpo
+		);
+		const nodoTecnica = parrafos.find((p) => p.textContent?.trim() === TECNICA);
+		const nodoNoEntrenes = parrafos.find(
+			(p) => p.textContent?.trim() === M.onboarding.disclaimer.noEntrenesTitulo
+		);
+		expect(nodoAviso).toBeDefined();
+		expect(nodoTecnica).toBeDefined();
+		expect(nodoNoEntrenes).toBeDefined();
+		expect(nodoTecnica?.className).toBe(nodoAviso?.className);
+
+		expect(
+			(nodoAviso as HTMLElement).compareDocumentPosition(nodoTecnica as Node) &
+				Node.DOCUMENT_POSITION_FOLLOWING
+		).toBeTruthy();
+		expect(
+			(nodoTecnica as HTMLElement).compareDocumentPosition(nodoNoEntrenes as Node) &
+				Node.DOCUMENT_POSITION_FOLLOWING
+		).toBeTruthy();
+
+		const texto = tarjeta?.textContent ?? '';
+		expect(texto.indexOf(M.onboarding.disclaimer.avisoCuerpo)).toBeLessThan(
+			texto.indexOf(TECNICA)
+		);
+		expect(texto.indexOf(TECNICA)).toBeLessThan(
+			texto.indexOf(M.onboarding.disclaimer.noEntrenesTitulo)
+		);
 	});
 });

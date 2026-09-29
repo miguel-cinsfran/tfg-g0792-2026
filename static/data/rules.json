@@ -30,7 +30,7 @@
   "desbalance_inicial": {
     "RULE-DESB-PORCENTAJE": 15,
     "RULE-DESB-DURACION-SEMANAS": 4,
-    "_nota": "Compensacion temporal de volumen para el patron mas debil detectado en la evaluacion inicial."
+    "_nota": "Se calcula en la evaluación inicial y se informa en el resumen del alta. En esta versión no modifica el volumen de las sesiones."
   },
 
   "split": {

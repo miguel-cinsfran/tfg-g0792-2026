@@ -320,6 +320,7 @@ describe('M.onboarding - textos que se fijan', () => {
 	it('conserva las cadenas acordadas', () => {
 		expect(M.onboarding.disclaimer.introduccion).toBe('Tu plan usa solo tu peso corporal y no necesita equipo. Antes de empezar, lee este aviso de seguridad.');
 		expect(M.onboarding.disclaimer.avisoCuerpo).toBe('Esta aplicación es una guía de entrenamiento con peso corporal y no sustituye la consulta médica. Si tienes una condición de salud, o dudas de si puedes hacer ejercicio, consulta a un profesional antes de empezar.');
+		expect(M.onboarding.disclaimer.tecnicaCuerpo).toBe('La aplicación no ve cómo haces cada ejercicio: no usa la cámara ni sensores de movimiento. Cuidar la técnica, y decidir si cambias de variante o vuelves a activar un ejercicio en pausa, depende de ti.');
 		expect(M.onboarding.evaluacion.core.introduccion).toContain('«Empezar a contar»');
 		expect(M.onboarding.evaluacion.core.introduccion).toContain('«Detener»');
 		expect(M.onboarding.evaluacion.core.mensajeInvalidoSegundos).toBe('Escribe cuántos segundos sostuviste, o usa «No puedo sostenerla».');

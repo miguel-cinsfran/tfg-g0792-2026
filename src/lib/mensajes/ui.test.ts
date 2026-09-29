@@ -58,16 +58,16 @@ describe('M.perfil.resumen - lineas del plan', () => {
 describe('M.onboarding.resumen.patronDebil - lenguaje llano', () => {
 	it('PUSH se lee empujar y CORE se lee abdomen', () => {
 		expect(M.onboarding.resumen.patronDebil('PUSH')).toBe(
-			'Tu punto más débil es empujar (flexiones). Tendrá prioridad en tus entrenamientos.'
+			'Tu punto más débil es empujar (flexiones). Sus ejercicios se eligen según esa prueba, no según tu nivel general.'
 		);
 		expect(M.onboarding.resumen.patronDebil('CORE')).toBe(
-			'Tu punto más débil es abdomen (plancha). Tendrá prioridad en tus entrenamientos.'
+			'Tu punto más débil es abdomen (plancha). Sus ejercicios se eligen según esa prueba, no según tu nivel general.'
 		);
 	});
 
 	it('PULL se lee tirar', () => {
 		expect(M.onboarding.resumen.patronDebil('PULL')).toBe(
-			'Tu punto más débil es tirar (remo). Tendrá prioridad en tus entrenamientos.'
+			'Tu punto más débil es tirar (remo). Sus ejercicios se eligen según esa prueba, no según tu nivel general.'
 		);
 	});
 });
