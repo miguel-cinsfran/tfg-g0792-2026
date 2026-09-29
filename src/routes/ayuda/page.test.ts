@@ -1,11 +1,9 @@
 // @vitest-environment jsdom
 //
-// Pagina /ayuda: cada tema vive en un <details> con su <h2> DENTRO del
-// <summary> (docs/convenciones-ui.md: plegable y navegable por
-// encabezados a la vez). Los textos salen de M.ayuda: la ruta no
-// duplica ni reformula nada.
+// Índice /ayuda: un h2 por grupo con temas y, bajo cada uno, una fila
+// por tema que navega a /ayuda/<id>. Los textos salen de M.ayuda: la
+// ruta no duplica ni reformula nada.
 
-import { readFileSync } from 'node:fs';
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { mount, unmount, flushSync } from 'svelte';
 import PaginaAyuda from './+page.svelte';
@@ -14,6 +12,7 @@ import { M } from '$lib/mensajes/ui';
 const estadoMock = vi.hoisted(() => ({
 	gotoMock: vi.fn(),
 	sonarMock: vi.fn(),
+	de: null as string | null,
 }));
 
 vi.mock('$app/navigation', () => ({
@@ -21,11 +20,20 @@ vi.mock('$app/navigation', () => ({
 }));
 
 vi.mock('$app/paths', () => ({
-	resolve: (ruta: string) => ruta,
+	resolve: (ruta: string, params?: Record<string, string>) => {
+		if (!params) return ruta;
+		return ruta.replace('[tema]', params.tema ?? '');
+	},
 }));
 
 vi.mock('$app/state', () => ({
-	page: { url: { searchParams: new URLSearchParams() } },
+	page: {
+		url: {
+			get searchParams() {
+				return new URLSearchParams(estadoMock.de === null ? '' : `de=${estadoMock.de}`);
+			},
+		},
+	},
 }));
 
 // BotonVolver suena al interactuar; silenciar en tests.
@@ -33,93 +41,89 @@ vi.mock('$lib/sonido/reproducir', () => ({
 	sonar: (...args: unknown[]) => estadoMock.sonarMock(...args),
 }));
 
-const CAMPOS = ['vibracion', 'chequeo', 'racha', 'sonidos', 'reanudar', 'nivel'] as const;
+function gruposVisibles() {
+	return M.ayuda.grupos.filter((g) => g.temas.length > 0);
+}
 
-describe('Pagina de ayuda', () => {
+describe('Índice de ayuda', () => {
 	let instancia: ReturnType<typeof mount>;
 
 	beforeEach(() => {
 		document.body.innerHTML = '';
+		estadoMock.gotoMock.mockReset();
+		estadoMock.de = null;
 	});
 
 	afterEach(() => {
 		if (instancia) unmount(instancia);
 	});
 
-	it('seis <details> en el orden de los temas, con h2 de M.ayuda dentro de cada summary', () => {
+	it('un h2 por grupo con temas, en el orden de M.ayuda', () => {
 		instancia = mount(PaginaAyuda, { target: document.body });
 		flushSync();
 
-		const detalles = document.body.querySelectorAll('details');
-		expect(detalles.length).toBe(6);
-
-		CAMPOS.forEach((campo, i) => {
-			const summary = detalles[i].querySelector('summary');
-			expect(summary, `summary ${i} existe`).not.toBeNull();
-			const h2 = summary?.querySelectorAll('h2');
-			expect(h2?.length, `un unico h2 en el summary ${i}`).toBe(1);
-			expect(h2?.[0].textContent).toBe(M.ayuda[`${campo}Titulo`]);
-		});
+		const h2s = [...document.body.querySelectorAll('h2')].map((h) => h.textContent);
+		expect(h2s).toEqual(gruposVisibles().map((g) => g.titulo));
 	});
 
-	it('cada <details> conserva el texto del cuerpo desde M.ayuda', () => {
+	it('una fila por tema con el título como nombre accesible', () => {
 		instancia = mount(PaginaAyuda, { target: document.body });
 		flushSync();
 
-		const detalles = document.body.querySelectorAll('details');
-		CAMPOS.forEach((campo, i) => {
-			const parrafo = detalles[i].querySelector('p');
-			expect(parrafo?.textContent).toBe(M.ayuda[`${campo}Texto`]);
-		});
+		const filas = [...document.body.querySelectorAll('button.fila-configuracion')];
+		const esperados = gruposVisibles().flatMap((g) => g.temas.map((id) => M.ayuda.temas[id].titulo));
+		expect(filas.map((f) => f.textContent?.trim())).toEqual(esperados);
+		for (const fila of filas) {
+			expect(fila.getAttribute('aria-label') ?? fila.textContent?.trim()).toContain(
+				M.ayuda.temas[
+					gruposVisibles().flatMap((g) => g.temas)[filas.indexOf(fila)]
+				].titulo
+			);
+		}
 	});
 
-	it('un solo h1 con el titulo y ningun otro encabezado repetido', () => {
+	it('tocar una fila navega a /ayuda/<id>', () => {
+		instancia = mount(PaginaAyuda, { target: document.body });
+		flushSync();
+
+		const fila = [...document.body.querySelectorAll<HTMLButtonElement>('button.fila-configuracion')].find(
+			(b) => b.textContent?.trim() === M.ayuda.temas['racha'].titulo
+		);
+		expect(fila, 'fila de racha presente').not.toBeUndefined();
+		fila?.click();
+		flushSync();
+
+		expect(estadoMock.gotoMock).toHaveBeenCalledWith('/ayuda/racha');
+	});
+
+	it('con ?de=config la fila conserva el origen en el destino', () => {
+		estadoMock.de = 'config';
+		instancia = mount(PaginaAyuda, { target: document.body });
+		flushSync();
+
+		const fila = document.body.querySelector<HTMLButtonElement>('button.fila-configuracion');
+		fila?.click();
+		flushSync();
+
+		const destino = estadoMock.gotoMock.mock.calls[0]?.[0] as string;
+		expect(destino).toContain('/ayuda/');
+		expect(destino).toContain('de=config');
+	});
+
+	it('un solo h1 con el título', () => {
 		instancia = mount(PaginaAyuda, { target: document.body });
 		flushSync();
 
 		const h1s = document.body.querySelectorAll('h1');
 		expect(h1s.length).toBe(1);
 		expect(h1s[0].textContent).toBe(M.ayuda.titulo);
-
-		const conElTitulo = Array.from(document.body.querySelectorAll('h1, h2')).filter(
-			(h) => h.textContent === M.ayuda.titulo,
-		);
-		expect(conElTitulo.length).toBe(1);
 	});
 
-	it('navegacion por encabezados: exactamente un h1 y seis h2', () => {
+	it('seis grupos y veintidós filas, uno por tema del manual', () => {
 		instancia = mount(PaginaAyuda, { target: document.body });
 		flushSync();
 
-		const h1s = document.body.querySelectorAll('h1');
-		const h2s = document.body.querySelectorAll('h2');
-		expect(h1s.length).toBe(1);
-		expect(h2s.length).toBe(6);
-	});
-
-	it('el ultimo tema explica el nivel en generico', () => {
-		instancia = mount(PaginaAyuda, { target: document.body });
-		flushSync();
-
-		const detalles = document.body.querySelectorAll('details');
-		const ultimo = detalles[detalles.length - 1];
-		expect(ultimo.querySelector('summary h2')?.textContent).toBe('Qué significa tu nivel');
-		expect(ultimo.querySelector('p')?.textContent).toBe(
-			'Tu nivel sale de tus pruebas: es el que más se repitió entre ellas. El grupo más débil tiene prioridad en tus entrenamientos.'
-		);
-	});
-});
-
-describe('retorno de Ayuda', () => {
-	it('con ?de=config vuelve a /config', () => {
-		const src = readFileSync('src/routes/ayuda/+page.svelte', 'utf-8');
-		expect(src, 'Ayuda con ?de=config debe ir a /config').toMatch(/searchParams\.get\('de'\)\s*===\s*'config'/);
-		expect(src, 'destino esperado /config').toMatch(/goto\(resolve\('\/config'\)\)/);
-		expect(src, 'no debe volver a /perfil').not.toMatch(/goto\(resolve\('\/perfil'\)\)/);
-	});
-
-	it('sin parametro usa history.back()', () => {
-		const src = readFileSync('src/routes/ayuda/+page.svelte', 'utf-8');
-		expect(src, 'Ayuda sin origen debe usar history.back()').toMatch(/history\.back\(\)/);
+		expect(document.body.querySelectorAll('h2').length).toBe(6);
+		expect(document.body.querySelectorAll('button.fila-configuracion').length).toBe(22);
 	});
 });

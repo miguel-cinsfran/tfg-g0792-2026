@@ -31,6 +31,389 @@ const PATRON_TEXTO: Record<keyof ResultadoEvaluacion['evaluacion_por_patron'], s
 	CORE: 'abdomen (plancha)',
 };
 
+// Ayuda: cada tema tiene titulo y bloques. Un bloque con `texto` es
+// un parrafo; uno con `pasos`, una lista numerada de pasos en orden.
+// La plantilla distingue por la clave `texto`, que es corta a
+// proposito: la prueba de literales prohibe las cadenas largas en
+// las rutas.
+export type BloqueAyuda = { texto: string } | { pasos: readonly string[] };
+export type TemaAyuda = { titulo: string; bloques: readonly BloqueAyuda[] };
+export type GrupoAyuda = { id: string; titulo: string; temas: readonly string[] };
+
+// Manual de uso: 22 temas en 6 grupos. Cada tema tiene entre 2 y 6
+// párrafos cortos, lo esencial primero, sin nada que no esté
+// verificado en el código.
+const TEMAS_AYUDA: Record<string, TemaAyuda> = {
+	plan: {
+		titulo: 'Cómo se arma tu plan',
+		bloques: [
+			{
+				texto: 'El registro hace una prueba por grupo: empujar (flexiones), tirar (remo), piernas (sentadillas) y abdomen (plancha, en segundos).',
+			},
+			{
+				texto: 'El nivel general es el que más se repitió entre las pruebas. Los ejercicios de cada grupo se eligen según la prueba de ese grupo, no según el nivel general.',
+			},
+			{
+				texto: 'Un grupo cuya prueba dio cero empieza por el ejercicio más fácil. Sin barra ni anclaje, la prueba de tirar no se hace y ese grupo empieza en principiante; los ejercicios que necesitan barra o anclaje no entran en el plan.',
+			},
+			{
+				texto: 'Si las zonas con dolor dejan un grupo sin ejercicios seguros, su prueba no se hace y el grupo no entra en el plan hasta que cambien las zonas.',
+			},
+			{
+				texto: 'Con hasta 3 días por semana, cada sesión es de cuerpo completo. Con 4 o 5 días, en nivel intermedio o avanzado se alterna tren superior y tren inferior.',
+			},
+			{
+				texto: 'La duración elegida limita la sesión: si algo no entra, primero se quitan series y después ejercicios de menor prioridad.',
+			},
+		],
+	},
+	evaluacion: {
+		titulo: 'Volver a hacer la evaluación',
+		bloques: [
+			{
+				texto: 'En Configuración, sección «Tu evaluación», está «Volver a hacer la evaluación».',
+			},
+			{
+				texto: 'Borra tu perfil y tu evaluación, y lleva de nuevo al registro. El historial de sesiones se conserva.',
+			},
+			{
+				texto: 'Pide dos confirmaciones; el botón final dice «Sí, borrar tu perfil y rehacer la evaluación». No se puede deshacer.',
+			},
+		],
+	},
+	sesion: {
+		titulo: 'Cómo avanza una sesión',
+		bloques: [
+			{
+				texto: 'Desde Inicio, «Empezar entrenamiento». Cada ejercicio dice su nombre, la serie en curso y el objetivo.',
+			},
+			{
+				texto: 'En ejercicios de repeticiones, al terminar se toca «Terminar serie». En los de sostener, «Empezar» lanza una cuenta atrás y la serie termina sola al llegar a cero.',
+			},
+			{
+				texto: 'La cantidad se registra igual al objetivo. Si hiciste otra cantidad, durante el descanso «Corregir cantidad» permite cambiarla.',
+			},
+			{
+				texto: 'El descanso tiene cuenta atrás audible, «+30 segundos» para alargarlo y «Saltar descanso». Al llegar a cero, la sesión sigue sola.',
+			},
+			{
+				texto: 'Al terminar todo se anuncia «Sesión completada», con la duración y los ejercicios hechos.',
+			},
+		],
+	},
+	revision: {
+		titulo: 'Revisión semanal',
+		bloques: [
+			{
+				texto: 'La primera sesión de cada semana, a partir de la segunda semana, pregunta al final de cada ejercicio cuánto más habrías podido hacer. La primera sesión después del registro no cuenta.',
+			},
+			{
+				texto: 'Las opciones son «Muchas más», «Algunas más», «Pocas más» y «Ninguna más». En los ejercicios de sostener: «Mucho más», «Bastante más», «Ligeramente más» y «Ninguna más».',
+			},
+			{
+				texto: 'Con eso se ajusta el plan. El resto de la semana no pregunta nada.',
+			},
+			{
+				texto: 'Si esa sesión se interrumpe por dolor, la pregunta pasa a la siguiente sesión de la semana.',
+			},
+		],
+	},
+	'como-se-hace': {
+		titulo: 'Cómo se hace un ejercicio',
+		bloques: [
+			{
+				texto: 'Durante la sesión, «Cómo se hace» abre una ventana con la descripción completa del ejercicio.',
+			},
+			{
+				texto: 'Describe la posición inicial, los pasos del movimiento, cómo notar con el tacto y el cuerpo que la postura está bien, y los errores comunes.',
+			},
+			{
+				texto: 'La misma descripción está en la pestaña Ejercicios.',
+			},
+			{
+				texto: 'Las descripciones no dependen de ver: usan referencias al cuerpo y al contacto con el suelo o la pared.',
+			},
+		],
+	},
+	salir: {
+		titulo: 'Terminar antes o salir de la sesión',
+		bloques: [
+			{
+				texto: '«Terminar la sesión» está disponible en cualquier momento y pide confirmación.',
+			},
+			{
+				texto: 'Si ya hiciste alguna serie, se guarda lo hecho y la sesión queda cerrada.',
+			},
+			{
+				texto: 'Si todavía no hiciste ninguna, la sesión se descarta sin guardar nada.',
+			},
+			{
+				texto: '«Volver al inicio» deja la sesión guardada: en Inicio el botón pasa a decir «Continuar sesión».',
+			},
+			{
+				texto: 'La sesión se guarda a cada paso. Si Android cierra la aplicación o la cierras sin querer, al volver la aplicación pregunta si sigues donde estabas, con «Seguir donde estabas», o empiezas una nueva, con «Empezar una sesión nueva».',
+			},
+		],
+	},
+	dolor: {
+		titulo: 'Si algo duele durante la sesión',
+		bloques: [
+			{
+				texto: 'Detente ante un dolor agudo.',
+			},
+			{
+				texto: '«Reportar dolor» está en cada ejercicio y en el descanso. Se marcan las zonas donde hay dolor y se confirma.',
+			},
+			{
+				texto: 'El ejercicio queda en pausa 28 días.',
+			},
+			{
+				texto: 'Si hay otro ejercicio del mismo grupo que no carga esa zona, se anuncia el cambio. Se elige entre «Continuar con el cambio» o «Interrumpir la sesión».',
+			},
+			{
+				texto: 'Si no hay otro, las opciones son «Saltar este ejercicio hoy», «Revisar tus zonas con dolor» o «Interrumpir la sesión». El cambio nunca se aplica sin que lo elijas.',
+			},
+		],
+	},
+	pausa: {
+		titulo: 'Ejercicios en pausa',
+		bloques: [
+			{
+				texto: 'Un ejercicio en pausa no aparece en las sesiones.',
+			},
+			{
+				texto: 'A los 28 días, Inicio pregunta cómo está esa zona.',
+			},
+			{
+				texto: '«Sin dolor» lo vuelve a habilitar, con menos volumen durante las dos primeras sesiones.',
+			},
+			{
+				texto: '«Sigue molestando» lo deja en pausa otros 28 días y aconseja consultar al médico; «Más tarde» deja la pregunta para después.',
+			},
+			{
+				texto: 'Para habilitarlo antes, en el detalle del ejercicio (pestaña Ejercicios) está «Reactivar ahora», que pide confirmación.',
+			},
+			{
+				texto: 'En Configuración, la fila «Zonas con dolor» muestra también cuántos ejercicios hay en pausa.',
+			},
+		],
+	},
+	zonas: {
+		titulo: 'Zonas con dolor',
+		bloques: [
+			{
+				texto: 'Las zonas con dolor se marcan en el registro o después en Configuración, «Zonas con dolor». Ningún ejercicio que cargue esas zonas entra en el plan.',
+			},
+			{
+				texto: 'Si una zona mejoró, se desmarca ahí. Si las zonas dejan un grupo entero sin ejercicios seguros, ese grupo no entra en el plan hasta que cambien.',
+			},
+		],
+	},
+	tecnica: {
+		titulo: 'Lo que la aplicación no ve',
+		bloques: [
+			{
+				texto: 'La aplicación no ve cómo haces cada ejercicio: no usa la cámara ni sensores de movimiento.',
+			},
+			{
+				texto: 'Cuidar la técnica, y decidir si cambias de variante o vuelves a activar un ejercicio en pausa, depende de ti.',
+			},
+			{
+				texto: 'No reemplaza la consulta médica.',
+			},
+			{
+				texto: 'Detén la sesión ante dolor en el pecho, dificultad para respirar, mareo intenso o dolor agudo en una articulación, y busca atención médica si sigue.',
+			},
+		],
+	},
+	ejercicios: {
+		titulo: 'La lista de ejercicios',
+		bloques: [
+			{
+				texto: 'La pestaña Ejercicios lista todo el catálogo, agrupado por grupo de movimiento.',
+			},
+			{
+				texto: 'Cada fila dice el nombre y el nivel. Tocar un ejercicio abre su detalle con la descripción completa.',
+			},
+			{
+				texto: 'Si un ejercicio no entra en tu plan, su fila dice por qué: «No entra en tu plan: necesita barra o anclaje», o que carga una zona con dolor.',
+			},
+			{
+				texto: 'Desde el detalle se puede pasar a la variante más difícil o volver a la más fácil. El cambio pide confirmación y se aplica desde la próxima sesión, nunca en la de hoy.',
+			},
+		],
+	},
+	subir: {
+		titulo: 'Cuándo se propone subir de nivel',
+		bloques: [
+			{
+				texto: 'Al terminar una sesión de revisión semanal, si en dos revisiones seguidas llegaste al objetivo de un ejercicio respondiendo «Muchas más» o «Algunas más», la aplicación propone pasar a una variante más exigente.',
+			},
+			{
+				texto: 'Se elige «Sí, subir» o «Seguir en este nivel». Sin confirmación no cambia nada.',
+			},
+			{
+				texto: 'Un ejercicio que vuelve de una pausa por dolor no genera esta propuesta mientras tiene el volumen reducido.',
+			},
+		],
+	},
+	racha: {
+		titulo: '¿Qué cuenta como racha?',
+		bloques: [
+			{
+				texto: 'La racha son semanas completas, no días sueltos. Una semana cuenta si entrenas los días que elegiste en tu plan. Cada día vale una vez: entrenar dos veces el mismo día no suma doble.',
+			},
+			{
+				texto: 'La racha solo sube cuando termina la semana con esos días hechos. Si la semana actual está a medias, las que ya cerraste no se borran. Las sesiones interrumpidas por dolor no cuentan para la meta.',
+			},
+			{
+				texto: 'En la pantalla de Progreso también ves tu mejor racha, que es la mayor cantidad de semanas seguidas que alcanzaste.',
+			},
+		],
+	},
+	progreso: {
+		titulo: 'La pantalla de Progreso',
+		bloques: [
+			{
+				texto: 'La pestaña Progreso muestra la racha actual, la mejor racha y cuántas sesiones completaste.',
+			},
+			{
+				texto: 'El historial de sesiones trae fecha, tipo y duración, las series de cada ejercicio, y si se interrumpió por dolor.',
+			},
+			{
+				texto: 'También trae los eventos de dolor, con sus zonas y su estado.',
+			},
+		],
+	},
+	vibraciones: {
+		titulo: 'Vibraciones',
+		bloques: [
+			{
+				texto: 'Una vibración larga marca un cambio: empezó un ejercicio, terminaste una serie o se acabó el descanso. Durante el descanso, tres vibraciones cortas seguidas avisan que faltan 3 segundos: es el momento de ponerte en posición antes de la señal final.',
+			},
+			{
+				texto: 'Si el teléfono no tiene vibración, el sonido y la voz avisan en su lugar.',
+			},
+		],
+	},
+	sonidos: {
+		titulo: 'Sonidos y música',
+		bloques: [
+			{
+				texto: 'Los avisos importantes suenan: cambio de pestaña, al empezar una serie, fin del descanso, sesión completada y racha, entre otros.',
+			},
+			{
+				texto: 'En Configuración, «Efectos y música»: un interruptor para los efectos y otro para la música.',
+			},
+			{
+				texto: 'Los botones suben y bajan el volumen de cada uno por separado. La música empieza apagada.',
+			},
+		],
+	},
+	aspecto: {
+		titulo: 'Aspecto y tamaño de la letra',
+		bloques: [
+			{
+				texto: 'En Configuración, «Aspecto»: «Según el teléfono», «Claro», «Oscuro» o «Alto contraste».',
+			},
+			{
+				texto: '«Alto contraste» es negro, blanco y amarillo, con bordes marcados. Está pensado para baja visión.',
+			},
+			{
+				texto: 'Elegir uno lo aplica al instante.',
+			},
+			{
+				texto: 'La aplicación acepta el tamaño de letra de los ajustes de Android y permite el zoom con dos dedos.',
+			},
+		],
+	},
+	pantalla: {
+		titulo: 'Pantalla encendida',
+		bloques: [
+			{
+				texto: 'En Configuración, sección General: «Mantener la pantalla encendida durante el entrenamiento».',
+			},
+			{
+				texto: 'Viene activada.',
+			},
+			{
+				texto: 'Solo actúa durante la sesión. Fuera de ella, la pantalla se apaga como siempre.',
+			},
+		],
+	},
+	consejos: {
+		titulo: 'Consejos de la portada',
+		bloques: [
+			{
+				texto: 'La portada muestra un consejo de uso.',
+			},
+			{
+				texto: 'En Configuración, sección Consejos: «Mostrar consejos» y «Anunciar el consejo al entrar», cada uno con su interruptor.',
+			},
+		],
+	},
+	datos: {
+		titulo: 'Dónde se guardan tus datos',
+		bloques: [
+			{
+				texto: 'Todos tus datos se guardan solo en tu teléfono.',
+			},
+			{
+				texto: 'No hay cuenta ni servidor. La aplicación funciona sin conexión y no tiene permiso de acceso a internet.',
+			},
+			{
+				texto: 'Si desinstalas la aplicación o cambias de teléfono, los datos se pierden salvo que tengas una copia de seguridad.',
+			},
+		],
+	},
+	copia: {
+		titulo: 'Copia de seguridad',
+		bloques: [
+			{
+				texto: 'En Configuración, sección «Copia de seguridad»: «Exportar tus datos» arma un archivo con tu perfil, el historial de sesiones, el estado de los ejercicios y el historial de dolor.',
+			},
+			{
+				texto: 'Después se abre la ventana de compartir de Android para guardarlo donde elijas.',
+			},
+			{
+				texto: '«Importar datos» reemplaza todos tus datos por los del archivo. Se confirma con «Importar y reemplazar tus datos».',
+			},
+			{
+				texto: 'El archivo se comprueba antes: si no es una copia válida, no cambia nada.',
+			},
+			{
+				texto: 'En una instalación nueva, la primera pantalla ofrece recuperar la copia con «Recuperar mis datos», sin pasar por el registro.',
+			},
+		],
+	},
+	borrar: {
+		titulo: 'Borrar todo',
+		bloques: [
+			{
+				texto: 'En Configuración, «Borrar todo».',
+			},
+			{
+				texto: 'Borra tu perfil, el historial de sesiones, el estado de los ejercicios y el historial de dolor, y lleva al registro inicial.',
+			},
+			{
+				texto: 'Antes sugiere exportar una copia: «Exportar primero» o «Seguir sin exportar». Después pide dos confirmaciones; el botón final dice «Sí, borrar todo y empezar de cero».',
+			},
+			{
+				texto: 'No se puede deshacer. La preferencia de sonido no cambia.',
+			},
+		],
+	},
+};
+
+const GRUPOS_AYUDA: readonly GrupoAyuda[] = [
+	{ id: 'empezar', titulo: 'Empezar', temas: ['plan', 'evaluacion'] },
+	{ id: 'sesion', titulo: 'Durante la sesión', temas: ['sesion', 'revision', 'como-se-hace', 'salir'] },
+	{ id: 'dolor', titulo: 'Dolor y seguridad', temas: ['dolor', 'pausa', 'zonas', 'tecnica'] },
+	{ id: 'progreso', titulo: 'Ejercicios y progreso', temas: ['ejercicios', 'subir', 'racha', 'progreso'] },
+	{ id: 'ajustes', titulo: 'Sonido, vibración y pantalla', temas: ['vibraciones', 'sonidos', 'aspecto', 'pantalla', 'consejos'] },
+	{ id: 'datos', titulo: 'Tus datos', temas: ['datos', 'copia', 'borrar'] },
+];
+
 // Nombre de cada prueba del alta en la lista del resumen.
 const ETIQUETA_GRUPO_PRUEBA: Record<GrupoEvaluable, string> = {
 	PUSH: 'Empujar',
@@ -223,24 +606,11 @@ export const M = {	sesion: {
 
 	ayuda: {
 		titulo: 'Ayuda',
-		vibracionTitulo: 'Vibraciones',
-		vibracionTexto:
-			'Una vibración larga marca un cambio: empezó un ejercicio, terminaste una serie o se acabó el descanso. Durante el descanso, tres vibraciones cortas seguidas avisan que faltan 3 segundos: es el momento de ponerte en posición antes de la señal final.',
-		chequeoTitulo: 'Revisión semanal',
-		chequeoTexto:
-			'La primera sesión de la semana pregunta, al final de cada ejercicio, cuántas repeticiones más habrías podido hacer. Con eso se ajusta el plan a tu nivel real. El resto de la semana no te pregunta nada: la idea es molestarte lo menos posible.',
-		rachaTitulo: '¿Qué cuenta como racha?',
-		rachaTexto:
-			'La racha son semanas completas, no días sueltos. Una semana cuenta si entrenas los días que elegiste en tu plan. Cada día vale una vez: entrenar dos veces el mismo día no suma doble. La racha solo sube cuando termina la semana con esos días hechos. Si la semana actual está a medias, las que ya cerraste no se borran. Las sesiones interrumpidas por dolor no cuentan para la meta. En la pantalla de Progreso también ves tu mejor racha, que es la mayor cantidad de semanas seguidas que alcanzaste.',
-		sonidosTitulo: 'Sonidos',
-		sonidosTexto:
-			'Los avisos importantes suenan: cambio de pestaña, al empezar una serie, fin del descanso, sesión completada y racha, entre otros. Desde Perfil puedes apagar los efectos o la música y ajustar el volumen de cada uno por separado.',
-		reanudarTitulo: 'Si la aplicación se cierra a mitad de sesión',
-		reanudarTexto:
-			'La sesión se guarda en tu teléfono a cada paso. Si Android cierra la aplicación o la cierras sin querer, al volver la aplicación te pregunta si sigues donde estabas o empiezas una nueva.',
-		nivelTitulo: 'Qué significa tu nivel',
-		nivelTexto:
-			'Tu nivel sale de tus pruebas: es el que más se repitió entre ellas. El grupo más débil tiene prioridad en tus entrenamientos.',
+		noEncontradoTitulo: 'Tema no encontrado',
+		noEncontradoTexto:
+			'Ese tema no existe. Vuelve a la Ayuda y elige un tema de la lista.',
+		grupos: GRUPOS_AYUDA,
+		temas: TEMAS_AYUDA,
 	},
 
 	modal: {
@@ -421,6 +791,8 @@ export const M = {	sesion: {
 			avisoTitulo: 'Aviso médico',
 			avisoCuerpo:
 				'Esta aplicación es una guía de entrenamiento con peso corporal y no sustituye la consulta médica. Si tienes una condición de salud, o dudas de si puedes hacer ejercicio, consulta a un profesional antes de empezar.',
+			tecnicaCuerpo:
+				'La aplicación no ve cómo haces cada ejercicio: no usa la cámara ni sensores de movimiento. Cuidar la técnica, y decidir si cambias de variante o vuelves a activar un ejercicio en pausa, depende de ti.',
 			noEntrenesTitulo: 'No entrenes hoy si tienes:',
 			noEntrenesItems: [
 				'Dolor intenso de causa desconocida.',
@@ -499,8 +871,8 @@ export const M = {	sesion: {
 				intermedio: 'Intermedio',
 				avanzado: 'Avanzado'
 			},
-			patronDebil: (patron: keyof ResultadoEvaluacion['evaluacion_por_patron']) =>
-				`Tu punto más débil es ${PATRON_TEXTO[patron]}. Tendrá prioridad en tus entrenamientos.`,
+		patronDebil: (patron: keyof ResultadoEvaluacion['evaluacion_por_patron']) =>
+			`Tu punto más débil es ${PATRON_TEXTO[patron]}. Sus ejercicios se eligen según esa prueba, no según tu nivel general.`,
 			// El nivel es el que mas se repitio entre las pruebas hechas.
 			fraseNivel: (nivel: Nivel, pruebas: number) =>
 				pruebas <= 0

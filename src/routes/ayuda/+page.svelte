@@ -5,6 +5,7 @@
 	import { enfocarPrincipal } from '$lib/a11y/foco';
 	import { M } from '$lib/mensajes/ui';
 	import Cabecera from '$lib/components/Cabecera.svelte';
+	import ChevronDerecha from '$lib/components/iconos/ChevronDerecha.svelte';
 
 	let heading = $state<HTMLElement>();
 
@@ -23,6 +24,17 @@
 			history.back();
 		}
 	}
+
+	// El tema hereda el origen: su Atrás vuelve al índice y el índice
+	// al suyo, así el camino de vuelta no se corta a mitad.
+	function irAlTema(id: string) {
+		if (page.url.searchParams.get('de') === 'config') {
+			// eslint-disable-next-line svelte/no-navigation-without-resolve -- ruta interna resuelta, solo se conserva el origen
+			goto(`${resolve('/ayuda/[tema]', { tema: id })}?de=config`);
+		} else {
+			goto(resolve('/ayuda/[tema]', { tema: id }));
+		}
+	}
 </script>
 
 <svelte:head><title>{M.ayuda.titulo}</title></svelte:head>
@@ -31,51 +43,20 @@
 	<h1 tabindex="-1" bind:this={heading}>{M.ayuda.titulo}</h1>
 </Cabecera>
 
-<!-- name comun: acordeon nativo, al abrir un tema se cierra el resto.
-     Si la WebView no lo soporta, degradan a independientes. -->
-<div class="flex flex-col gap-2 mt-4">
-	<details class="clase-tema-ayuda desplegable desplegable-fila" name="tema-ayuda">
-		<summary><h2>{M.ayuda.vibracionTitulo}</h2></summary>
-		<p>{M.ayuda.vibracionTexto}</p>
-	</details>
-	<details class="clase-tema-ayuda desplegable desplegable-fila" name="tema-ayuda">
-		<summary><h2>{M.ayuda.chequeoTitulo}</h2></summary>
-		<p>{M.ayuda.chequeoTexto}</p>
-	</details>
-	<details class="clase-tema-ayuda desplegable desplegable-fila" name="tema-ayuda">
-		<summary><h2>{M.ayuda.rachaTitulo}</h2></summary>
-		<p>{M.ayuda.rachaTexto}</p>
-	</details>
-	<details class="clase-tema-ayuda desplegable desplegable-fila" name="tema-ayuda">
-		<summary><h2>{M.ayuda.sonidosTitulo}</h2></summary>
-		<p>{M.ayuda.sonidosTexto}</p>
-	</details>
-	<details class="clase-tema-ayuda desplegable desplegable-fila" name="tema-ayuda">
-		<summary><h2>{M.ayuda.reanudarTitulo}</h2></summary>
-		<p>{M.ayuda.reanudarTexto}</p>
-	</details>
-	<details class="clase-tema-ayuda desplegable desplegable-fila" name="tema-ayuda">
-		<summary><h2>{M.ayuda.nivelTitulo}</h2></summary>
-		<p>{M.ayuda.nivelTexto}</p>
-	</details>
-</div>
-
-<style>
-	/* Marca de acento a la izquierda cuando el tema esta abierto. Va
-	   absoluta sobre el relleno para no mover la sangria del texto, que
-	   iguala a la fila de configuracion. El chevron viene de .desplegable. */
-	.clase-tema-ayuda > summary::before {
-		content: '';
-		position: absolute;
-		left: 0.375rem;
-		top: 0.75rem;
-		bottom: 0.75rem;
-		width: 0.25rem;
-		background-color: transparent;
-		border-radius: 0.125rem;
-		transition: background-color 0.15s;
-	}
-	.clase-tema-ayuda[open] > summary::before {
-		background-color: var(--color-acento);
-	}
-</style>
+<!-- Índice por grupos: cada tema es una fila que lleva a su pantalla.
+     Un grupo sin temas no se muestra. -->
+{#each M.ayuda.grupos as grupo, i (grupo.id)}
+	{#if grupo.temas.length > 0}
+		<section aria-labelledby={grupo.id} class={i === 0 ? 'mt-4' : 'mt-6'}>
+			<h2 id={grupo.id}>{grupo.titulo}</h2>
+			<div class="flex flex-col gap-2">
+				{#each grupo.temas as id (id)}
+					<button type="button" onclick={() => irAlTema(id)} class="fila-configuracion">
+						<span class="flex-1">{M.ayuda.temas[id].titulo}</span>
+						<ChevronDerecha tamano="1.25em" clase="text-text-secondary" />
+					</button>
+				{/each}
+			</div>
+		</section>
+	{/if}
+{/each}

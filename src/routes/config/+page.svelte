@@ -258,7 +258,7 @@
 				onclick={() => goto(resolve('/config/datos'))}
 				class="fila-configuracion"
 			>
-				<span>{M.configuracion.indice.plan.tusDatos}</span>
+				<span class="flex-1">{M.configuracion.indice.plan.tusDatos}</span>
 				<ChevronDerecha tamano="1.25em" clase="text-text-secondary" />
 			</button>
 			<button
@@ -284,7 +284,7 @@
 				onclick={() => goto(resolve('/config/audio'))}
 				class="fila-configuracion"
 			>
-				<span>{M.configuracion.indice.sonidoYMusica.efectosYMusica}</span>
+				<span class="flex-1">{M.configuracion.indice.sonidoYMusica.efectosYMusica}</span>
 				<ChevronDerecha tamano="1.25em" clase="text-text-secondary" />
 			</button>
 		</div>
@@ -330,7 +330,7 @@
 				onclick={() => goto(resolve('/config/rehacer'))}
 				class="fila-configuracion"
 			>
-				<span>{M.configuracion.indice.tuEvaluacion.volverAHacerEvaluacion}</span>
+				<span class="flex-1">{M.configuracion.indice.tuEvaluacion.volverAHacerEvaluacion}</span>
 				<ChevronDerecha tamano="1.25em" clase="text-text-secondary" />
 			</button>
 		</div>
@@ -368,7 +368,7 @@
 				aria-disabled={guardando || undefined}
 				class="fila-configuracion"
 			>
-				<span>{M.configuracion.indice.tusDatos.exportarTusDatos}</span>
+				<span class="flex-1">{M.configuracion.indice.tusDatos.exportarTusDatos}</span>
 				<ChevronDerecha tamano="1.25em" clase="text-text-secondary" />
 			</button>
 			<button
@@ -376,7 +376,7 @@
 				onclick={() => goto(resolve('/config/importar'))}
 				class="fila-configuracion"
 			>
-				<span>{M.configuracion.indice.tusDatos.importarDatos}</span>
+				<span class="flex-1">{M.configuracion.indice.tusDatos.importarDatos}</span>
 				<ChevronDerecha tamano="1.25em" clase="text-text-secondary" />
 			</button>
 			<!-- Acción destructiva: texto e ícono en el color de error del
@@ -388,7 +388,7 @@
 				onclick={() => goto(resolve('/config/borrar'))}
 				class="fila-configuracion"
 			>
-				<span class="text-error">{M.configuracion.indice.tusDatos.borrarTodo}</span>
+				<span class="flex-1 text-error">{M.configuracion.indice.tusDatos.borrarTodo}</span>
 				<ChevronDerecha tamano="1.25em" clase="text-error shrink-0" />
 			</button>
 		</div>
@@ -435,7 +435,7 @@
 				}}
 				class="fila-configuracion"
 			>
-				<span>Ayuda</span>
+				<span class="flex-1">{M.ayuda.titulo}</span>
 				<ChevronDerecha tamano="1.25em" clase="text-text-secondary" />
 			</button>
 			<button
@@ -443,7 +443,7 @@
 				onclick={() => goto(resolve('/config/acerca'))}
 				class="fila-configuracion"
 			>
-				<span>{M.configuracion.indice.informacion.acercaDe}</span>
+				<span class="flex-1">{M.configuracion.indice.informacion.acercaDe}</span>
 				<ChevronDerecha tamano="1.25em" clase="text-text-secondary" />
 			</button>
 		</div>

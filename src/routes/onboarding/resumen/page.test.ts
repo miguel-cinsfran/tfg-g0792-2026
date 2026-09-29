@@ -35,7 +35,10 @@ vi.mock('$app/navigation', () => ({
 }));
 
 vi.mock('$app/paths', () => ({
-	resolve: (ruta: string) => ruta
+	resolve: (ruta: string, params?: Record<string, string>) => {
+		if (!params) return ruta;
+		return ruta.replace('[tema]', params.tema ?? '');
+	}
 }));
 
 vi.mock('$lib/onboarding/estado', () => ({
@@ -213,6 +216,20 @@ describe('Resumen: empezar abre la sesion', () => {
 
 		expect(estadoMock.gotoMock).not.toHaveBeenCalledWith('/sesion');
 		expect(estadoMock.gotoMock).not.toHaveBeenCalledWith('/');
+	});
+
+	it('el botón Ayuda abre el tema del plan', () => {
+		instancia = mount(PaginaResumen, { target: document.body });
+		flushSync();
+
+		const ayuda = [...document.body.querySelectorAll('button')].find(
+			(b) => b.textContent?.trim() === M.onboarding.resumen.botonAyuda
+		);
+		expect(ayuda, 'botón Ayuda presente').not.toBeUndefined();
+		ayuda?.click();
+		flushSync();
+
+		expect(estadoMock.gotoMock).toHaveBeenCalledWith('/ayuda/plan');
 	});
 });
 

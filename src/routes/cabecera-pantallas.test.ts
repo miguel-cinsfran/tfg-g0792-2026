@@ -34,6 +34,10 @@ const PANTALLAS: Pantalla[] = [
 	{ ruta: 'onboarding/evaluacion/core', titulos: ['{M.onboarding.evaluacion.core.titulo}'] },
 	{ ruta: 'ayuda', titulos: ['{M.ayuda.titulo}'] },
 	{
+		ruta: 'ayuda/[tema]',
+		titulos: ['{tema.titulo}', '{M.ayuda.noEncontradoTitulo}'],
+	},
+	{
 		ruta: 'biblioteca/[id]',
 		titulos: ['{ejercicio.nombre}', '{M.biblioteca.tituloNoEncontrado}'],
 	},
@@ -121,6 +125,7 @@ type Retorno = { ruta: string; destino: string; condicional?: boolean };
 
 const RETORNOS: Retorno[] = [
 	{ ruta: 'ayuda', destino: '/config', condicional: true },
+	{ ruta: 'ayuda/[tema]', destino: '/ayuda' },
 	{ ruta: 'biblioteca/[id]', destino: '/biblioteca' },
 	{ ruta: 'sesion', destino: '/' },
 	{ ruta: 'config/audio', destino: '/config' },

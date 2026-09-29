@@ -86,7 +86,13 @@ describe('guarda de huérfanos', () => {
 				const padreUsado = pantallas.some((r) => readFileSync(r, 'utf-8').includes(padre)) || componentes.some((r) => readFileSync(r, 'utf-8').includes(padre));
 				if (padreUsado) continue;
 			}
-			// Caso campos técnicos: el valor literal aparece en la pantalla aunque la clave no se importe directa (label hardcodeado)
+			// Caso ayuda: acceso dinámico via M.ayuda.temas[id] desde el
+			// índice y la pantalla de tema, que recorren grupos y temas
+			if (clave.startsWith('M.ayuda.temas.')) {
+				const padre = 'M.ayuda.temas';
+				const padreUsado = pantallas.some((r) => readFileSync(r, 'utf-8').includes(padre)) || componentes.some((r) => readFileSync(r, 'utf-8').includes(padre));
+				if (padreUsado) continue;
+			}
 			if (typeof valor === 'string' && pantallas.some((r) => readFileSync(r, 'utf-8').includes(valor))) continue;
 			huerfanas.push(clave);
 		}

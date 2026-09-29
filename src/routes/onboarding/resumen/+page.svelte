@@ -255,7 +255,7 @@
 			</Boton>
 		{/snippet}
 		{#snippet secundaria()}
-			<Boton variante="secundario" onclick={() => goto(resolve('/ayuda'))}>
+			<Boton variante="secundario" onclick={() => goto(resolve('/ayuda/[tema]', { tema: 'plan' }))}>
 				{M.onboarding.resumen.botonAyuda}
 			</Boton>
 		{/snippet}
